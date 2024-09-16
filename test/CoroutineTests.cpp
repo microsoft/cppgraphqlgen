@@ -3,9 +3,14 @@
 
 #include <gtest/gtest.h>
 
-#include "TodayMock.h"
+#include <coroutine>
+#include <cstddef>
 
-#include "graphqlservice/JSONResponse.h"
+import GraphQL.Parse;
+import GraphQL.JSONResponse;
+import GraphQL.Service;
+
+import GraphQL.Today.Mock;
 
 using namespace graphql;
 
@@ -25,7 +30,7 @@ public:
 	}
 
 protected:
-	std::unique_ptr<today::TodayMockService> _mockService;
+	std::unique_ptr<graphql::today::TodayMockService> _mockService;
 };
 
 TEST_F(CoroutineCase, QueryEverythingSync)
@@ -66,7 +71,7 @@ TEST_F(CoroutineCase, QueryEverythingSync)
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(1);
-	const auto worker = std::make_shared<coro::suspend_never>();
+	const auto worker = std::make_shared<std::suspend_never>();
 	auto result = _mockService->service
 					  ->resolve({ query,
 						  "Everything"sv,
@@ -74,20 +79,23 @@ TEST_F(CoroutineCase, QueryEverythingSync)
 						  service::await_async { worker },
 						  state })
 					  .get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 1 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 1 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->tasksRequestId) << "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 1 }, state->tasksRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadUnreadCountsCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->unreadCountsRequestId)
+		<< "today service passed the same RequestState";
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadUnreadCountsCount)
+		<< "today service called the loader once";
 
 	try
 	{
@@ -102,7 +110,7 @@ TEST_F(CoroutineCase, QueryEverythingSync)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -121,7 +129,7 @@ TEST_F(CoroutineCase, QueryEverythingSync)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
-		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("id", taskNode))
@@ -136,7 +144,7 @@ TEST_F(CoroutineCase, QueryEverythingSync)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
-		ASSERT_EQ(size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
@@ -201,20 +209,23 @@ TEST_F(CoroutineCase, QueryEverythingQueued)
 						  service::await_async { worker },
 						  state })
 					  .get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 2 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 2 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 2 }, state->tasksRequestId) << "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 2 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 2 }, state->tasksRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadUnreadCountsCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 2 }, state->unreadCountsRequestId)
+		<< "today service passed the same RequestState";
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadUnreadCountsCount)
+		<< "today service called the loader once";
 
 	try
 	{
@@ -229,7 +240,7 @@ TEST_F(CoroutineCase, QueryEverythingQueued)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -248,7 +259,7 @@ TEST_F(CoroutineCase, QueryEverythingQueued)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
-		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("id", taskNode))
@@ -263,7 +274,7 @@ TEST_F(CoroutineCase, QueryEverythingQueued)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
-		ASSERT_EQ(size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);
@@ -328,20 +339,23 @@ TEST_F(CoroutineCase, QueryEverythingThreaded)
 						  service::await_async { worker },
 						  state })
 					  .get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 3 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 3 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 3 }, state->tasksRequestId) << "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 3 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 3 }, state->tasksRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadUnreadCountsCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 3 }, state->unreadCountsRequestId)
+		<< "today service passed the same RequestState";
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadUnreadCountsCount)
+		<< "today service called the loader once";
 
 	try
 	{
@@ -356,7 +370,7 @@ TEST_F(CoroutineCase, QueryEverythingThreaded)
 		const auto appointments = service::ScalarArgument::require("appointments", data);
 		const auto appointmentEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", appointments);
-		ASSERT_EQ(size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, appointmentEdges.size()) << "appointments should have 1 entry";
 		ASSERT_TRUE(appointmentEdges[0].type() == response::Type::Map)
 			<< "appointment should be an object";
 		const auto appointmentNode = service::ScalarArgument::require("node", appointmentEdges[0]);
@@ -375,7 +389,7 @@ TEST_F(CoroutineCase, QueryEverythingThreaded)
 		const auto tasks = service::ScalarArgument::require("tasks", data);
 		const auto taskEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", tasks);
-		ASSERT_EQ(size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, taskEdges.size()) << "tasks should have 1 entry";
 		ASSERT_TRUE(taskEdges[0].type() == response::Type::Map) << "task should be an object";
 		const auto taskNode = service::ScalarArgument::require("node", taskEdges[0]);
 		EXPECT_EQ(today::getFakeTaskId(), service::IdArgument::require("id", taskNode))
@@ -390,7 +404,7 @@ TEST_F(CoroutineCase, QueryEverythingThreaded)
 		const auto unreadCounts = service::ScalarArgument::require("unreadCounts", data);
 		const auto unreadCountEdges =
 			service::ScalarArgument::require<service::TypeModifier::List>("edges", unreadCounts);
-		ASSERT_EQ(size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, unreadCountEdges.size()) << "unreadCounts should have 1 entry";
 		ASSERT_TRUE(unreadCountEdges[0].type() == response::Type::Map)
 			<< "unreadCount should be an object";
 		const auto unreadCountNode = service::ScalarArgument::require("node", unreadCountEdges[0]);

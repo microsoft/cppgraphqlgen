@@ -4,6 +4,7 @@
 #include "graphqlservice/internal/Base64.h"
 
 #include <array>
+#include <cstddef>
 #include <stdexcept>
 
 namespace graphql::internal {
@@ -111,7 +112,7 @@ std::string Base64::toBase64(const std::vector<std::uint8_t>& bytes)
 		return result;
 	}
 
-	size_t count = bytes.size();
+	std::size_t count = bytes.size();
 	const std::uint8_t* data = bytes.data();
 
 	result.reserve((count + (count % 3)) * 4 / 3);

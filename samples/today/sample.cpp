@@ -1,20 +1,22 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "TodayMock.h"
-
-#include "graphqlservice/JSONResponse.h"
-
 #include <cstdio>
 #include <iostream>
 #include <iterator>
 #include <stdexcept>
 
+import GraphQL.Parse;
+import GraphQL.JSONResponse;
+import GraphQL.Service;
+
+import GraphQL.Today.Mock;
+
 using namespace graphql;
 
 int main(int argc, char** argv)
 {
-	const auto mockService = today::mock_service();
+	const auto mockService = graphql::today::mock_service();
 	const auto& service = mockService->service;
 
 	std::cout << "Created the service..." << std::endl;

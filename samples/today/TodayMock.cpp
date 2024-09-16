@@ -13,7 +13,6 @@
 
 #include <algorithm>
 #include <chrono>
-#include <future>
 #include <iostream>
 #include <mutex>
 
@@ -106,7 +105,7 @@ std::unique_ptr<TodayMockService> mock_service() noexcept
 	return result;
 }
 
-RequestState::RequestState(size_t id)
+RequestState::RequestState(std::size_t id)
 	: requestId(id)
 {
 }
@@ -477,7 +476,7 @@ auto operator co_await(std::chrono::duration<_Rep, _Period> delay)
 			return true;
 		}
 
-		void await_suspend(coro::coroutine_handle<> h) noexcept
+		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
 			h.resume();
 		}
@@ -845,16 +844,16 @@ std::shared_ptr<object::Node> Subscription::getNodeChange(const response::IdType
 	throw std::runtime_error("Unexpected call to getNodeChange");
 }
 
-size_t NextAppointmentChange::_notifySubscribeCount = 0;
-size_t NextAppointmentChange::_subscriptionCount = 0;
-size_t NextAppointmentChange::_notifyUnsubscribeCount = 0;
+std::size_t NextAppointmentChange::_notifySubscribeCount = 0;
+std::size_t NextAppointmentChange::_subscriptionCount = 0;
+std::size_t NextAppointmentChange::_notifyUnsubscribeCount = 0;
 
 NextAppointmentChange::NextAppointmentChange(nextAppointmentChange&& changeNextAppointment)
 	: _changeNextAppointment(std::move(changeNextAppointment))
 {
 }
 
-size_t NextAppointmentChange::getCount(service::ResolverContext resolverContext)
+std::size_t NextAppointmentChange::getCount(service::ResolverContext resolverContext)
 {
 	switch (resolverContext)
 	{
@@ -963,9 +962,9 @@ std::stack<CapturedParams> NestedType::getCapturedParams() noexcept
 std::mutex Expensive::testMutex {};
 std::mutex Expensive::pendingExpensiveMutex {};
 std::condition_variable Expensive::pendingExpensiveCondition {};
-size_t Expensive::pendingExpensive = 0;
+std::size_t Expensive::pendingExpensive = 0;
 
-std::atomic<size_t> Expensive::instances = 0;
+std::atomic<std::size_t> Expensive::instances = 0;
 
 bool Expensive::Reset() noexcept
 {

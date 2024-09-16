@@ -10,7 +10,7 @@ get_filename_component(SCHEMA_GRAPHQL "${SCHEMA_SOURCE_DIR}/${SCHEMA_GRAPHQL}" A
 file(MAKE_DIRECTORY ${SCHEMA_BINARY_DIR})
 
 # Cleanup all of the stale files in the binary directory
-file(GLOB PREVIOUS_FILES ${SCHEMA_BINARY_DIR}/*.h ${SCHEMA_BINARY_DIR}/*.cpp
+file(GLOB PREVIOUS_FILES ${SCHEMA_BINARY_DIR}/*.h ${SCHEMA_BINARY_DIR}/*.ixx ${SCHEMA_BINARY_DIR}/*.cpp
      ${SCHEMA_BINARY_DIR}/${SCHEMA_TARGET}_schema_files)
 foreach(PREVIOUS_FILE ${PREVIOUS_FILES})
   file(REMOVE ${PREVIOUS_FILE})
@@ -29,7 +29,7 @@ execute_process(
 
 # Get the up-to-date list of files in the binary directory
 set(FILE_NAMES "")
-file(GLOB NEW_FILES ${SCHEMA_BINARY_DIR}/*.h ${SCHEMA_BINARY_DIR}/*.cpp)
+file(GLOB NEW_FILES ${SCHEMA_BINARY_DIR}/*.h ${SCHEMA_BINARY_DIR}/*.ixx ${SCHEMA_BINARY_DIR}/*.cpp)
 foreach(NEW_FILE ${NEW_FILES})
   get_filename_component(NEW_FILE ${NEW_FILE} NAME)
   list(APPEND FILE_NAMES "${NEW_FILE}")
@@ -44,13 +44,14 @@ endif()
 cmake_policy(SET CMP0057 NEW)
 
 # Remove stale files in the source directory
-file(GLOB OLD_FILES ${SCHEMA_SOURCE_DIR}/*.h ${SCHEMA_SOURCE_DIR}/*.cpp)
+file(GLOB OLD_FILES ${SCHEMA_SOURCE_DIR}/*.h ${SCHEMA_SOURCE_DIR}/*.ixx ${SCHEMA_SOURCE_DIR}/*.cpp)
 foreach(OLD_FILE ${OLD_FILES})
   get_filename_component(OLD_FILE ${OLD_FILE} NAME)
   if(NOT OLD_FILE IN_LIST FILE_NAMES)
-    if(OLD_FILE MATCHES "Object\\.h$" OR OLD_FILE MATCHES "Object\\.cpp$")
+    if(OLD_FILE MATCHES "Object\\.h$" OR OLD_FILE MATCHES "Object\\.ixx$" OR OLD_FILE MATCHES "Object\\.cpp$")
       file(REMOVE "${SCHEMA_SOURCE_DIR}/${OLD_FILE}")
     elseif(NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.h" AND
+        NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.ixx" AND
         NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.cpp")
       message(WARNING "Unexpected file in ${SCHEMA_TARGET} GraphQL schema sources: ${OLD_FILE}")
     endif()

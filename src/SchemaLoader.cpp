@@ -4,6 +4,7 @@
 #include "SchemaLoader.h"
 
 #include <cctype>
+#include <cstddef>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -1614,7 +1615,7 @@ const tao::graphqlpeg::position& SchemaLoader::getTypePosition(std::string_view 
 	return _typePositions.at(type);
 }
 
-size_t SchemaLoader::getScalarIndex(std::string_view type) const
+std::size_t SchemaLoader::getScalarIndex(std::string_view type) const
 {
 	return _scalarNames.at(type);
 }
@@ -1624,7 +1625,7 @@ const ScalarTypeList& SchemaLoader::getScalarTypes() const noexcept
 	return _scalarTypes;
 }
 
-size_t SchemaLoader::getEnumIndex(std::string_view type) const
+std::size_t SchemaLoader::getEnumIndex(std::string_view type) const
 {
 	return _enumNames.at(type);
 }
@@ -1634,7 +1635,7 @@ const EnumTypeList& SchemaLoader::getEnumTypes() const noexcept
 	return _enumTypes;
 }
 
-size_t SchemaLoader::getInputIndex(std::string_view type) const
+std::size_t SchemaLoader::getInputIndex(std::string_view type) const
 {
 	return _inputNames.at(type);
 }
@@ -1644,7 +1645,7 @@ const InputTypeList& SchemaLoader::getInputTypes() const noexcept
 	return _inputTypes;
 }
 
-size_t SchemaLoader::getUnionIndex(std::string_view type) const
+std::size_t SchemaLoader::getUnionIndex(std::string_view type) const
 {
 	return _unionNames.at(type);
 }
@@ -1654,7 +1655,7 @@ const UnionTypeList& SchemaLoader::getUnionTypes() const noexcept
 	return _unionTypes;
 }
 
-size_t SchemaLoader::getInterfaceIndex(std::string_view type) const
+std::size_t SchemaLoader::getInterfaceIndex(std::string_view type) const
 {
 	return _interfaceNames.at(type);
 }
@@ -1664,7 +1665,7 @@ const InterfaceTypeList& SchemaLoader::getInterfaceTypes() const noexcept
 	return _interfaceTypes;
 }
 
-size_t SchemaLoader::getObjectIndex(std::string_view type) const
+std::size_t SchemaLoader::getObjectIndex(std::string_view type) const
 {
 	return _objectNames.at(type);
 }
@@ -1695,9 +1696,9 @@ std::string_view SchemaLoader::getCppType(std::string_view type) const noexcept
 
 	if (itrBuiltin != s_builtinTypes.cend())
 	{
-		if (static_cast<size_t>(itrBuiltin->second) < s_builtinCppTypes.size())
+		if (static_cast<std::size_t>(itrBuiltin->second) < s_builtinCppTypes.size())
 		{
-			return s_builtinCppTypes[static_cast<size_t>(itrBuiltin->second)];
+			return s_builtinCppTypes[static_cast<std::size_t>(itrBuiltin->second)];
 		}
 	}
 	else
@@ -1716,7 +1717,7 @@ std::string_view SchemaLoader::getCppType(std::string_view type) const noexcept
 std::string SchemaLoader::getInputCppType(const InputField& field) const noexcept
 {
 	bool nonNull = true;
-	size_t templateCount = 0;
+	std::size_t templateCount = 0;
 	std::ostringstream inputType;
 
 	for (auto modifier : field.modifiers)
@@ -1765,7 +1766,7 @@ std::string SchemaLoader::getInputCppType(const InputField& field) const noexcep
 
 	inputType << getCppType(field.type);
 
-	for (size_t i = 0; i < templateCount; ++i)
+	for (std::size_t i = 0; i < templateCount; ++i)
 	{
 		inputType << R"cpp(>)cpp";
 	}
@@ -1776,7 +1777,7 @@ std::string SchemaLoader::getInputCppType(const InputField& field) const noexcep
 std::string SchemaLoader::getOutputCppType(const OutputField& field) const noexcept
 {
 	bool nonNull = true;
-	size_t templateCount = 0;
+	std::size_t templateCount = 0;
 	std::ostringstream outputType;
 
 	switch (field.fieldType)
@@ -1855,7 +1856,7 @@ std::string SchemaLoader::getOutputCppType(const OutputField& field) const noexc
 			break;
 	}
 
-	for (size_t i = 0; i < templateCount; ++i)
+	for (std::size_t i = 0; i < templateCount; ++i)
 	{
 		outputType << R"cpp(>)cpp";
 	}

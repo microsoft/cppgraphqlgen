@@ -11,6 +11,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <sstream>
 #include <stdexcept>

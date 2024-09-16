@@ -6,11 +6,13 @@
 #ifndef GRAPHQLRESPONSE_H
 #define GRAPHQLRESPONSE_H
 
-#include "internal/Awaitable.h"
 #include "internal/DllExports.h"
+#include "internal/Awaitable.h"
 
+#include <cstddef>
 #include <cstdint>
 #include <initializer_list>
+#include <iterator>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -55,7 +57,7 @@ struct [[nodiscard("unnecessary conversion")]] IdType
 	GRAPHQLRESPONSE_EXPORT ~IdType();
 
 	// Implicit ByteData constructors
-	GRAPHQLRESPONSE_EXPORT IdType(size_t count, typename ByteData::value_type value = 0);
+	GRAPHQLRESPONSE_EXPORT IdType(std::size_t count, typename ByteData::value_type value = 0);
 	GRAPHQLRESPONSE_EXPORT IdType(std::initializer_list<typename ByteData::value_type> values);
 	template <typename InputIt>
 	IdType(InputIt begin, InputIt end);
@@ -90,20 +92,21 @@ struct [[nodiscard("unnecessary conversion")]] IdType
 
 	// Shared accessors
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT bool empty() const noexcept;
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT size_t size() const noexcept;
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT size_t max_size() const noexcept;
-	GRAPHQLRESPONSE_EXPORT void reserve(size_t new_cap);
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT size_t capacity() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::size_t size() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::size_t max_size() const noexcept;
+	GRAPHQLRESPONSE_EXPORT void reserve(std::size_t new_cap);
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::size_t capacity() const noexcept;
 	GRAPHQLRESPONSE_EXPORT void shrink_to_fit();
 	GRAPHQLRESPONSE_EXPORT void clear() noexcept;
 
 	// ByteData accessors
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const std::uint8_t& at(
-		size_t pos) const;
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& at(size_t pos);
+		std::size_t pos) const;
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& at(std::size_t pos);
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const std::uint8_t& operator[](
-		size_t pos) const;
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& operator[](size_t pos);
+		std::size_t pos) const;
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& operator[](
+		std::size_t pos);
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const std::uint8_t& front() const;
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& front();
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const std::uint8_t& back() const;
@@ -250,8 +253,8 @@ struct [[nodiscard("unnecessary conversion")]] Value
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT bool maybe_id() const noexcept;
 
 	// Valid for Type::Map or Type::List
-	GRAPHQLRESPONSE_EXPORT void reserve(size_t count);
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT size_t size() const;
+	GRAPHQLRESPONSE_EXPORT void reserve(std::size_t count);
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::size_t size() const;
 
 	// Valid for Type::Map
 	GRAPHQLRESPONSE_EXPORT bool emplace_back(std::string&& name, Value&& value);
@@ -265,7 +268,7 @@ struct [[nodiscard("unnecessary conversion")]] Value
 	// Valid for Type::List
 	GRAPHQLRESPONSE_EXPORT void emplace_back(Value&& value);
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const Value& operator[](
-		size_t index) const;
+		std::size_t index) const;
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
@@ -286,7 +289,7 @@ private:
 		[[nodiscard("unnecessary call")]] bool operator==(const MapData& rhs) const;
 
 		MapType map;
-		std::vector<size_t> members;
+		std::vector<std::size_t> members;
 	};
 
 	// Type::String
@@ -461,7 +464,7 @@ public:
 	template <class T>
 	Writer(std::unique_ptr<T> writer) noexcept
 		: _concept { std::static_pointer_cast<const Concept>(
-			std::make_shared<Model<T>>(std::move(writer))) }
+			  std::make_shared<Model<T>>(std::move(writer))) }
 	{
 	}
 

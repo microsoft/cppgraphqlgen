@@ -8,7 +8,6 @@
 
 #include "DllExports.h"
 #include "SortedMap.h"
-#include "Version.h"
 
 #include <memory>
 #include <optional>
@@ -81,7 +80,7 @@ private:
 	std::shared_ptr<const ObjectType> _query;
 	std::shared_ptr<const ObjectType> _mutation;
 	std::shared_ptr<const ObjectType> _subscription;
-	internal::string_view_map<size_t> _typeMap;
+	internal::string_view_map<std::size_t> _typeMap;
 	std::vector<std::pair<std::string_view, std::shared_ptr<const BaseType>>> _types;
 	std::vector<std::shared_ptr<const Directive>> _directives;
 	std::shared_mutex _nonNullWrappersMutex;

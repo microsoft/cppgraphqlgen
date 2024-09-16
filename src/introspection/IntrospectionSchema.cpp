@@ -7,6 +7,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <sstream>
 #include <stdexcept>
@@ -50,7 +51,7 @@ service::AwaitableResolver Result<introspection::TypeKind>::convert(service::Awa
 		{
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesTypeKind[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesTypeKind[static_cast<std::size_t>(value)] });
 
 			return resolvedResult;
 		});
@@ -106,7 +107,7 @@ service::AwaitableResolver Result<introspection::DirectiveLocation>::convert(ser
 		{
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesDirectiveLocation[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesDirectiveLocation[static_cast<std::size_t>(value)] });
 
 			return resolvedResult;
 		});
@@ -160,35 +161,35 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(__Directive)gql"sv, typeDirective);
 
 	typeTypeKind->AddEnumValues({
-		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::SCALAR)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::OBJECT)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::INTERFACE)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::UNION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::ENUM)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::INPUT_OBJECT)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::LIST)], R"md()md"sv, std::nullopt },
-		{ service::s_namesTypeKind[static_cast<size_t>(introspection::TypeKind::NON_NULL)], R"md()md"sv, std::nullopt }
+		{ service::s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::SCALAR)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::OBJECT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::INTERFACE)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::UNION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::ENUM)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::INPUT_OBJECT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::LIST)], R"md()md"sv, std::nullopt },
+		{ service::s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::NON_NULL)], R"md()md"sv, std::nullopt }
 	});
 	typeDirectiveLocation->AddEnumValues({
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::QUERY)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::MUTATION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SUBSCRIPTION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FIELD)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FRAGMENT_DEFINITION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FRAGMENT_SPREAD)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INLINE_FRAGMENT)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::VARIABLE_DEFINITION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SCHEMA)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::SCALAR)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::OBJECT)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::FIELD_DEFINITION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ARGUMENT_DEFINITION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INTERFACE)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::UNION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ENUM)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::ENUM_VALUE)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INPUT_OBJECT)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDirectiveLocation[static_cast<size_t>(introspection::DirectiveLocation::INPUT_FIELD_DEFINITION)], R"md()md"sv, std::nullopt }
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::QUERY)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::MUTATION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::SUBSCRIPTION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::FIELD)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::FRAGMENT_DEFINITION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::FRAGMENT_SPREAD)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::INLINE_FRAGMENT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::VARIABLE_DEFINITION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::SCHEMA)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::SCALAR)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::OBJECT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::FIELD_DEFINITION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::ARGUMENT_DEFINITION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::INTERFACE)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::UNION)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::ENUM)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::ENUM_VALUE)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::INPUT_OBJECT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::INPUT_FIELD_DEFINITION)], R"md()md"sv, std::nullopt }
 	});
 
 	AddSchemaDetails(typeSchema, schema);

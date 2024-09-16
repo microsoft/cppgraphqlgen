@@ -34,26 +34,26 @@ const response::IdType& getFakeFolderId() noexcept;
 struct TodayMockService
 {
 	std::shared_ptr<Operations> service {};
-	size_t getAppointmentsCount {};
-	size_t getTasksCount {};
-	size_t getUnreadCountsCount {};
+	std::size_t getAppointmentsCount {};
+	std::size_t getTasksCount {};
+	std::size_t getUnreadCountsCount {};
 };
 
 std::unique_ptr<TodayMockService> mock_service() noexcept;
 
 struct RequestState : service::RequestState
 {
-	RequestState(size_t id);
+	RequestState(std::size_t id);
 
-	const size_t requestId;
+	const std::size_t requestId;
 
-	size_t appointmentsRequestId = 0;
-	size_t tasksRequestId = 0;
-	size_t unreadCountsRequestId = 0;
+	std::size_t appointmentsRequestId = 0;
+	std::size_t tasksRequestId = 0;
+	std::size_t unreadCountsRequestId = 0;
 
-	size_t loadAppointmentsCount = 0;
-	size_t loadTasksCount = 0;
-	size_t loadUnreadCountsCount = 0;
+	std::size_t loadAppointmentsCount = 0;
+	std::size_t loadTasksCount = 0;
+	std::size_t loadUnreadCountsCount = 0;
 };
 
 class Appointment;
@@ -318,7 +318,7 @@ public:
 
 	explicit NextAppointmentChange(nextAppointmentChange&& changeNextAppointment);
 
-	static size_t getCount(service::ResolverContext resolverContext);
+	static std::size_t getCount(service::ResolverContext resolverContext);
 
 	std::shared_ptr<object::Appointment> getNextAppointmentChange(
 		const service::FieldParams& params) const;
@@ -327,9 +327,9 @@ public:
 private:
 	nextAppointmentChange _changeNextAppointment;
 
-	static size_t _notifySubscribeCount;
-	static size_t _subscriptionCount;
-	static size_t _notifyUnsubscribeCount;
+	static std::size_t _notifySubscribeCount;
+	static std::size_t _subscriptionCount;
+	static std::size_t _notifyUnsubscribeCount;
 };
 
 class NodeChange
@@ -388,20 +388,20 @@ public:
 
 	std::future<int> getOrder(const service::FieldParams& params) const noexcept;
 
-	static constexpr size_t count = 5;
+	static constexpr std::size_t count = 5;
 	static std::mutex testMutex;
 
 private:
 	// Block async calls to getOrder until pendingExpensive == count
 	static std::mutex pendingExpensiveMutex;
 	static std::condition_variable pendingExpensiveCondition;
-	static size_t pendingExpensive;
+	static std::size_t pendingExpensive;
 
 	// Number of instances
-	static std::atomic<size_t> instances;
+	static std::atomic<std::size_t> instances;
 
 	// Initialized in the constructor
-	const size_t order;
+	const std::size_t order;
 };
 
 class EmptyOperations : public service::Request

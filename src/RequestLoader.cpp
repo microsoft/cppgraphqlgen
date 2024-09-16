@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cstddef>
 #include <fstream>
 #include <iterator>
 #include <sstream>
@@ -162,7 +163,7 @@ std::string RequestLoader::getInputCppType(
 	const RequestSchemaType& inputType, const TypeModifierStack& modifiers) const noexcept
 {
 	bool nonNull = true;
-	size_t templateCount = 0;
+	std::size_t templateCount = 0;
 	std::ostringstream cppType;
 
 	for (auto modifier : modifiers)
@@ -211,7 +212,7 @@ std::string RequestLoader::getInputCppType(
 
 	cppType << _schemaLoader.getCppType(inputType->name());
 
-	for (size_t i = 0; i < templateCount; ++i)
+	for (std::size_t i = 0; i < templateCount; ++i)
 	{
 		cppType << R"cpp(>)cpp";
 	}
@@ -223,7 +224,7 @@ std::string RequestLoader::getOutputCppType(
 	std::string_view outputCppType, const TypeModifierStack& modifiers) noexcept
 {
 	bool nonNull = true;
-	size_t templateCount = 0;
+	std::size_t templateCount = 0;
 	std::ostringstream cppType;
 
 	for (auto modifier : modifiers)
@@ -260,7 +261,7 @@ std::string RequestLoader::getOutputCppType(
 
 	cppType << outputCppType;
 
-	for (size_t i = 0; i < templateCount; ++i)
+	for (std::size_t i = 0; i < templateCount; ++i)
 	{
 		cppType << R"cpp(>)cpp";
 	}
@@ -572,8 +573,7 @@ void RequestLoader::addTypesToSchema()
 
 				locationValue.set<std::string>(std::string { locationName });
 
-				return service::Argument<introspection::DirectiveLocation>::convert(
-					locationValue);
+				return service::Argument<introspection::DirectiveLocation>::convert(locationValue);
 			});
 
 		std::vector<std::shared_ptr<const schema::InputValue>> arguments(
@@ -701,7 +701,8 @@ std::string_view RequestLoader::trimWhitespace(std::string_view content) noexcep
 
 	if (skip >= 0 && length >= skip)
 	{
-		content = content.substr(static_cast<size_t>(skip), static_cast<size_t>(length - skip));
+		content =
+			content.substr(static_cast<std::size_t>(skip), static_cast<std::size_t>(length - skip));
 	}
 
 	return content;

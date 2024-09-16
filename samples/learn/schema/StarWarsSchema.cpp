@@ -12,6 +12,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <sstream>
 #include <stdexcept>
@@ -55,7 +56,7 @@ service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableSca
 		{
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesEpisode[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesEpisode[static_cast<std::size_t>(value)] });
 
 			return resolvedResult;
 		});
@@ -175,9 +176,9 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
 
 	typeEpisode->AddEnumValues({
-		{ service::s_namesEpisode[static_cast<size_t>(learn::Episode::NEW_HOPE)], R"md()md"sv, std::nullopt },
-		{ service::s_namesEpisode[static_cast<size_t>(learn::Episode::EMPIRE)], R"md()md"sv, std::nullopt },
-		{ service::s_namesEpisode[static_cast<size_t>(learn::Episode::JEDI)], R"md()md"sv, std::nullopt }
+		{ service::s_namesEpisode[static_cast<std::size_t>(learn::Episode::NEW_HOPE)], R"md()md"sv, std::nullopt },
+		{ service::s_namesEpisode[static_cast<std::size_t>(learn::Episode::EMPIRE)], R"md()md"sv, std::nullopt },
+		{ service::s_namesEpisode[static_cast<std::size_t>(learn::Episode::JEDI)], R"md()md"sv, std::nullopt }
 	});
 
 	typeReviewInput->AddInputValues({

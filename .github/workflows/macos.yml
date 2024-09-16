@@ -3,7 +3,7 @@ name: macOS
 on: [push, pull_request]
 
 jobs:
-  xcode:
+  apple-clang:
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +53,7 @@ jobs:
         $env:VCPKG_BINARY_SOURCES = "clear;files,$cachedBinaries,$cacheAccess"
 
         $env:PATH = "${env:PATH}:${{ github.workspace }}/ninja-build"
-        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" -G Ninja ${{ github.workspace }}
+        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DCMAKE_BUILD_TYPE=$cmakeBuildType" "-DGRAPHQL_BUILD_MODULES=OFF" -G Ninja ${{ github.workspace }}
 
     - name: Build
       working-directory: build/

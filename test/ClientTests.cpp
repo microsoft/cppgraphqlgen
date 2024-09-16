@@ -3,12 +3,19 @@
 
 #include <gtest/gtest.h>
 
-#include "MutateClient.h"
-#include "QueryClient.h"
-#include "SubscribeClient.h"
-#include "TodayMock.h"
-
 #include <chrono>
+#include <cstddef>
+#include <future>
+
+import GraphQL.Parse;
+import GraphQL.Client;
+import GraphQL.Service;
+
+import GraphQL.Mutate.MutateClient;
+import GraphQL.Query.QueryClient;
+import GraphQL.Subscribe.SubscribeClient;
+
+import GraphQL.Today.Mock;
 
 using namespace graphql;
 
@@ -42,20 +49,23 @@ TEST_F(ClientCase, QueryEverything)
 	auto result = _mockService->service
 					  ->resolve({ query, {}, std::move(variables), std::launch::async, state })
 					  .get();
-	EXPECT_EQ(size_t { 1 }, _mockService->getAppointmentsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getAppointmentsCount)
 		<< "today service lazy loads the appointments and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getTasksCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getTasksCount)
 		<< "today service lazy loads the tasks and caches the result";
-	EXPECT_EQ(size_t { 1 }, _mockService->getUnreadCountsCount)
+	EXPECT_EQ(std::size_t { 1 }, _mockService->getUnreadCountsCount)
 		<< "today service lazy loads the unreadCounts and caches the result";
-	EXPECT_EQ(size_t { 1 }, state->appointmentsRequestId)
+	EXPECT_EQ(std::size_t { 1 }, state->appointmentsRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->tasksRequestId) << "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->unreadCountsRequestId)
+	EXPECT_EQ(std::size_t { 1 }, state->tasksRequestId)
 		<< "today service passed the same RequestState";
-	EXPECT_EQ(size_t { 1 }, state->loadAppointmentsCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
-	EXPECT_EQ(size_t { 1 }, state->loadUnreadCountsCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->unreadCountsRequestId)
+		<< "today service passed the same RequestState";
+	EXPECT_EQ(std::size_t { 1 }, state->loadAppointmentsCount)
+		<< "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadTasksCount) << "today service called the loader once";
+	EXPECT_EQ(std::size_t { 1 }, state->loadUnreadCountsCount)
+		<< "today service called the loader once";
 
 	try
 	{
@@ -63,10 +73,10 @@ TEST_F(ClientCase, QueryEverything)
 		auto serviceResponse = client::parseServiceResponse(std::move(result));
 		const auto response = parseResponse(std::move(serviceResponse.data));
 
-		EXPECT_EQ(size_t { 0 }, serviceResponse.errors.size()) << "no errors expected";
+		EXPECT_EQ(std::size_t { 0 }, serviceResponse.errors.size()) << "no errors expected";
 
 		ASSERT_TRUE(response.appointments.edges.has_value()) << "appointments should be set";
-		ASSERT_EQ(size_t { 1 }, response.appointments.edges->size())
+		ASSERT_EQ(std::size_t { 1 }, response.appointments.edges->size())
 			<< "appointments should have 1 entry";
 		ASSERT_TRUE((*response.appointments.edges)[0].has_value()) << "edge should be set";
 		const auto& appointmentNode = (*response.appointments.edges)[0]->node;
@@ -81,7 +91,7 @@ TEST_F(ClientCase, QueryEverything)
 		EXPECT_EQ("Appointment", appointmentNode->_typename) << "__typename should match";
 
 		ASSERT_TRUE(response.tasks.edges.has_value()) << "tasks should be set";
-		ASSERT_EQ(size_t { 1 }, response.tasks.edges->size()) << "tasks should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, response.tasks.edges->size()) << "tasks should have 1 entry";
 		ASSERT_TRUE((*response.tasks.edges)[0].has_value()) << "edge should be set";
 		const auto& taskNode = (*response.tasks.edges)[0]->node;
 		ASSERT_TRUE(taskNode.has_value()) << "node should be set";
@@ -92,7 +102,7 @@ TEST_F(ClientCase, QueryEverything)
 		EXPECT_EQ("Task", taskNode->_typename) << "__typename should match";
 
 		ASSERT_TRUE(response.unreadCounts.edges.has_value()) << "unreadCounts should be set";
-		ASSERT_EQ(size_t { 1 }, response.unreadCounts.edges->size())
+		ASSERT_EQ(std::size_t { 1 }, response.unreadCounts.edges->size())
 			<< "unreadCounts should have 1 entry";
 		ASSERT_TRUE((*response.unreadCounts.edges)[0].has_value()) << "edge should be set";
 		const auto& unreadCountNode = (*response.unreadCounts.edges)[0]->node;
@@ -107,7 +117,7 @@ TEST_F(ClientCase, QueryEverything)
 		EXPECT_EQ(client::query::Query::TaskState::Unassigned, response.testTaskState)
 			<< "testTaskState should match";
 
-		ASSERT_EQ(size_t { 1 }, response.anyType.size()) << "anyType should have 1 entry";
+		ASSERT_EQ(std::size_t { 1 }, response.anyType.size()) << "anyType should have 1 entry";
 		ASSERT_TRUE(response.anyType[0].has_value()) << "appointment should be set";
 		const auto& anyType = *response.anyType[0];
 		EXPECT_EQ("Appointment", anyType._typename) << "__typename should match";
@@ -148,7 +158,7 @@ TEST_F(ClientCase, MutateCompleteTask)
 		auto serviceResponse = client::parseServiceResponse(std::move(result));
 		const auto response = parseResponse(std::move(serviceResponse.data));
 
-		EXPECT_EQ(size_t { 0 }, serviceResponse.errors.size()) << "no errors expected";
+		EXPECT_EQ(std::size_t { 0 }, serviceResponse.errors.size()) << "no errors expected";
 
 		const auto& completedTask = response.completedTask;
 		const auto& task = completedTask.completedTask;
@@ -197,7 +207,7 @@ TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 		auto serviceResponse = client::parseServiceResponse(std::move(result));
 		const auto response = parseResponse(std::move(serviceResponse.data));
 
-		EXPECT_EQ(size_t { 0 }, serviceResponse.errors.size()) << "no errors expected";
+		EXPECT_EQ(std::size_t { 0 }, serviceResponse.errors.size()) << "no errors expected";
 
 		const auto& appointmentNode = response.nextAppointment;
 		ASSERT_TRUE(appointmentNode.has_value()) << "should get back a task";

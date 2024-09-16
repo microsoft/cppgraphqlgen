@@ -11,16 +11,17 @@
 #include "graphqlservice/GraphQLResponse.h"
 #include "graphqlservice/GraphQLService.h"
 
+#include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
-
-// Check if the library version is compatible with schemagen 4.5.0
-static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
 
 #include <array>
 #include <memory>
 #include <string>
 #include <string_view>
+
+// Check if the library version is compatible with schemagen 4.5.0
+static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
 
 namespace graphql {
 namespace validation {

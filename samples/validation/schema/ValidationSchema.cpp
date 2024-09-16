@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
 #include <sstream>
 #include <stdexcept>
@@ -56,7 +57,7 @@ service::AwaitableResolver Result<validation::DogCommand>::convert(service::Awai
 		{
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesDogCommand[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesDogCommand[static_cast<std::size_t>(value)] });
 
 			return resolvedResult;
 		});
@@ -112,7 +113,7 @@ service::AwaitableResolver Result<validation::CatCommand>::convert(service::Awai
 		{
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesCatCommand[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesCatCommand[static_cast<std::size_t>(value)] });
 
 			return resolvedResult;
 		});
@@ -258,12 +259,12 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Arguments)gql"sv, typeArguments);
 
 	typeDogCommand->AddEnumValues({
-		{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::SIT)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::DOWN)], R"md()md"sv, std::nullopt },
-		{ service::s_namesDogCommand[static_cast<size_t>(validation::DogCommand::HEEL)], R"md()md"sv, std::nullopt }
+		{ service::s_namesDogCommand[static_cast<std::size_t>(validation::DogCommand::SIT)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDogCommand[static_cast<std::size_t>(validation::DogCommand::DOWN)], R"md()md"sv, std::nullopt },
+		{ service::s_namesDogCommand[static_cast<std::size_t>(validation::DogCommand::HEEL)], R"md()md"sv, std::nullopt }
 	});
 	typeCatCommand->AddEnumValues({
-		{ service::s_namesCatCommand[static_cast<size_t>(validation::CatCommand::JUMP)], R"md()md"sv, std::nullopt }
+		{ service::s_namesCatCommand[static_cast<std::size_t>(validation::CatCommand::JUMP)], R"md()md"sv, std::nullopt }
 	});
 
 	typeComplexInput->AddInputValues({
