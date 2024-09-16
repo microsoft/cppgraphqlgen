@@ -11,7 +11,6 @@ export module GraphQL.Mutate.MutateClient;
 
 export namespace graphql::client {
 
-
 namespace mutate {
 
 using mutate::GetRequestText;

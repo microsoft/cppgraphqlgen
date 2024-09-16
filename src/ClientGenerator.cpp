@@ -643,20 +643,15 @@ export )cpp";
 
 	moduleFile << std::endl;
 
-	NamespaceScope schemaNamespace { moduleFile, _schemaLoader.getSchemaNamespace(), true };
+	NamespaceScope schemaNamespace { moduleFile, _schemaLoader.getSchemaNamespace() };
 	PendingBlankLine pendingSeparator { moduleFile };
 
-	pendingSeparator.reset();
-	if (schemaNamespace.enter())
-	{
-		moduleFile << R"cpp(
+	moduleFile << R"cpp(
 using )cpp" << _schemaLoader.getSchemaNamespace()
-				   << R"cpp(::GetRequestText;
+			   << R"cpp(::GetRequestText;
 using )cpp" << _schemaLoader.getSchemaNamespace()
-				   << R"cpp(::GetRequestObject;
+			   << R"cpp(::GetRequestObject;
 )cpp";
-		pendingSeparator.add();
-	}
 
 	const auto& operations = _requestLoader.getOperations();
 	std::unordered_set<std::string_view> declaredEnum;
@@ -1065,7 +1060,8 @@ response::Value Variable<)cpp"
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& inputValue)
+						   << cppType << R"cpp(>::serialize()cpp" << cppType
+						   << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 

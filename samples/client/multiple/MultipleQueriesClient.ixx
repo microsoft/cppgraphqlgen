@@ -11,7 +11,6 @@ export module GraphQL.MultipleQueries.MultipleQueriesClient;
 
 export namespace graphql::client {
 
-
 namespace multiple {
 
 using multiple::GetRequestText;

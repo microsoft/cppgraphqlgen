@@ -11,7 +11,6 @@ export module GraphQL.Benchmark.BenchmarkClient;
 
 export namespace graphql::client {
 
-
 namespace benchmark {
 
 using benchmark::GetRequestText;

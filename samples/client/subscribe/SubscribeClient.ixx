@@ -11,7 +11,6 @@ export module GraphQL.Subscribe.SubscribeClient;
 
 export namespace graphql::client {
 
-
 namespace subscribe {
 
 using subscribe::GetRequestText;
