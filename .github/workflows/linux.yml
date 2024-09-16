@@ -34,9 +34,7 @@ jobs:
       run: cmake -E make_directory build
 
     - name: Configure CMake
-      shell: pwsh
-      run: |
-        cmake --preset clang-18-${{ matrix.config }}
+      run: cmake --preset clang-18-${{ matrix.config }} -DCMAKE_TOOLCHAIN_FILE=
 
     - name: Build
       working-directory: build/
