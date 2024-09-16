@@ -337,6 +337,7 @@ if(GRAPHQL_BUILD_MODULES)
   target_sources(graphqlservice PUBLIC FILE_SET CXX_MODULES
     BASE_DIRS ${INCLUDE_ROOT}
     FILES ${INCLUDE_ROOT}/graphqlservice/Service.ixx)
+  set_target_properties(graphqlservice PROPERTIES GRAPHQL_BUILD_MODULES ON)
 endif()
 
 if(GRAPHQL_UPDATE_SAMPLES)
@@ -373,6 +374,7 @@ if(GRAPHQL_BUILD_MODULES)
   target_sources(graphqlclient PUBLIC FILE_SET CXX_MODULES
     BASE_DIRS ${INCLUDE_ROOT}
     FILES ${INCLUDE_ROOT}/graphqlservice/Client.ixx)
+  set_target_properties(graphqlclient PROPERTIES GRAPHQL_BUILD_MODULES ON)
 endif()
 
 if(GRAPHQL_UPDATE_VERSION)
