@@ -22,6 +22,7 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -758,8 +759,8 @@ struct ModifiedArgument
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(values.size());
 		const auto& elements = values.get<response::ListType>();
 
-		std::transform(elements.cbegin(),
-			elements.cend(),
+		std::transform(elements.begin(),
+			elements.end(),
 			result.begin(),
 			[name](const response::Value& element) {
 				response::Value single(response::Type::Map);
@@ -831,7 +832,7 @@ struct ModifiedArgument
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
 
-		std::transform(listValue.cbegin(), listValue.cend(), result.begin(), duplicate<Other...>);
+		std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
 
 		return result;
 	}

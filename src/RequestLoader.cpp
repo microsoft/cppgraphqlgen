@@ -418,8 +418,7 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<schema::EnumValueType> values(enumType.values.size());
 
-			std::transform(enumType.values.cbegin(),
-				enumType.values.cend(),
+			std::ranges::transform(enumType.values,
 				values.begin(),
 				[](const EnumValueType& value) noexcept {
 					return schema::EnumValueType {
@@ -441,8 +440,7 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<std::shared_ptr<const schema::InputValue>> fields(inputType.fields.size());
 
-			std::transform(inputType.fields.cbegin(),
-				inputType.fields.cend(),
+			std::ranges::transform(inputType.fields,
 				fields.begin(),
 				[this](const InputField& field) noexcept {
 					return schema::InputValue::Make(field.name,
@@ -463,8 +461,7 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<std::weak_ptr<const schema::BaseType>> options(unionType.options.size());
 
-			std::transform(unionType.options.cbegin(),
-				unionType.options.cend(),
+			std::ranges::transform(unionType.options,
 				options.begin(),
 				[this](std::string_view option) noexcept {
 					return _schema->LookupType(option);
@@ -482,15 +479,13 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<std::shared_ptr<const schema::Field>> fields(interfaceType.fields.size());
 
-			std::transform(interfaceType.fields.cbegin(),
-				interfaceType.fields.cend(),
+			std::ranges::transform(interfaceType.fields,
 				fields.begin(),
 				[this](const OutputField& field) noexcept {
 					std::vector<std::shared_ptr<const schema::InputValue>> arguments(
 						field.arguments.size());
 
-					std::transform(field.arguments.cbegin(),
-						field.arguments.cend(),
+					std::ranges::transform(field.arguments,
 						arguments.begin(),
 						[this](const InputField& argument) noexcept {
 							return schema::InputValue::Make(argument.name,
@@ -519,8 +514,7 @@ void RequestLoader::addTypesToSchema()
 			std::vector<std::shared_ptr<const schema::InterfaceType>> interfaces(
 				objectType.interfaces.size());
 
-			std::transform(objectType.interfaces.cbegin(),
-				objectType.interfaces.cend(),
+			std::ranges::transform(objectType.interfaces,
 				interfaces.begin(),
 				[&interfaceTypes](std::string_view interfaceName) noexcept {
 					return interfaceTypes[interfaceName];
@@ -533,15 +527,13 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<std::shared_ptr<const schema::Field>> fields(objectType.fields.size());
 
-			std::transform(objectType.fields.cbegin(),
-				objectType.fields.cend(),
+			std::ranges::transform(objectType.fields,
 				fields.begin(),
 				[this](const OutputField& field) noexcept {
 					std::vector<std::shared_ptr<const schema::InputValue>> arguments(
 						field.arguments.size());
 
-					std::transform(field.arguments.cbegin(),
-						field.arguments.cend(),
+					std::ranges::transform(field.arguments,
 						arguments.begin(),
 						[this](const InputField& argument) noexcept {
 							return schema::InputValue::Make(argument.name,
@@ -565,8 +557,7 @@ void RequestLoader::addTypesToSchema()
 	{
 		std::vector<introspection::DirectiveLocation> locations(directive.locations.size());
 
-		std::transform(directive.locations.cbegin(),
-			directive.locations.cend(),
+		std::ranges::transform(directive.locations,
 			locations.begin(),
 			[](std::string_view locationName) noexcept {
 				response::Value locationValue(response::Type::EnumValue);
@@ -579,8 +570,7 @@ void RequestLoader::addTypesToSchema()
 		std::vector<std::shared_ptr<const schema::InputValue>> arguments(
 			directive.arguments.size());
 
-		std::transform(directive.arguments.cbegin(),
-			directive.arguments.cend(),
+		std::ranges::transform(directive.arguments,
 			arguments.begin(),
 			[this](const InputField& argument) noexcept {
 				return schema::InputValue::Make(argument.name,
@@ -624,11 +614,11 @@ RequestSchemaType RequestLoader::getSchemaType(
 	{
 		bool nonNull = true;
 
-		for (auto itr = modifiers.crbegin(); itr != modifiers.crend(); ++itr)
+		for (const auto modifier : std::views::all(modifiers) | std::views::reverse)
 		{
 			if (nonNull)
 			{
-				switch (*itr)
+				switch (modifier)
 				{
 					case service::TypeModifier::None:
 					case service::TypeModifier::List:
@@ -643,7 +633,7 @@ RequestSchemaType RequestLoader::getSchemaType(
 				}
 			}
 
-			switch (*itr)
+			switch (modifier)
 			{
 				case service::TypeModifier::None:
 				{
@@ -911,29 +901,26 @@ void RequestLoader::reorderInputTypeDependencies(Operation& operation)
 	}
 
 	// Build the dependency list for each input type.
-	std::for_each(operation.referencedInputTypes.begin(),
-		operation.referencedInputTypes.end(),
-		[](RequestInputType& entry) noexcept {
-			const auto& fields = entry.type->inputFields();
-			std::for_each(fields.begin(),
-				fields.end(),
-				[&entry](const std::shared_ptr<const schema::InputValue>& field) noexcept {
-					const auto [inputType, modifiers] = unwrapSchemaType(field->type().lock());
+	std::ranges::for_each(operation.referencedInputTypes, [](RequestInputType& entry) noexcept {
+		const auto& fields = entry.type->inputFields();
+		std::ranges::for_each(fields,
+			[&entry](const std::shared_ptr<const schema::InputValue>& field) noexcept {
+				const auto [inputType, modifiers] = unwrapSchemaType(field->type().lock());
 
-					if (inputType->kind() == introspection::TypeKind::INPUT_OBJECT)
+				if (inputType->kind() == introspection::TypeKind::INPUT_OBJECT)
+				{
+					// https://spec.graphql.org/October2021/#sec-Input-Objects.Circular-References
+					if (!modifiers.empty() && modifiers.front() != service::TypeModifier::None)
 					{
-						// https://spec.graphql.org/October2021/#sec-Input-Objects.Circular-References
-						if (!modifiers.empty() && modifiers.front() != service::TypeModifier::None)
-						{
-							entry.declarations.push_back(inputType->name());
-						}
-						else
-						{
-							entry.dependencies.insert(inputType->name());
-						}
+						entry.declarations.push_back(inputType->name());
 					}
-				});
-		});
+					else
+					{
+						entry.dependencies.insert(inputType->name());
+					}
+				}
+			});
+	});
 
 	std::unordered_set<std::string_view> handled;
 	auto itr = operation.referencedInputTypes.begin();

@@ -7,6 +7,7 @@
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -45,7 +46,7 @@ void outputOverview(
 void outputSegment(
 	std::string_view name, std::vector<std::chrono::steady_clock::duration>& durations) noexcept
 {
-	std::sort(durations.begin(), durations.end());
+	std::ranges::sort(durations);
 
 	const auto count = durations.size();
 	const auto total =

@@ -86,8 +86,7 @@ error_path buildErrorPath(const std::optional<field_path>& path)
 		}
 
 		result.reserve(segments.size());
-		std::transform(segments.cbegin(),
-			segments.cend(),
+		std::ranges::transform(segments,
 			std::back_inserter(result),
 			[](const auto& segment) noexcept {
 				return segment.get();
@@ -133,12 +132,9 @@ std::list<schema_error> schema_exception::convertMessages(
 {
 	std::list<schema_error> errors;
 
-	std::transform(messages.begin(),
-		messages.end(),
-		std::back_inserter(errors),
-		[](std::string& message) noexcept {
-			return schema_error { std::move(message) };
-		});
+	std::ranges::transform(messages, std::back_inserter(errors), [](std::string& message) noexcept {
+		return schema_error { std::move(message) };
+	});
 
 	return errors;
 }
@@ -254,7 +250,7 @@ void await_worker_queue::resumePending()
 // Default to immediate synchronous execution.
 await_async::await_async()
 	: _pimpl { std::static_pointer_cast<const Concept>(
-		  std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
+		std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -262,9 +258,9 @@ await_async::await_async()
 await_async::await_async(std::launch launch)
 	: _pimpl { ((launch & std::launch::async) == std::launch::async)
 			? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
-				  std::make_shared<await_worker_thread>()))
+				std::make_shared<await_worker_thread>()))
 			: std::static_pointer_cast<const Concept>(std::make_shared<Model<std::suspend_never>>(
-				  std::make_shared<std::suspend_never>())) }
+				std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -1287,7 +1283,7 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 			if (!errors.empty())
 			{
-				std::copy(errors.begin(), errors.end(), std::back_inserter(document.errors));
+				std::ranges::copy(errors, std::back_inserter(document.errors));
 			}
 
 			document.data.emplace_back(std::string { child.name }, {});
@@ -2170,8 +2166,7 @@ std::vector<std::shared_ptr<const SubscriptionData>> Request::collectRegistratio
 		{
 			// Return all of the registered subscriptions for this field.
 			registrations.reserve(itrListeners->second.size());
-			std::transform(itrListeners->second.begin(),
-				itrListeners->second.end(),
+			std::ranges::transform(itrListeners->second,
 				std::back_inserter(registrations),
 				[this](const auto& key) noexcept {
 					const auto itr = _subscriptions.find(key);

@@ -1120,18 +1120,15 @@ response::Value Variable<)cpp"
 			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
 				enumValues.size());
 
-			std::transform(enumValues.cbegin(),
-				enumValues.cend(),
+			std::ranges::transform(enumValues,
 				sortedValues.begin(),
 				[](const auto& value) noexcept {
 					return std::make_pair(value->name(),
 						SchemaLoader::getSafeCppName(value->name()));
 				});
-			std::sort(sortedValues.begin(),
-				sortedValues.end(),
-				[](const auto& lhs, const auto& rhs) noexcept {
-					return internal::shorter_or_less {}(lhs.first, rhs.first);
-				});
+			std::ranges::sort(sortedValues, [](const auto& lhs, const auto& rhs) noexcept {
+				return internal::shorter_or_less {}(lhs.first, rhs.first);
+			});
 
 			bool firstValue = true;
 

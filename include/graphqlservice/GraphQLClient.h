@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <iterator>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
 #include <vector>
 
@@ -167,7 +168,7 @@ struct ModifiedVariable
 		response::Value result { response::Type::List };
 
 		result.reserve(listValue.size());
-		std::for_each(listValue.begin(), listValue.end(), [&result](auto& value) {
+		std::ranges::for_each(listValue, [&result](auto& value) {
 			result.emplace_back(serialize<Other...>(std::move(value)));
 		});
 		listValue.clear();
@@ -218,7 +219,7 @@ struct ModifiedVariable
 	{
 		typename VariableTraits<Type, Modifier, Other...>::type result(listValue.size());
 
-		std::transform(listValue.cbegin(), listValue.cend(), result.begin(), duplicate<Other...>);
+		std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
 
 		return result;
 	}
@@ -322,8 +323,7 @@ struct ModifiedResponse
 			auto listValue = response.release<response::ListType>();
 
 			result.reserve(listValue.size());
-			std::transform(listValue.begin(),
-				listValue.end(),
+			std::ranges::transform(listValue,
 				std::back_inserter(result),
 				[](response::Value& value) {
 					return parse<Other...>(std::move(value));

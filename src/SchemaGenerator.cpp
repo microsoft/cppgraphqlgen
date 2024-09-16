@@ -24,6 +24,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
@@ -243,17 +244,14 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
 				enumType.values.size());
 
-			std::transform(enumType.values.cbegin(),
-				enumType.values.cend(),
+			std::ranges::transform(enumType.values,
 				sortedValues.begin(),
 				[](const auto& value) noexcept {
 					return std::make_pair(value.value, value.cppValue);
 				});
-			std::sort(sortedValues.begin(),
-				sortedValues.end(),
-				[](const auto& lhs, const auto& rhs) noexcept {
-					return internal::shorter_or_less {}(lhs.first, rhs.first);
-				});
+			std::ranges::sort(sortedValues, [](const auto& lhs, const auto& rhs) noexcept {
+				return internal::shorter_or_less {}(lhs.first, rhs.first);
+			});
 
 			firstValue = true;
 
@@ -2518,8 +2516,7 @@ service::ResolverMap )cpp"
 
 	std::map<std::string_view, std::string, internal::shorter_or_less> resolvers;
 
-	std::transform(objectType.fields.cbegin(),
-		objectType.fields.cend(),
+	std::ranges::transform(objectType.fields,
 		std::inserter(resolvers, resolvers.begin()),
 		[](const OutputField& outputField) noexcept {
 			const auto resolverName = SchemaLoader::getOutputCppResolver(outputField);

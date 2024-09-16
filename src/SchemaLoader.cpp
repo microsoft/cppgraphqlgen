@@ -379,24 +379,22 @@ void SchemaLoader::fixupInputFieldList(InputFieldList& fields)
 void SchemaLoader::reorderInputTypeDependencies()
 {
 	// Build the dependency list for each input type.
-	std::for_each(_inputTypes.begin(), _inputTypes.end(), [](InputType& entry) noexcept {
-		std::for_each(entry.fields.cbegin(),
-			entry.fields.cend(),
-			[&entry](const InputField& field) noexcept {
-				if (field.fieldType == InputFieldType::Input)
+	std::ranges::for_each(_inputTypes, [](InputType& entry) noexcept {
+		std::ranges::for_each(entry.fields, [&entry](const InputField& field) noexcept {
+			if (field.fieldType == InputFieldType::Input)
+			{
+				// https://spec.graphql.org/October2021/#sec-Input-Objects.Circular-References
+				if (!field.modifiers.empty()
+					&& field.modifiers.front() != service::TypeModifier::None)
 				{
-					// https://spec.graphql.org/October2021/#sec-Input-Objects.Circular-References
-					if (!field.modifiers.empty()
-						&& field.modifiers.front() != service::TypeModifier::None)
-					{
-						entry.declarations.push_back(field.type);
-					}
-					else
-					{
-						entry.dependencies.insert(field.type);
-					}
+					entry.declarations.push_back(field.type);
 				}
-			});
+				else
+				{
+					entry.dependencies.insert(field.type);
+				}
+			}
+		});
 	});
 
 	std::unordered_set<std::string_view> handled;

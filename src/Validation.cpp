@@ -575,8 +575,7 @@ void ValidateExecutableVisitor::visit(const peg::ast_node& root)
 			unreferencedFragments.erase(name);
 		}
 
-		std::transform(unreferencedFragments.begin(),
-			unreferencedFragments.end(),
+		std::ranges::transform(unreferencedFragments,
 			std::back_inserter(_errors),
 			[](const auto& fragmentDefinition) noexcept {
 				auto position = fragmentDefinition.second.get().begin();

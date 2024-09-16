@@ -31,7 +31,7 @@ std::vector<std::shared_ptr<object::Type>> Schema::getTypes() const
 	const auto& types = _schema->types();
 	std::vector<std::shared_ptr<object::Type>> result(types.size());
 
-	std::transform(types.begin(), types.end(), result.begin(), [](const auto& entry) {
+	std::ranges::transform(types, result.begin(), [](const auto& entry) {
 		return std::make_shared<object::Type>(std::make_shared<Type>(entry.second));
 	});
 
@@ -67,7 +67,7 @@ std::vector<std::shared_ptr<object::Directive>> Schema::getDirectives() const
 	const auto& directives = _schema->directives();
 	std::vector<std::shared_ptr<object::Directive>> result(directives.size());
 
-	std::transform(directives.begin(), directives.end(), result.begin(), [](const auto& entry) {
+	std::ranges::transform(directives, result.begin(), [](const auto& entry) {
 		return std::make_shared<object::Directive>(std::make_shared<Directive>(entry));
 	});
 
@@ -141,7 +141,7 @@ std::optional<std::vector<std::shared_ptr<object::Type>>> Type::getInterfaces() 
 	const auto& interfaces = _type->interfaces();
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::Type>>>(interfaces.size());
 
-	std::transform(interfaces.begin(), interfaces.end(), result->begin(), [](const auto& entry) {
+	std::ranges::transform(interfaces, result->begin(), [](const auto& entry) {
 		return std::make_shared<object::Type>(std::make_shared<Type>(entry));
 	});
 
@@ -164,16 +164,13 @@ std::optional<std::vector<std::shared_ptr<object::Type>>> Type::getPossibleTypes
 	auto result =
 		std::make_optional<std::vector<std::shared_ptr<object::Type>>>(possibleTypes.size());
 
-	std::transform(possibleTypes.begin(),
-		possibleTypes.end(),
-		result->begin(),
-		[](const auto& entry) {
-			auto typeEntry = entry.lock();
+	std::ranges::transform(possibleTypes, result->begin(), [](const auto& entry) {
+		auto typeEntry = entry.lock();
 
-			return typeEntry && typeEntry->kind() == introspection::TypeKind::OBJECT
-				? std::make_shared<object::Type>(std::make_shared<Type>(std::move(typeEntry)))
-				: std::shared_ptr<object::Type> {};
-		});
+		return typeEntry && typeEntry->kind() == introspection::TypeKind::OBJECT
+			? std::make_shared<object::Type>(std::make_shared<Type>(std::move(typeEntry)))
+			: std::shared_ptr<object::Type> {};
+	});
 
 	result->erase(std::remove(result->begin(), result->end(), std::shared_ptr<object::Type> {}),
 		result->cend());
@@ -225,7 +222,7 @@ std::optional<std::vector<std::shared_ptr<object::InputValue>>> Type::getInputFi
 	auto result =
 		std::make_optional<std::vector<std::shared_ptr<object::InputValue>>>(inputFields.size());
 
-	std::transform(inputFields.begin(), inputFields.end(), result->begin(), [](const auto& entry) {
+	std::ranges::transform(inputFields, result->begin(), [](const auto& entry) {
 		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
@@ -279,7 +276,7 @@ std::vector<std::shared_ptr<object::InputValue>> Field::getArgs() const
 	const auto& args = _field->args();
 	std::vector<std::shared_ptr<object::InputValue>> result(args.size());
 
-	std::transform(args.begin(), args.end(), result.begin(), [](const auto& entry) {
+	std::ranges::transform(args, result.begin(), [](const auto& entry) {
 		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
@@ -394,7 +391,7 @@ std::vector<std::shared_ptr<object::InputValue>> Directive::getArgs() const
 	const auto& args = _directive->args();
 	std::vector<std::shared_ptr<object::InputValue>> result(args.size());
 
-	std::transform(args.begin(), args.end(), result.begin(), [](const auto& entry) {
+	std::ranges::transform(args, result.begin(), [](const auto& entry) {
 		return std::make_shared<object::InputValue>(std::make_shared<InputValue>(entry));
 	});
 
