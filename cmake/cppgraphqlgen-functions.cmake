@@ -53,6 +53,7 @@ function(add_graphql_schema_target SCHEMA_TARGET)
     target_sources(${SCHEMA_TARGET}_schema PUBLIC FILE_SET HEADERS
       BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
       FILES ${SCHEMA_HEADERS})
+    get_target_property(GRAPHQL_BUILD_MODULES cppgraphqlgen::graphqlservice GRAPHQL_BUILD_MODULES)
     if(GRAPHQL_BUILD_MODULES)
       file(GLOB SCHEMA_MODULES ${CMAKE_CURRENT_SOURCE_DIR}/*.ixx)
       target_sources(${SCHEMA_TARGET}_schema PUBLIC FILE_SET CXX_MODULES
@@ -106,6 +107,7 @@ function(add_graphql_client_target CLIENT_TARGET)
     target_sources(${CLIENT_TARGET}_client PUBLIC FILE_SET HEADERS
       BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}
       FILES ${CLIENT_HEADERS})
+    get_target_property(GRAPHQL_BUILD_MODULES cppgraphqlgen::graphqlclient GRAPHQL_BUILD_MODULES)
     if(GRAPHQL_BUILD_MODULES)
       file(GLOB CLIENT_MODULES ${CMAKE_CURRENT_SOURCE_DIR}/*.ixx)
       target_sources(${CLIENT_TARGET}_client PUBLIC FILE_SET CXX_MODULES

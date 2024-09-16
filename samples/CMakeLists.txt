@@ -13,22 +13,12 @@ endif()
 
 if(GRAPHQL_BUILD_HTTP_SAMPLE)
   find_package(boost_beast CONFIG QUIET)
-  if(Boost_FOUND)
-    if(Boost_VERSION VERSION_GREATER_EQUAL "1.81.0")
-      try_compile(TEST_RESULT
-        ${CMAKE_CURRENT_BINARY_DIR}
-        ${CMAKE_CURRENT_SOURCE_DIR}/../cmake/test_boost_beast.cpp
-        CMAKE_FLAGS -DINCLUDE_DIRECTORIES:STRING=${Boost_INCLUDE_DIRS}
-        CXX_STANDARD 20)
-
-      if(TEST_RESULT)
-        message(STATUS "Using Boost.Beast ${Boost_VERSION}")
-        add_subdirectory(proxy)
-      else()
-        message(WARNING "GRAPHQL_BUILD_HTTP_SAMPLE requires the Boost.Beast header-only library and a toolchain that supports co_await in Boost.Asio.")
-      endif()
+  if(boost_beast_FOUND)
+    if(boost_beast_VERSION VERSION_GREATER_EQUAL "1.81.0")
+      message(STATUS "Using Boost.Beast ${boost_beast_VERSION}")
+      add_subdirectory(proxy)
     else()
-      message(WARNING "GRAPHQL_BUILD_HTTP_SAMPLE requires the Boost.Beast header-only library >= 1.81.0, but only ${Boost_VERSION} was found in ${Boost_INCLUDE_DIR}.")
+      message(WARNING "GRAPHQL_BUILD_HTTP_SAMPLE requires the Boost.Beast header-only library >= 1.81.0, but only ${boost_beast_VERSION} was found.")
     endif()
   endif()
 endif()

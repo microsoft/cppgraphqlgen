@@ -16,11 +16,7 @@ using peg::ast_node;
 using peg::ast_input;
 using peg::ast;
 
-namespace constants {
-
-constexpr std::size_t c_defaultDepthLimit = peg::c_defaultDepthLimit;
-
-} // namespace constants
+constexpr std::size_t c_defaultDepthLimit = constants::c_defaultDepthLimit;
 
 using peg::parseSchemaString;
 using peg::parseSchemaFile;

@@ -11,7 +11,6 @@ export module GraphQL.NestedInput.NestedInputClient;
 
 export namespace graphql::client {
 
-
 namespace nestedinput {
 
 using nestedinput::GetRequestText;

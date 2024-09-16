@@ -11,7 +11,6 @@ export module GraphQL.Query.QueryClient;
 
 export namespace graphql::client {
 
-
 namespace query {
 
 using query::GetRequestText;

@@ -9,7 +9,7 @@ module;
 
 export module GraphQL.Proxy.ProxySchema;
 
-namespace included = graphql::proxy;
+export import GraphQL.Proxy.QueryObject;
 
 export namespace graphql::proxy {
 

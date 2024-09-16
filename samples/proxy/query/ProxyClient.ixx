@@ -11,7 +11,6 @@ export module GraphQL.Proxy.ProxyClient;
 
 export namespace graphql::client {
 
-
 namespace proxy {
 
 using proxy::GetRequestText;

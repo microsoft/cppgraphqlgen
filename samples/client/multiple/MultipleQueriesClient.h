@@ -18,9 +18,9 @@
 #include <string>
 #include <vector>
 
-// Check if the library version is compatible with clientgen 4.5.0
-static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with clientgen: minor version mismatch");
+// Check if the library version is compatible with clientgen 5.0.0
+static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
 namespace graphql::client {
 

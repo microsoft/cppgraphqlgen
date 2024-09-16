@@ -25,9 +25,13 @@ struct [[nodiscard("unnecessary parse")]] ast
 	bool validated = false;
 };
 
+inline namespace constants {
+
 // By default, we want to limit the depth of nested nodes. You can override this with
 // another value for the depthLimit parameter in these parse functions.
 constexpr std::size_t c_defaultDepthLimit = 25;
+
+} // namespace constants
 
 [[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT ast parseSchemaString(
 	std::string_view input, std::size_t depthLimit = c_defaultDepthLimit);
