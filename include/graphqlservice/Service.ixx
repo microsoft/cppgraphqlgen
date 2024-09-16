@@ -10,6 +10,9 @@ export module GraphQL.Service;
 export import GraphQL.Parse;
 export import GraphQL.Response;
 
+export import GraphQL.Internal.Awaitable;
+export import GraphQL.Internal.SortedMap;
+
 export namespace graphql {
 
 namespace schema {

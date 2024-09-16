@@ -7,7 +7,7 @@ module;
 
 export module GraphQL.Response;
 
-namespace included = graphql::response;
+export import GraphQL.Internal.Awaitable;
 
 export namespace graphql::response {
 
