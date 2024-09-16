@@ -37,9 +37,7 @@ jobs:
       run: cmake --preset clang-18-${{ matrix.config }} -DCMAKE_TOOLCHAIN_FILE=
 
     - name: Build
-      working-directory: build/
       run: cmake --build --preset clang-18-${{ matrix.config }} -j -v
 
     - name: Test
-      working-directory: build/
       run: ctest --preset clang-18-${{ matrix.config }} --output-on-failure
