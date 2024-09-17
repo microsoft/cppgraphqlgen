@@ -13,8 +13,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <format>
 #include <iostream>
 #include <mutex>
+#include <ranges>
 
 namespace graphql::today {
 
@@ -24,7 +26,7 @@ const response::IdType& getFakeAppointmentId() noexcept
 		std::string_view fakeIdString { "fakeAppointmentId" };
 		response::IdType result(fakeIdString.size());
 
-		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+		std::ranges::copy(fakeIdString, result.begin());
 
 		return response::IdType { std::move(result) };
 	}();
@@ -38,7 +40,7 @@ const response::IdType& getFakeTaskId() noexcept
 		std::string_view fakeIdString { "fakeTaskId" };
 		response::IdType result(fakeIdString.size());
 
-		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+		std::ranges::copy(fakeIdString, result.begin());
 
 		return response::IdType { std::move(result) };
 	}();
@@ -52,7 +54,7 @@ const response::IdType& getFakeFolderId() noexcept
 		std::string_view fakeIdString { "fakeFolderId" };
 		response::IdType result(fakeIdString.size());
 
-		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+		std::ranges::copy(fakeIdString, result.begin());
 
 		return response::IdType { std::move(result) };
 	}();
@@ -198,8 +200,7 @@ std::optional<std::vector<std::shared_ptr<object::AppointmentEdge>>> Appointment
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::AppointmentEdge>>>(
 		_appointments.size());
 
-	std::transform(_appointments.cbegin(),
-		_appointments.cend(),
+	std::ranges::transform(_appointments,
 		result->begin(),
 		[](const std::shared_ptr<Appointment>& node) {
 			return std::make_shared<object::AppointmentEdge>(
@@ -268,12 +269,9 @@ std::optional<std::vector<std::shared_ptr<object::TaskEdge>>> TaskConnection::ge
 {
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::TaskEdge>>>(_tasks.size());
 
-	std::transform(_tasks.cbegin(),
-		_tasks.cend(),
-		result->begin(),
-		[](const std::shared_ptr<Task>& node) {
-			return std::make_shared<object::TaskEdge>(std::make_shared<TaskEdge>(node));
-		});
+	std::ranges::transform(_tasks, result->begin(), [](const std::shared_ptr<Task>& node) {
+		return std::make_shared<object::TaskEdge>(std::make_shared<TaskEdge>(node));
+	});
 
 	return result;
 }
@@ -338,12 +336,9 @@ std::optional<std::vector<std::shared_ptr<object::FolderEdge>>> FolderConnection
 	auto result =
 		std::make_optional<std::vector<std::shared_ptr<object::FolderEdge>>>(_folders.size());
 
-	std::transform(_folders.cbegin(),
-		_folders.cend(),
-		result->begin(),
-		[](const std::shared_ptr<Folder>& node) {
-			return std::make_shared<object::FolderEdge>(std::make_shared<FolderEdge>(node));
-		});
+	std::ranges::transform(_folders, result->begin(), [](const std::shared_ptr<Folder>& node) {
+		return std::make_shared<object::FolderEdge>(std::make_shared<FolderEdge>(node));
+	});
 
 	return result;
 }
@@ -575,10 +570,8 @@ struct EdgeConstraints
 		{
 			if (*first < 0)
 			{
-				std::ostringstream error;
-
-				error << "Invalid argument: first value: " << *first;
-				throw service::schema_exception { { service::schema_error { error.str() } } };
+				auto error = std::format("Invalid argument: first value: {}", *first);
+				throw service::schema_exception { { service::schema_error { std::move(error) } } };
 			}
 
 			if (itrLast - itrFirst > *first)
@@ -591,10 +584,8 @@ struct EdgeConstraints
 		{
 			if (*last < 0)
 			{
-				std::ostringstream error;
-
-				error << "Invalid argument: last value: " << *last;
-				throw service::schema_exception { { service::schema_error { error.str() } } };
+				auto error = std::format("Invalid argument: last value: {}", *last);
+				throw service::schema_exception { { service::schema_error { std::move(error) } } };
 			}
 
 			if (itrLast - itrFirst > *last)
@@ -708,12 +699,9 @@ std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(
 {
 	std::vector<std::shared_ptr<object::Appointment>> result(ids.size());
 
-	std::transform(ids.cbegin(),
-		ids.cend(),
-		result.begin(),
-		[this, &params](const response::IdType& id) {
-			return std::make_shared<object::Appointment>(findAppointment(params, id));
-		});
+	std::ranges::transform(ids, result.begin(), [this, &params](const response::IdType& id) {
+		return std::make_shared<object::Appointment>(findAppointment(params, id));
+	});
 
 	return result;
 }
@@ -723,12 +711,9 @@ std::vector<std::shared_ptr<object::Task>> Query::getTasksById(
 {
 	std::vector<std::shared_ptr<object::Task>> result(ids.size());
 
-	std::transform(ids.cbegin(),
-		ids.cend(),
-		result.begin(),
-		[this, &params](const response::IdType& id) {
-			return std::make_shared<object::Task>(findTask(params, id));
-		});
+	std::ranges::transform(ids, result.begin(), [this, &params](const response::IdType& id) {
+		return std::make_shared<object::Task>(findTask(params, id));
+	});
 
 	return result;
 }
@@ -738,12 +723,9 @@ std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(
 {
 	std::vector<std::shared_ptr<object::Folder>> result(ids.size());
 
-	std::transform(ids.cbegin(),
-		ids.cend(),
-		result.begin(),
-		[this, &params](const response::IdType& id) {
-			return std::make_shared<object::Folder>(findUnreadCount(params, id));
-		});
+	std::ranges::transform(ids, result.begin(), [this, &params](const response::IdType& id) {
+		return std::make_shared<object::Folder>(findUnreadCount(params, id));
+	});
 
 	return result;
 }
@@ -777,13 +759,10 @@ std::vector<std::shared_ptr<object::UnionType>> Query::getAnyType(
 
 	std::vector<std::shared_ptr<object::UnionType>> result(_appointments.size());
 
-	std::transform(_appointments.cbegin(),
-		_appointments.cend(),
-		result.begin(),
-		[](const auto& appointment) noexcept {
-			return std::make_shared<object::UnionType>(
-				std::make_shared<object::Appointment>(appointment));
-		});
+	std::ranges::transform(_appointments, result.begin(), [](const auto& appointment) noexcept {
+		return std::make_shared<object::UnionType>(
+			std::make_shared<object::Appointment>(appointment));
+	});
 
 	return result;
 }

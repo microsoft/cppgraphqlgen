@@ -371,12 +371,9 @@ EnumType::EnumType(init&& params)
 void EnumType::AddEnumValues(std::vector<EnumValueType>&& enumValues)
 {
 	_enumValues.resize(enumValues.size());
-	std::transform(enumValues.begin(),
-		enumValues.end(),
-		_enumValues.begin(),
-		[](const auto& value) {
-			return EnumValue::Make(value.value, value.description, value.deprecationReason);
-		});
+	std::ranges::transform(enumValues, _enumValues.begin(), [](const auto& value) {
+		return EnumValue::Make(value.value, value.description, value.deprecationReason);
+	});
 }
 
 std::string_view EnumType::name() const noexcept

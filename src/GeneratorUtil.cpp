@@ -4,6 +4,7 @@
 #include "GeneratorUtil.h"
 
 #include <algorithm>
+#include <ranges>
 
 namespace graphql::generator {
 
@@ -12,17 +13,14 @@ IncludeGuardScope::IncludeGuardScope(
 	: _outputFile(outputFile)
 	, _includeGuardName(headerFileName.size(), char {})
 {
-	std::transform(headerFileName.begin(),
-		headerFileName.end(),
-		_includeGuardName.begin(),
-		[](char ch) noexcept -> char {
-			if (ch == '.')
-			{
-				return '_';
-			}
+	std::ranges::transform(headerFileName, _includeGuardName.begin(), [](char ch) noexcept -> char {
+		if (ch == '.')
+		{
+			return '_';
+		}
 
-			return static_cast<char>(std::toupper(ch));
-		});
+		return static_cast<char>(std::toupper(ch));
+	});
 
 	_outputFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.

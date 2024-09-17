@@ -16,13 +16,14 @@
 #include <chrono>
 #include <condition_variable>
 #include <coroutine>
+#include <format>
 #include <future>
 #include <list>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <sstream>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -685,11 +686,7 @@ struct ModifiedArgument
 
 			for (auto& error : errors)
 			{
-				std::ostringstream message;
-
-				message << "Invalid argument: " << name << " error: " << error.message;
-
-				error.message = message.str();
+				error.message = std::format("Invalid argument: {} error: {}", name, error.message);
 			}
 
 			throw schema_exception(std::move(errors));
@@ -758,8 +755,8 @@ struct ModifiedArgument
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(values.size());
 		const auto& elements = values.get<response::ListType>();
 
-		std::transform(elements.cbegin(),
-			elements.cend(),
+		std::transform(elements.begin(),
+			elements.end(),
 			result.begin(),
 			[name](const response::Value& element) {
 				response::Value single(response::Type::Map);
@@ -831,7 +828,7 @@ struct ModifiedArgument
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
 
-		std::transform(listValue.cbegin(), listValue.cend(), result.begin(), duplicate<Other...>);
+		std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
 
 		return result;
 	}
@@ -1200,12 +1197,11 @@ struct ModifiedResult
 			}
 			catch (const std::exception& ex)
 			{
-				std::ostringstream message;
+				auto message = std::format("Field error name: {} unknown error: {}",
+					params.fieldName,
+					ex.what());
 
-				message << "Field error name: " << params.fieldName
-						<< " unknown error: " << ex.what();
-
-				document.errors.emplace_back(schema_error { message.str(),
+				document.errors.emplace_back(schema_error { std::move(message),
 					params.getLocation(),
 					buildErrorPath(params.errorPath) });
 			}
@@ -1293,11 +1289,10 @@ struct ModifiedResult
 		}
 		catch (const std::exception& ex)
 		{
-			std::ostringstream message;
+			auto message =
+				std::format("Field name: {} unknown error: {}", params.fieldName, ex.what());
 
-			message << "Field name: " << params.fieldName << " unknown error: " << ex.what();
-
-			document.errors.emplace_back(schema_error { message.str(),
+			document.errors.emplace_back(schema_error { std::move(message),
 				params.getLocation(),
 				buildErrorPath(params.errorPath) });
 		}

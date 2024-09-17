@@ -15,7 +15,6 @@
 #include <array>
 #include <cstddef>
 #include <functional>
-#include <sstream>
 #include <stdexcept>
 #include <string_view>
 #include <utility>

@@ -100,9 +100,9 @@ bool IdType::operator==(const IdType& rhs) const noexcept
 
 	return (std::holds_alternative<ByteData>(_data)
 				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
-						 std::get<OpaqueString>(rhs._data))
+					   std::get<OpaqueString>(rhs._data))
 				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
-						 std::get<OpaqueString>(_data)))
+					   std::get<OpaqueString>(_data)))
 		== internal::Base64::Comparison::EqualTo;
 }
 
@@ -145,7 +145,7 @@ bool IdType::operator<(const IdType& rhs) const noexcept
 	return (std::holds_alternative<ByteData>(_data)
 			? (internal::Base64::compareBase64(std::get<ByteData>(_data),
 				   std::get<OpaqueString>(rhs._data))
-				  < internal::Base64::Comparison::EqualTo)
+				< internal::Base64::Comparison::EqualTo)
 			: (internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
 				  std::get<OpaqueString>(_data)))
 				> internal::Base64::Comparison::EqualTo);
@@ -1338,8 +1338,7 @@ bool Value::emplace_back(std::string&& name, Value&& value)
 	}
 
 	auto& mapData = std::get<MapData>(_data);
-	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
-		mapData.members.cend(),
+	const auto [itr, itrEnd] = std::ranges::equal_range(mapData.members,
 		std::nullopt,
 		[&mapData, &name](std::optional<std::size_t> lhs, std::optional<std::size_t> rhs) noexcept {
 			std::string_view lhsName { lhs == std::nullopt ? name : mapData.map[*lhs].first };
@@ -1368,8 +1367,7 @@ MapType::const_iterator Value::find(std::string_view name) const
 	}
 
 	const auto& mapData = std::get<MapData>(typeData);
-	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
-		mapData.members.cend(),
+	const auto [itr, itrEnd] = std::ranges::equal_range(mapData.members,
 		std::nullopt,
 		[&mapData, name](std::optional<std::size_t> lhs, std::optional<std::size_t> rhs) noexcept {
 			std::string_view lhsName { lhs == std::nullopt ? name : mapData.map[*lhs].first };

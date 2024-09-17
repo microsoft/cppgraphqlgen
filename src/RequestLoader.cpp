@@ -418,8 +418,7 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<schema::EnumValueType> values(enumType.values.size());
 
-			std::transform(enumType.values.cbegin(),
-				enumType.values.cend(),
+			std::ranges::transform(enumType.values,
 				values.begin(),
 				[](const EnumValueType& value) noexcept {
 					return schema::EnumValueType {
@@ -441,8 +440,7 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<std::shared_ptr<const schema::InputValue>> fields(inputType.fields.size());
 
-			std::transform(inputType.fields.cbegin(),
-				inputType.fields.cend(),
+			std::ranges::transform(inputType.fields,
 				fields.begin(),
 				[this](const InputField& field) noexcept {
 					return schema::InputValue::Make(field.name,
@@ -463,8 +461,7 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<std::weak_ptr<const schema::BaseType>> options(unionType.options.size());
 
-			std::transform(unionType.options.cbegin(),
-				unionType.options.cend(),
+			std::ranges::transform(unionType.options,
 				options.begin(),
 				[this](std::string_view option) noexcept {
 					return _schema->LookupType(option);
@@ -482,15 +479,13 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<std::shared_ptr<const schema::Field>> fields(interfaceType.fields.size());
 
-			std::transform(interfaceType.fields.cbegin(),
-				interfaceType.fields.cend(),
+			std::ranges::transform(interfaceType.fields,
 				fields.begin(),
 				[this](const OutputField& field) noexcept {
 					std::vector<std::shared_ptr<const schema::InputValue>> arguments(
 						field.arguments.size());
 
-					std::transform(field.arguments.cbegin(),
-						field.arguments.cend(),
+					std::ranges::transform(field.arguments,
 						arguments.begin(),
 						[this](const InputField& argument) noexcept {
 							return schema::InputValue::Make(argument.name,
@@ -519,8 +514,7 @@ void RequestLoader::addTypesToSchema()
 			std::vector<std::shared_ptr<const schema::InterfaceType>> interfaces(
 				objectType.interfaces.size());
 
-			std::transform(objectType.interfaces.cbegin(),
-				objectType.interfaces.cend(),
+			std::ranges::transform(objectType.interfaces,
 				interfaces.begin(),
 				[&interfaceTypes](std::string_view interfaceName) noexcept {
 					return interfaceTypes[interfaceName];
@@ -533,15 +527,13 @@ void RequestLoader::addTypesToSchema()
 		{
 			std::vector<std::shared_ptr<const schema::Field>> fields(objectType.fields.size());
 
-			std::transform(objectType.fields.cbegin(),
-				objectType.fields.cend(),
+			std::ranges::transform(objectType.fields,
 				fields.begin(),
 				[this](const OutputField& field) noexcept {
 					std::vector<std::shared_ptr<const schema::InputValue>> arguments(
 						field.arguments.size());
 
-					std::transform(field.arguments.cbegin(),
-						field.arguments.cend(),
+					std::ranges::transform(field.arguments,
 						arguments.begin(),
 						[this](const InputField& argument) noexcept {
 							return schema::InputValue::Make(argument.name,
@@ -565,8 +557,7 @@ void RequestLoader::addTypesToSchema()
 	{
 		std::vector<introspection::DirectiveLocation> locations(directive.locations.size());
 
-		std::transform(directive.locations.cbegin(),
-			directive.locations.cend(),
+		std::ranges::transform(directive.locations,
 			locations.begin(),
 			[](std::string_view locationName) noexcept {
 				response::Value locationValue(response::Type::EnumValue);
@@ -579,8 +570,7 @@ void RequestLoader::addTypesToSchema()
 		std::vector<std::shared_ptr<const schema::InputValue>> arguments(
 			directive.arguments.size());
 
-		std::transform(directive.arguments.cbegin(),
-			directive.arguments.cend(),
+		std::ranges::transform(directive.arguments,
 			arguments.begin(),
 			[this](const InputField& argument) noexcept {
 				return schema::InputValue::Make(argument.name,
@@ -624,11 +614,11 @@ RequestSchemaType RequestLoader::getSchemaType(
 	{
 		bool nonNull = true;
 
-		for (auto itr = modifiers.crbegin(); itr != modifiers.crend(); ++itr)
+		for (const auto modifier : std::views::all(modifiers) | std::views::reverse)
 		{
 			if (nonNull)
 			{
-				switch (*itr)
+				switch (modifier)
 				{
 					case service::TypeModifier::None:
 					case service::TypeModifier::List:
@@ -643,7 +633,7 @@ RequestSchemaType RequestLoader::getSchemaType(
 				}
 			}
 
-			switch (*itr)
+			switch (modifier)
 			{
 				case service::TypeModifier::None:
 				{
@@ -743,16 +733,14 @@ void RequestLoader::findOperation()
 
 	if (_operations.empty())
 	{
-		std::ostringstream message;
-
-		message << "Missing operation";
+		auto message = "Missing operation"s;
 
 		if (_requestOptions.operationName && !_requestOptions.operationName->empty())
 		{
-			message << " name: " << *_requestOptions.operationName;
+			message += std::format(" name: {}", *_requestOptions.operationName);
 		}
 
-		throw service::schema_exception { { message.str() } };
+		throw service::schema_exception { { std::move(message) } };
 	}
 
 	std::list<service::schema_error> errors;
@@ -774,17 +762,15 @@ void RequestLoader::findOperation()
 
 		if (!operation.responseType.type)
 		{
-			std::ostringstream message;
 			const auto position = operation.operation->begin();
-
-			message << "Unsupported operation type: " << operation.type;
+			auto message = std::format("Unsupported operation type: {}", operation.type);
 
 			if (!operation.name.empty())
 			{
-				message << " name: " << operation.name;
+				message += std::format(" name: {}", operation.name);
 			}
 
-			service::schema_error error { message.str(),
+			service::schema_error error { std::move(message),
 				service::schema_location { position.line, position.column } };
 
 			errors.push_back(std::move(error));
@@ -852,12 +838,11 @@ void RequestLoader::collectVariables(Operation& operation) noexcept
 				&& variable.defaultValue.type() == response::Type::Null
 				&& (modifiers.empty() || modifiers.front() != service::TypeModifier::Nullable))
 			{
-				std::ostringstream error;
-
-				error << "Expected Non-Null default value for variable name: " << variable.name;
+				auto error = std::format("Expected Non-Null default value for variable name: {}",
+					variable.name);
 
 				throw service::schema_exception {
-					{ service::schema_error { error.str(), std::move(defaultValueLocation) } }
+					{ service::schema_error { std::move(error), std::move(defaultValueLocation) } }
 				};
 			}
 
@@ -911,29 +896,26 @@ void RequestLoader::reorderInputTypeDependencies(Operation& operation)
 	}
 
 	// Build the dependency list for each input type.
-	std::for_each(operation.referencedInputTypes.begin(),
-		operation.referencedInputTypes.end(),
-		[](RequestInputType& entry) noexcept {
-			const auto& fields = entry.type->inputFields();
-			std::for_each(fields.begin(),
-				fields.end(),
-				[&entry](const std::shared_ptr<const schema::InputValue>& field) noexcept {
-					const auto [inputType, modifiers] = unwrapSchemaType(field->type().lock());
+	std::ranges::for_each(operation.referencedInputTypes, [](RequestInputType& entry) noexcept {
+		const auto& fields = entry.type->inputFields();
+		std::ranges::for_each(fields,
+			[&entry](const std::shared_ptr<const schema::InputValue>& field) noexcept {
+				const auto [inputType, modifiers] = unwrapSchemaType(field->type().lock());
 
-					if (inputType->kind() == introspection::TypeKind::INPUT_OBJECT)
+				if (inputType->kind() == introspection::TypeKind::INPUT_OBJECT)
+				{
+					// https://spec.graphql.org/October2021/#sec-Input-Objects.Circular-References
+					if (!modifiers.empty() && modifiers.front() != service::TypeModifier::None)
 					{
-						// https://spec.graphql.org/October2021/#sec-Input-Objects.Circular-References
-						if (!modifiers.empty() && modifiers.front() != service::TypeModifier::None)
-						{
-							entry.declarations.push_back(inputType->name());
-						}
-						else
-						{
-							entry.dependencies.insert(inputType->name());
-						}
+						entry.declarations.push_back(inputType->name());
 					}
-				});
-		});
+					else
+					{
+						entry.dependencies.insert(inputType->name());
+					}
+				}
+			});
+	});
 
 	std::unordered_set<std::string_view> handled;
 	auto itr = operation.referencedInputTypes.begin();
@@ -958,11 +940,9 @@ void RequestLoader::reorderInputTypeDependencies(Operation& operation)
 		// input types which are referenced in the request.
 		if (itrDependent == itr)
 		{
-			std::ostringstream error;
+			const auto error = std::format("Input object cycle type: {}", itr->type->name());
 
-			error << "Input object cycle type: " << itr->type;
-
-			throw std::logic_error(error.str());
+			throw std::logic_error(error);
 		}
 
 		if (itrDependent != operation.referencedInputTypes.end())
@@ -1194,12 +1174,10 @@ void RequestLoader::SelectionVisitor::visitFragmentSpread(const peg::ast_node& f
 	if (itr == _fragments.end())
 	{
 		auto position = fragmentSpread.begin();
-		std::ostringstream error;
-
-		error << "Unknown fragment name: " << name;
+		auto error = std::format("Unknown fragment name: {}", name);
 
 		throw service::schema_exception {
-			{ service::schema_error { error.str(), { position.line, position.column } } }
+			{ service::schema_error { std::move(error), { position.line, position.column } } }
 		};
 	}
 

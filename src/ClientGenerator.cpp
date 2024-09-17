@@ -22,6 +22,7 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -113,12 +114,11 @@ const std::string& Generator::getOperationNamespace(const Operation& operation) 
 
 		for (const auto& entry : operations)
 		{
-			std::ostringstream oss;
+			auto value = std::format(R"cpp({}::{})cpp",
+				_requestLoader.getOperationType(entry),
+				_requestLoader.getOperationNamespace(entry));
 
-			oss << _requestLoader.getOperationType(entry) << R"cpp(::)cpp"
-				<< _requestLoader.getOperationNamespace(entry);
-
-			result.emplace(entry.name, oss.str());
+			result.emplace(entry.name, std::move(value));
 		}
 
 		return result;
@@ -138,15 +138,17 @@ std::string Generator::getResponseFieldCppType(
 		case introspection::TypeKind::INTERFACE:
 		case introspection::TypeKind::UNION:
 		{
-			std::ostringstream oss;
+			std::string prefix;
 
 			if (!currentScope.empty())
 			{
-				oss << currentScope << R"cpp(::)cpp";
+				prefix = std::format(R"cpp({}::)cpp", currentScope);
 			}
 
-			oss << responseField.cppName << R"cpp(_)cpp" << responseField.type->name();
-			result = SchemaLoader::getSafeCppName(oss.str());
+			result = SchemaLoader::getSafeCppName(std::format(R"cpp({}{}_{})cpp",
+				prefix,
+				responseField.cppName,
+				responseField.type->name()));
 			break;
 		}
 
@@ -619,7 +621,6 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 bool Generator::outputModule() const noexcept
 {
 	std::ofstream moduleFile(_modulePath, std::ios_base::trunc);
-	std::ostringstream ossNamespace;
 
 	moduleFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -810,7 +811,6 @@ bool Generator::outputSource() const noexcept
 #include <algorithm>
 #include <array>
 #include <cstddef>
-#include <sstream>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -1120,18 +1120,15 @@ response::Value Variable<)cpp"
 			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
 				enumValues.size());
 
-			std::transform(enumValues.cbegin(),
-				enumValues.cend(),
+			std::ranges::transform(enumValues,
 				sortedValues.begin(),
 				[](const auto& value) noexcept {
 					return std::make_pair(value->name(),
 						SchemaLoader::getSafeCppName(value->name()));
 				});
-			std::sort(sortedValues.begin(),
-				sortedValues.end(),
-				[](const auto& lhs, const auto& rhs) noexcept {
-					return internal::shorter_or_less {}(lhs.first, rhs.first);
-				});
+			std::ranges::sort(sortedValues, [](const auto& lhs, const auto& rhs) noexcept {
+				return internal::shorter_or_less {}(lhs.first, rhs.first);
+			});
 
 			bool firstValue = true;
 
@@ -1170,11 +1167,8 @@ response::Value Variable<)cpp"
 			pendingSeparator.add();
 		}
 
-		std::ostringstream oss;
-
-		oss << getOperationNamespace(operation) << R"cpp(::Response)cpp";
-
-		const auto currentScope = oss.str();
+		const auto currentScope =
+			std::format(R"cpp({}::Response)cpp", getOperationNamespace(operation));
 		const auto& responseType = _requestLoader.getResponseType(operation);
 
 		for (const auto& responseField : responseType.fields)
@@ -1353,11 +1347,8 @@ const std::string& GetOperationName() noexcept
 bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 	const std::string& outerScope, const ResponseField& responseField) const noexcept
 {
-	std::ostringstream oss;
-
-	oss << outerScope << R"cpp(::)cpp" << getResponseFieldCppType(responseField);
-
-	const auto cppType = oss.str();
+	const auto cppType =
+		std::format(R"cpp({}::{})cpp", outerScope, getResponseFieldCppType(responseField));
 	std::unordered_set<std::string_view> fieldNames;
 
 	switch (responseField.type->kind())

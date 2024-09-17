@@ -22,8 +22,10 @@
 #include <cctype>
 #include <cstddef>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
+#include <ranges>
 #include <regex>
 #include <sstream>
 #include <stdexcept>
@@ -243,17 +245,14 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
 				enumType.values.size());
 
-			std::transform(enumType.values.cbegin(),
-				enumType.values.cend(),
+			std::ranges::transform(enumType.values,
 				sortedValues.begin(),
 				[](const auto& value) noexcept {
 					return std::make_pair(value.value, value.cppValue);
 				});
-			std::sort(sortedValues.begin(),
-				sortedValues.end(),
-				[](const auto& lhs, const auto& rhs) noexcept {
-					return internal::shorter_or_less {}(lhs.first, rhs.first);
-				});
+			std::ranges::sort(sortedValues, [](const auto& lhs, const auto& rhs) noexcept {
+				return internal::shorter_or_less {}(lhs.first, rhs.first);
+			});
 
 			firstValue = true;
 
@@ -689,11 +688,7 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 bool Generator::outputModule() const noexcept
 {
 	std::ofstream moduleFile(_modulePath, std::ios_base::trunc);
-	std::ostringstream ossNamespace;
-
-	ossNamespace << R"cpp(graphql::)cpp" << _loader.getSchemaNamespace();
-
-	const auto schemaNamespace = ossNamespace.str();
+	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
 
 	moduleFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -1384,13 +1379,10 @@ public:
 
 std::string Generator::getFieldDeclaration(const InputField& inputField) const noexcept
 {
-	std::ostringstream output;
-
-	output << R"cpp(	)cpp" << _loader.getInputCppType(inputField) << R"cpp( )cpp"
-		   << inputField.cppName << R"cpp(;
-)cpp";
-
-	return output.str();
+	return std::format(R"cpp(	{} {};
+)cpp",
+		_loader.getInputCppType(inputField),
+		inputField.cppName);
 }
 
 std::string Generator::getFieldDeclaration(const OutputField& outputField) const noexcept
@@ -1427,14 +1419,12 @@ std::string Generator::getFieldDeclaration(const OutputField& outputField) const
 
 std::string Generator::getResolverDeclaration(const OutputField& outputField) const noexcept
 {
-	std::ostringstream output;
 	const auto resolverName = SchemaLoader::getOutputCppResolver(outputField);
 
-	output << R"cpp(	[[nodiscard("unnecessary call")]] service::AwaitableResolver )cpp"
-		   << resolverName << R"cpp((service::ResolverParams&& params) const;
-)cpp";
-
-	return output.str();
+	return std::format(
+		R"cpp(	[[nodiscard("unnecessary call")]] service::AwaitableResolver {}(service::ResolverParams&& params) const;
+)cpp",
+		resolverName);
 }
 
 bool Generator::outputSource() const noexcept
@@ -1486,7 +1476,6 @@ bool Generator::outputSource() const noexcept
 #include <array>
 #include <cstddef>
 #include <functional>
-#include <sstream>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -2518,18 +2507,16 @@ service::ResolverMap )cpp"
 
 	std::map<std::string_view, std::string, internal::shorter_or_less> resolvers;
 
-	std::transform(objectType.fields.cbegin(),
-		objectType.fields.cend(),
+	std::ranges::transform(objectType.fields,
 		std::inserter(resolvers, resolvers.begin()),
 		[](const OutputField& outputField) noexcept {
 			const auto resolverName = SchemaLoader::getOutputCppResolver(outputField);
-			std::ostringstream output;
+			auto output = std::format(
+				R"cpp(		{{ R"gql({})gql"sv, [this](service::ResolverParams&& params) {{ return {}(std::move(params)); }} }})cpp",
+				outputField.name,
+				resolverName);
 
-			output << R"cpp(		{ R"gql()cpp" << outputField.name
-				   << R"cpp()gql"sv, [this](service::ResolverParams&& params) { return )cpp"
-				   << resolverName << R"cpp((std::move(params)); } })cpp";
-
-			return std::make_pair(std::string_view { outputField.name }, output.str());
+			return std::make_pair(std::string_view { outputField.name }, std::move(output));
 		});
 
 	resolvers["__typename"sv] =
@@ -3232,16 +3219,8 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 		}
 	}
 
-	std::ostringstream ossNamespace;
-
-	ossNamespace << R"cpp(graphql::)cpp" << _loader.getSchemaNamespace();
-
-	const auto schemaNamespace = ossNamespace.str();
-	std::ostringstream ossInterfaceNamespace;
-
-	ossInterfaceNamespace << schemaNamespace << R"cpp(::object)cpp";
-
-	const auto objectNamespace = ossInterfaceNamespace.str();
+	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
+	const auto objectNamespace = std::format(R"cpp({}::object)cpp", schemaNamespace);
 
 	for (const auto& interfaceType : _loader.getInterfaceTypes())
 	{
@@ -3442,11 +3421,8 @@ using namespace std::literals;
 				}
 
 				// Output the stub concepts
-				std::ostringstream ossConceptNamespace;
-
-				ossConceptNamespace << R"cpp(methods::)cpp" << objectType.cppType << R"cpp(Has)cpp";
-
-				const auto conceptNamespace = ossConceptNamespace.str();
+				const auto conceptNamespace =
+					std::format(R"cpp(methods::{}Has)cpp", objectType.cppType);
 				NamespaceScope stubNamespace { headerFile, conceptNamespace };
 
 				outputObjectStubs(headerFile, objectType);
@@ -3537,7 +3513,6 @@ using namespace std::literals;
 			sourceFile << R"cpp(
 #include <algorithm>
 #include <functional>
-#include <sstream>
 #include <stdexcept>
 #include <unordered_map>
 
