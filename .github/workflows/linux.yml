@@ -35,7 +35,7 @@ jobs:
       run: cmake -E make_directory build
 
     - name: Configure CMake
-      run: cmake --preset ${{ matrix.compiler }}-${{ matrix.config }} -DCMAKE_TOOLCHAIN_FILE=
+      run: cmake --preset ${{ matrix.compiler }}-${{ matrix.config }} -DGRAPHQL_USE_TAOCPP_JSON=OFF -DCMAKE_TOOLCHAIN_FILE=
 
     - name: Build
       run: cmake --build --preset ${{ matrix.compiler }}-${{ matrix.config }} -j -v

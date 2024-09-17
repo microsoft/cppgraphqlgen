@@ -16,10 +16,10 @@
 
 namespace graphql::response {
 
-class StringWriter
+class StreamWriter
 {
 public:
-	StringWriter(rapidjson::StringBuffer& buffer)
+	StreamWriter(rapidjson::StringBuffer& buffer)
 		: _writer { buffer }
 	{
 	}
@@ -81,7 +81,7 @@ private:
 std::string toJSON(Value&& response)
 {
 	rapidjson::StringBuffer buffer;
-	Writer writer { std::make_unique<StringWriter>(buffer) };
+	Writer writer { std::make_unique<StreamWriter>(buffer) };
 
 	writer.write(std::move(response));
 	return buffer.GetString();

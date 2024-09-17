@@ -387,21 +387,22 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_version_rc(graphqlclient)
 endif()
 
-# RapidJSON is the only option for JSON serialization used in this project, but if you want
-# to use another JSON library you can implement an alternate version of the functions in
-# JSONResponse.cpp to serialize to and from GraphQLResponse and build graphqljson from that.
-# You will also need to define how to build the graphqljson library target with your
-# implementation, and you should set BUILD_GRAPHQLJSON so that the test dependencies know
-# about your version of graphqljson.
-if(GRAPHQL_USE_RAPIDJSON)
-  find_package(RapidJSON CONFIG REQUIRED)
-
+if(GRAPHQL_USE_TAOCPP_JSON)
+  find_package(taocpp-json CONFIG REQUIRED)
   set(BUILD_GRAPHQLJSON ON)
-  add_library(graphqljson JSONResponse.cpp)
+  add_library(graphqljson TaoCppJSONResponse.cpp)
+  target_link_libraries(graphqljson PRIVATE taocpp::json)
+elseif(GRAPHQL_USE_RAPIDJSON)
+  find_package(RapidJSON CONFIG REQUIRED)
+  set(BUILD_GRAPHQLJSON ON)
+  add_library(graphqljson RapidJSONResponse.cpp)
+  target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
+endif()
+
+if(BUILD_GRAPHQLJSON)
   add_library(cppgraphqlgen::graphqljson ALIAS graphqljson)
   target_compile_features(graphqljson PUBLIC cxx_std_20)
   target_link_libraries(graphqljson PUBLIC graphqlresponse)
-  target_include_directories(graphqljson SYSTEM PRIVATE ${RAPIDJSON_INCLUDE_DIRS})
   target_sources(graphqljson PUBLIC FILE_SET HEADERS
     BASE_DIRS ${INCLUDE_ROOT}
     FILES ${INCLUDE_ROOT}/graphqlservice/JSONResponse.h)
@@ -456,8 +457,6 @@ endif()
 
 # graphqljson
 if(BUILD_GRAPHQLJSON)
-  target_link_libraries(graphqljson PUBLIC graphqlresponse)
-
   install(TARGETS graphqljson
     EXPORT cppgraphqlgen-targets
     RUNTIME DESTINATION bin
