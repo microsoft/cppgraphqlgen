@@ -1944,31 +1944,31 @@ void ValidateExecutableVisitor::visitDirectives(
 			switch (location)
 			{
 				case introspection::DirectiveLocation::QUERY:
-					message += " name: QUERY";
+					message += " name: QUERY"sv;
 					break;
 
 				case introspection::DirectiveLocation::MUTATION:
-					message += " name: MUTATION";
+					message += " name: MUTATION"sv;
 					break;
 
 				case introspection::DirectiveLocation::SUBSCRIPTION:
-					message += " name: SUBSCRIPTION";
+					message += " name: SUBSCRIPTION"sv;
 					break;
 
 				case introspection::DirectiveLocation::FIELD:
-					message += " name: FIELD";
+					message += " name: FIELD"sv;
 					break;
 
 				case introspection::DirectiveLocation::FRAGMENT_DEFINITION:
-					message += " name: FRAGMENT_DEFINITION";
+					message += " name: FRAGMENT_DEFINITION"sv;
 					break;
 
 				case introspection::DirectiveLocation::FRAGMENT_SPREAD:
-					message += " name: FRAGMENT_SPREAD";
+					message += " name: FRAGMENT_SPREAD"sv;
 					break;
 
 				case introspection::DirectiveLocation::INLINE_FRAGMENT:
-					message += " name: INLINE_FRAGMENT";
+					message += " name: INLINE_FRAGMENT"sv;
 					break;
 
 				default:

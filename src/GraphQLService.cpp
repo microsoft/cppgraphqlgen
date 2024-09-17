@@ -1082,7 +1082,7 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	catch (const std::exception& ex)
 	{
 		std::promise<ResolverResult> promise;
-		auto message = std::format("Field error name: {} unknown error: ", alias, ex.what());
+		auto message = std::format("Field error name: {} unknown error: {}", alias, ex.what());
 
 		promise.set_exception(
 			std::make_exception_ptr(schema_exception { { schema_error { std::move(message),
