@@ -9,12 +9,12 @@
 #include <tao/pegtl/contrib/unescape.hpp>
 
 #include <cstddef>
+#include <format>
 #include <functional>
 #include <iterator>
 #include <memory>
 #include <numeric>
 #include <optional>
-#include <sstream>
 #include <utility>
 
 using namespace std::literals;
@@ -51,7 +51,7 @@ std::string_view ast_node::unescaped_view() const
 							   && child->children.front()->is_type<block_quote_empty_line>()
 							   && child->children.back()->is_type<block_quote_line_content>())
 						? std::make_optional(std::make_pair(child->children.front()->string_view(),
-							  child->children.back()->unescaped_view()))
+							child->children.back()->unescaped_view()))
 						: std::nullopt;
 				});
 
@@ -674,12 +674,11 @@ struct ast_action<selection_set> : maybe_nothing
 		depth_guard guard(in.selectionSetDepth);
 		if (in.selectionSetDepth > in.depthLimit())
 		{
-			std::ostringstream oss;
+			const auto error = std::format("Exceeded nested depth limit: {} for "
+										   "https://spec.graphql.org/October2021/#SelectionSet",
+				in.depthLimit());
 
-			oss << "Exceeded nested depth limit: " << in.depthLimit()
-				<< " for https://spec.graphql.org/October2021/#SelectionSet";
-
-			throw parse_error(oss.str(), in);
+			throw parse_error(error, in);
 		}
 
 		return tao::graphqlpeg::template match<Rule, A, M, Action, Control>(in, st...);

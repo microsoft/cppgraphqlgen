@@ -78,18 +78,17 @@ void SchemaLoader::validateSchema()
 	{
 		if (s_builtinTypes.find(entry.first) != s_builtinTypes.cend())
 		{
-			std::ostringstream error;
 			auto itrPosition = _typePositions.find(entry.first);
-
-			error << "Builtin type overridden: " << entry.first;
+			auto error = std::format("Builtin type overridden: {}", entry.first);
 
 			if (itrPosition != _typePositions.cend())
 			{
-				error << " line: " << itrPosition->second.line
-					  << " column: " << itrPosition->second.column;
+				error += std::format(" line: {} column: {}",
+					itrPosition->second.line,
+					itrPosition->second.column);
 			}
 
-			throw std::runtime_error(error.str());
+			throw std::runtime_error(error);
 		}
 	}
 
@@ -149,12 +148,11 @@ void SchemaLoader::validateSchema()
 			{
 				if (_objectNames.find(operation.type) == _objectNames.cend())
 				{
-					std::ostringstream error;
+					const auto error = std::format("Unknown operation type: {} operation: {}",
+						operation.type,
+						operation.operation);
 
-					error << "Unknown operation type: " << operation.type
-						  << " operation: " << operation.operation;
-
-					throw std::runtime_error(error.str());
+					throw std::runtime_error(error);
 				}
 
 				queryDefined = queryDefined || (operation.operation == service::strQuery);
@@ -215,18 +213,18 @@ void SchemaLoader::validateSchema()
 
 			if (itr == _objectNames.cend())
 			{
-				std::ostringstream error;
 				auto itrPosition = _typePositions.find(entry.type);
-
-				error << "Unknown type: " << objectName << " included by: " << entry.type;
+				auto error =
+					std::format("Unknown type: {} included by: {}", objectName, entry.type);
 
 				if (itrPosition != _typePositions.cend())
 				{
-					error << " line: " << itrPosition->second.line
-						  << " column: " << itrPosition->second.column;
+					error += std::format(" line: {} column: {}",
+						itrPosition->second.line,
+						itrPosition->second.column);
 				}
 
-				throw std::runtime_error(error.str());
+				throw std::runtime_error(error);
 			}
 
 			_objectTypes[itr->second].unions.push_back(entry.type);
@@ -265,16 +263,16 @@ void SchemaLoader::fixupOutputFieldList(OutputFieldList& fields,
 
 		if (itr == _schemaTypes.cend())
 		{
-			std::ostringstream error;
-
-			error << "Unknown field type: " << entry.type;
+			auto error = std::format("Unknown field type: {}", entry.type);
 
 			if (entry.position)
 			{
-				error << " line: " << entry.position->line << " column: " << entry.position->column;
+				error += std::format(" line: {} column: {}",
+					entry.position->line,
+					entry.position->column);
 			}
 
-			throw std::runtime_error(error.str());
+			throw std::runtime_error(error);
 		}
 
 		switch (itr->second)
@@ -301,17 +299,16 @@ void SchemaLoader::fixupOutputFieldList(OutputFieldList& fields,
 
 			default:
 			{
-				std::ostringstream error;
-
-				error << "Invalid field type: " << entry.type;
+				auto error = std::format("Invalid field type: {}", entry.type);
 
 				if (entry.position)
 				{
-					error << " line: " << entry.position->line
-						  << " column: " << entry.position->column;
+					error += std::format(" line: {} column: {}",
+						entry.position->line,
+						entry.position->column);
 				}
 
-				throw std::runtime_error(error.str());
+				throw std::runtime_error(error);
 			}
 		}
 
@@ -332,16 +329,16 @@ void SchemaLoader::fixupInputFieldList(InputFieldList& fields)
 
 		if (itr == _schemaTypes.cend())
 		{
-			std::ostringstream error;
-
-			error << "Unknown argument type: " << entry.type;
+			auto error = std::format("Unknown argument type: {}", entry.type);
 
 			if (entry.position)
 			{
-				error << " line: " << entry.position->line << " column: " << entry.position->column;
+				error += std::format(" line: {} column: {}",
+					entry.position->line,
+					entry.position->column);
 			}
 
-			throw std::runtime_error(error.str());
+			throw std::runtime_error(error);
 		}
 
 		switch (itr->second)
@@ -360,17 +357,16 @@ void SchemaLoader::fixupInputFieldList(InputFieldList& fields)
 
 			default:
 			{
-				std::ostringstream error;
-
-				error << "Invalid argument type: " << entry.type;
+				auto error = std::format("Invalid argument type: {}", entry.type);
 
 				if (entry.position)
 				{
-					error << " line: " << entry.position->line
-						  << " column: " << entry.position->column;
+					error += std::format(" line: {} column: {}",
+						entry.position->line,
+						entry.position->column);
 				}
 
-				throw std::runtime_error(error.str());
+				throw std::runtime_error(error);
 			}
 		}
 	}
@@ -417,11 +413,9 @@ void SchemaLoader::reorderInputTypeDependencies()
 		// Check to make sure we made progress.
 		if (itrDependent == itr)
 		{
-			std::ostringstream error;
+			const auto error = std::format("Input object cycle type: {}", itr->type);
 
-			error << "Input object cycle type: " << itr->type;
-
-			throw std::runtime_error(error.str());
+			throw std::runtime_error(error);
 		}
 
 		if (itrDependent != _inputTypes.end())
@@ -534,12 +528,11 @@ void SchemaLoader::visitDefinition(const peg::ast_node& definition)
 	else
 	{
 		const auto position = definition.begin();
-		std::ostringstream error;
+		const auto error = std::format("Unexpected executable definition line: {} column: {}",
+			position.line,
+			position.column);
 
-		error << "Unexpected executable definition line: " << position.line
-			  << " column: " << position.column;
-
-		throw std::runtime_error(error.str());
+		throw std::runtime_error(error);
 	}
 }
 
@@ -1287,16 +1280,14 @@ void SchemaLoader::blockReservedName(
 	// https://spec.graphql.org/October2021/#sec-Names.Reserved-Names
 	if (name.size() > 1 && name.substr(0, 2) == R"gql(__)gql"sv)
 	{
-		std::ostringstream error;
-
-		error << "Names starting with __ are reserved: " << name;
+		auto error = std::format("Names starting with __ are reserved: {}", name);
 
 		if (position)
 		{
-			error << " line: " << position->line << " column: " << position->column;
+			error += std::format(" line: {} column: {}", position->line, position->column);
 		}
 
-		throw std::runtime_error(error.str());
+		throw std::runtime_error(error);
 	}
 }
 
@@ -1307,18 +1298,18 @@ const InterfaceType& SchemaLoader::findInterfaceType(
 
 	if (itrType == _interfaceNames.cend())
 	{
-		std::ostringstream error;
 		const auto itrPosition = _typePositions.find(typeName);
-
-		error << "Unknown interface: " << interfaceName << " implemented by: " << typeName;
+		auto error =
+			std::format("Unknown interface: {} implemented by: {}", interfaceName, typeName);
 
 		if (itrPosition != _typePositions.cend())
 		{
-			error << " line: " << itrPosition->second.line
-				  << " column: " << itrPosition->second.column;
+			error += std::format(" line: {} column: {}",
+				itrPosition->second.line,
+				itrPosition->second.column);
 		}
 
-		throw std::runtime_error(error.str());
+		throw std::runtime_error(error);
 	}
 
 	return _interfaceTypes[itrType->second];
@@ -1342,24 +1333,24 @@ void SchemaLoader::validateInterfaceFields(std::string_view typeName,
 
 	if (!unimplemented.empty())
 	{
-		std::ostringstream error;
 		const auto itrPosition = _typePositions.find(typeName);
-
-		error << "Missing interface fields type: " << typeName
-			  << " interface: " << interfaceType.type;
+		auto error = std::format("Missing interface fields type: {} interface: {}",
+			typeName,
+			interfaceType.type);
 
 		if (itrPosition != _typePositions.cend())
 		{
-			error << " line: " << itrPosition->second.line
-				  << " column: " << itrPosition->second.column;
+			error += std::format(" line: {} column: {}",
+				itrPosition->second.line,
+				itrPosition->second.column);
 		}
 
 		for (auto fieldName : unimplemented)
 		{
-			error << " field: " << fieldName;
+			error += std::format(" field: {}", fieldName);
 		}
 
-		throw std::runtime_error(error.str());
+		throw std::runtime_error(error);
 	}
 }
 
@@ -1382,18 +1373,17 @@ void SchemaLoader::validateTransitiveInterfaces(
 
 	if (unimplemented.find(typeName) != unimplemented.cend())
 	{
-		std::ostringstream error;
 		const auto itrPosition = _typePositions.find(typeName);
-
-		error << "Interface cycle interface: " << typeName;
+		auto error = std::format("Interface cycle interface: {}", typeName);
 
 		if (itrPosition != _typePositions.cend())
 		{
-			error << " line: " << itrPosition->second.line
-				  << " column: " << itrPosition->second.column;
+			error += std::format(" line: {} column: {}",
+				itrPosition->second.line,
+				itrPosition->second.column);
 		}
 
-		throw std::runtime_error(error.str());
+		throw std::runtime_error(error);
 	}
 
 	for (auto entry : interfaces)
@@ -1403,23 +1393,22 @@ void SchemaLoader::validateTransitiveInterfaces(
 
 	if (!unimplemented.empty())
 	{
-		std::ostringstream error;
 		const auto itrPosition = _typePositions.find(typeName);
-
-		error << "Missing transitive interface type: " << typeName;
+		auto error = std::format("Missing transitive interface type: {}", typeName);
 
 		if (itrPosition != _typePositions.cend())
 		{
-			error << " line: " << itrPosition->second.line
-				  << " column: " << itrPosition->second.column;
+			error += std::format(" line: {} column: {}",
+				itrPosition->second.line,
+				itrPosition->second.column);
 		}
 
 		for (auto interfaceName : unimplemented)
 		{
-			error << " interface: " << interfaceName;
+			error += std::format(" interface: {}", interfaceName);
 		}
 
-		throw std::runtime_error(error.str());
+		throw std::runtime_error(error);
 	}
 }
 
@@ -1548,13 +1537,13 @@ InputFieldList SchemaLoader::getInputFields(const peg::ast_node::children_t& fie
 			&& (field.modifiers.empty()
 				|| field.modifiers.front() != service::TypeModifier::Nullable))
 		{
-			std::ostringstream error;
+			const auto error = std::format(
+				"Expected Non-Null default value for field name: {} line: {} column: {}",
+				field.name,
+				defaultValueLocation.line,
+				defaultValueLocation.column);
 
-			error << "Expected Non-Null default value for field name: " << field.name
-				  << " line: " << defaultValueLocation.line
-				  << " column: " << defaultValueLocation.column;
-
-			throw std::runtime_error(error.str());
+			throw std::runtime_error(error);
 		}
 
 		inputFields.push_back(std::move(field));

@@ -733,16 +733,14 @@ void RequestLoader::findOperation()
 
 	if (_operations.empty())
 	{
-		std::ostringstream message;
-
-		message << "Missing operation";
+		auto message = "Missing operation"s;
 
 		if (_requestOptions.operationName && !_requestOptions.operationName->empty())
 		{
-			message << " name: " << *_requestOptions.operationName;
+			message += std::format(" name: {}", *_requestOptions.operationName);
 		}
 
-		throw service::schema_exception { { message.str() } };
+		throw service::schema_exception { { std::move(message) } };
 	}
 
 	std::list<service::schema_error> errors;
@@ -764,17 +762,15 @@ void RequestLoader::findOperation()
 
 		if (!operation.responseType.type)
 		{
-			std::ostringstream message;
 			const auto position = operation.operation->begin();
-
-			message << "Unsupported operation type: " << operation.type;
+			auto message = std::format("Unsupported operation type: {}", operation.type);
 
 			if (!operation.name.empty())
 			{
-				message << " name: " << operation.name;
+				message += std::format(" name: {}", operation.name);
 			}
 
-			service::schema_error error { message.str(),
+			service::schema_error error { std::move(message),
 				service::schema_location { position.line, position.column } };
 
 			errors.push_back(std::move(error));
@@ -842,12 +838,11 @@ void RequestLoader::collectVariables(Operation& operation) noexcept
 				&& variable.defaultValue.type() == response::Type::Null
 				&& (modifiers.empty() || modifiers.front() != service::TypeModifier::Nullable))
 			{
-				std::ostringstream error;
-
-				error << "Expected Non-Null default value for variable name: " << variable.name;
+				auto error = std::format("Expected Non-Null default value for variable name: {}",
+					variable.name);
 
 				throw service::schema_exception {
-					{ service::schema_error { error.str(), std::move(defaultValueLocation) } }
+					{ service::schema_error { std::move(error), std::move(defaultValueLocation) } }
 				};
 			}
 
@@ -945,11 +940,9 @@ void RequestLoader::reorderInputTypeDependencies(Operation& operation)
 		// input types which are referenced in the request.
 		if (itrDependent == itr)
 		{
-			std::ostringstream error;
+			const auto error = std::format("Input object cycle type: {}", itr->type->name());
 
-			error << "Input object cycle type: " << itr->type;
-
-			throw std::logic_error(error.str());
+			throw std::logic_error(error);
 		}
 
 		if (itrDependent != operation.referencedInputTypes.end())
@@ -1181,12 +1174,10 @@ void RequestLoader::SelectionVisitor::visitFragmentSpread(const peg::ast_node& f
 	if (itr == _fragments.end())
 	{
 		auto position = fragmentSpread.begin();
-		std::ostringstream error;
-
-		error << "Unknown fragment name: " << name;
+		auto error = std::format("Unknown fragment name: {}", name);
 
 		throw service::schema_exception {
-			{ service::schema_error { error.str(), { position.line, position.column } } }
+			{ service::schema_error { std::move(error), { position.line, position.column } } }
 		};
 	}
 

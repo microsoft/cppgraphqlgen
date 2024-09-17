@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <format>
 #include <iostream>
 #include <mutex>
 #include <ranges>
@@ -569,10 +570,8 @@ struct EdgeConstraints
 		{
 			if (*first < 0)
 			{
-				std::ostringstream error;
-
-				error << "Invalid argument: first value: " << *first;
-				throw service::schema_exception { { service::schema_error { error.str() } } };
+				auto error = std::format("Invalid argument: first value: {}", *first);
+				throw service::schema_exception { { service::schema_error { std::move(error) } } };
 			}
 
 			if (itrLast - itrFirst > *first)
@@ -585,10 +584,8 @@ struct EdgeConstraints
 		{
 			if (*last < 0)
 			{
-				std::ostringstream error;
-
-				error << "Invalid argument: last value: " << *last;
-				throw service::schema_exception { { service::schema_error { error.str() } } };
+				auto error = std::format("Invalid argument: last value: {}", *last);
+				throw service::schema_exception { { service::schema_error { std::move(error) } } };
 			}
 
 			if (itrLast - itrFirst > *last)

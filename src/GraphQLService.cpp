@@ -170,13 +170,7 @@ unimplemented_method::unimplemented_method(std::string_view methodName)
 
 std::string unimplemented_method::getMessage(std::string_view methodName) noexcept
 {
-	using namespace std::literals;
-
-	std::ostringstream oss;
-
-	oss << methodName << R"ex( is not implemented)ex"sv;
-
-	return oss.str();
+	return std::format(R"ex({} is not implemented)ex", methodName);
 }
 
 void await_worker_thread::await_suspend(std::coroutine_handle<> h) const
@@ -371,12 +365,10 @@ void ValueVisitor::visitVariable(const peg::ast_node& variable)
 	if (itr == _variables.get<response::MapType>().cend())
 	{
 		auto position = variable.begin();
-		std::ostringstream error;
-
-		error << "Unknown variable name: " << name;
+		auto error = std::format("Unknown variable name: {}", name);
 
 		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column } } }
+			{ schema_error { std::move(error), { position.line, position.column } } }
 		};
 	}
 
@@ -535,11 +527,9 @@ bool DirectiveVisitor::shouldSkip() const
 
 		if (arguments.type() != response::Type::Map)
 		{
-			std::ostringstream error;
+			auto error = std::format("Invalid arguments to directive: {}", directiveName);
 
-			error << "Invalid arguments to directive: " << directiveName;
-
-			throw schema_exception { { error.str() } };
+			throw schema_exception { { std::move(error) } };
 		}
 
 		bool argumentTrue = false;
@@ -550,12 +540,11 @@ bool DirectiveVisitor::shouldSkip() const
 			if (argumentTrue || argumentFalse || argumentValue.type() != response::Type::Boolean
 				|| argumentName != "if")
 			{
-				std::ostringstream error;
+				auto error = std::format("Invalid argument to directive: {} name: {}",
+					directiveName,
+					argumentName);
 
-				error << "Invalid argument to directive: " << directiveName
-					  << " name: " << argumentName;
-
-				throw schema_exception { { error.str() } };
+				throw schema_exception { { std::move(error) } };
 			}
 
 			argumentTrue = argumentValue.get<bool>();
@@ -572,11 +561,9 @@ bool DirectiveVisitor::shouldSkip() const
 		}
 		else
 		{
-			std::ostringstream error;
+			auto error = std::format("Missing argument directive: {} name: if", directiveName);
 
-			error << "Missing argument directive: " << directiveName << " name: if";
-
-			throw schema_exception { { error.str() } };
+			throw schema_exception { { std::move(error) } };
 		}
 	}
 
@@ -700,11 +687,9 @@ void blockSubFields(const ResolverParams& params)
 	if (params.selection != nullptr)
 	{
 		auto position = params.selection->begin();
-		std::ostringstream error;
+		auto error = std::format("Field may not have sub-fields name: {}", params.fieldName);
 
-		error << "Field may not have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error { error.str(),
+		throw schema_exception { { schema_error { std::move(error),
 			{ position.line, position.column },
 			buildErrorPath(params.errorPath) } } };
 	}
@@ -791,11 +776,9 @@ void requireSubFields(const ResolverParams& params)
 	if (params.selection == nullptr)
 	{
 		auto position = params.field.begin();
-		std::ostringstream error;
+		auto error = std::format("Field must have sub-fields name: {}", params.fieldName);
 
-		error << "Field must have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error { error.str(),
+		throw schema_exception { { schema_error { std::move(error),
 			{ position.line, position.column },
 			buildErrorPath(params.errorPath) } } };
 	}
@@ -1007,12 +990,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	{
 		std::promise<ResolverResult> promise;
 		auto position = field.begin();
-		std::ostringstream error;
-
-		error << "Unknown field name: " << name;
+		auto error = std::format("Unknown field name: {}", name);
 
 		promise.set_exception(
-			std::make_exception_ptr(schema_exception { { schema_error { error.str(),
+			std::make_exception_ptr(schema_exception { { schema_error { std::move(error),
 				{ position.line, position.column },
 				buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } }));
 
@@ -1101,12 +1082,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	catch (const std::exception& ex)
 	{
 		std::promise<ResolverResult> promise;
-		std::ostringstream message;
-
-		message << "Field error name: " << alias << " unknown error: " << ex.what();
+		auto message = std::format("Field error name: {} unknown error: ", alias, ex.what());
 
 		promise.set_exception(
-			std::make_exception_ptr(schema_exception { { schema_error { message.str(),
+			std::make_exception_ptr(schema_exception { { schema_error { std::move(message),
 				{ position.line, position.column },
 				buildErrorPath(selectionSetParams.errorPath) } } }));
 
@@ -1122,11 +1101,9 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 	if (itr == _fragments.end())
 	{
 		auto position = fragmentSpread.begin();
-		std::ostringstream error;
+		auto error = std::format("Unknown fragment name: {}", name);
 
-		error << "Unknown fragment name: " << name;
-
-		throw schema_exception { { schema_error { error.str(),
+		throw schema_exception { { schema_error { std::move(error),
 			{ position.line, position.column },
 			buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } };
 	}
@@ -1261,13 +1238,10 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 			if (!document.data.emplace_back(std::string { child.name }, std::move(value.data)))
 			{
-				std::ostringstream message;
-
-				message << "Ambiguous field error name: " << child.name;
-
+				auto message = std::format("Ambiguous field error name: {}", child.name);
 				field_path path { parent, path_segment { child.name } };
 
-				document.errors.push_back({ message.str(),
+				document.errors.push_back({ std::move(message),
 					child.location.value_or(schema_location {}),
 					buildErrorPath(std::make_optional(path)) });
 			}
@@ -1290,13 +1264,11 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 		}
 		catch (const std::exception& ex)
 		{
-			std::ostringstream message;
-
-			message << "Field error name: " << child.name << " unknown error: " << ex.what();
-
+			auto message =
+				std::format("Field error name: {} unknown error: {}", child.name, ex.what());
 			field_path path { parent, path_segment { child.name } };
 
-			document.errors.push_back({ message.str(),
+			document.errors.push_back({ std::move(message),
 				child.location.value_or(schema_location {}),
 				buildErrorPath(std::make_optional(path)) });
 			document.data.emplace_back(std::string { child.name }, {});
@@ -1598,12 +1570,10 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
 	if (!_field.empty())
 	{
 		auto position = field.begin();
-		std::ostringstream error;
-
-		error << "Extra subscription root field name: " << name;
+		auto error = std::format("Extra subscription root field name: {}", name);
 
 		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column } } }
+			{ schema_error { std::move(error), { position.line, position.column } } }
 		};
 	}
 
@@ -1645,12 +1615,10 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node& fra
 	if (itr == _fragments.end())
 	{
 		auto position = fragmentSpread.begin();
-		std::ostringstream error;
-
-		error << "Unknown fragment name: " << name;
+		auto error = std::format("Unknown fragment name: {}", name);
 
 		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column } } }
+			{ schema_error { std::move(error), { position.line, position.column } } }
 		};
 	}
 
@@ -1798,31 +1766,27 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 
 		if (!operationDefinition)
 		{
-			std::ostringstream message;
-
-			message << "Missing operation";
+			auto message = "Missing operation"s;
 
 			if (!params.operationName.empty())
 			{
-				message << " name: " << params.operationName;
+				message += std::format(" name: {}", params.operationName);
 			}
 
-			throw schema_exception { { message.str() } };
+			throw schema_exception { { std::move(message) } };
 		}
 		else if (operationType == strSubscription)
 		{
 			auto position = operationDefinition->begin();
-			std::ostringstream message;
-
-			message << "Unexpected subscription";
+			auto message = "Unexpected subscription"s;
 
 			if (!params.operationName.empty())
 			{
-				message << " name: " << params.operationName;
+				message += std::format(" name: {}", params.operationName);
 			}
 
 			throw schema_exception {
-				{ schema_error { message.str(), { position.line, position.column } } }
+				{ schema_error { std::move(message), { position.line, position.column } } }
 			};
 		}
 
@@ -2076,31 +2040,27 @@ SubscriptionKey Request::addSubscription(RequestSubscribeParams&& params)
 
 	if (!operationDefinition)
 	{
-		std::ostringstream message;
-
-		message << "Missing subscription";
+		auto message = "Missing subscription"s;
 
 		if (!params.operationName.empty())
 		{
-			message << " name: " << params.operationName;
+			message += std::format(" name: {}", params.operationName);
 		}
 
-		throw schema_exception { { message.str() } };
+		throw schema_exception { { std::move(message) } };
 	}
 	else if (operationType != strSubscription)
 	{
 		auto position = operationDefinition->begin();
-		std::ostringstream message;
-
-		message << "Unexpected operation type: " << operationType;
+		auto message = std::format("Unexpected operation type: {}", operationType);
 
 		if (!params.operationName.empty())
 		{
-			message << " name: " << params.operationName;
+			message += std::format(" name: {}", params.operationName);
 		}
 
 		throw schema_exception {
-			{ schema_error { message.str(), { position.line, position.column } } }
+			{ schema_error { std::move(message), { position.line, position.column } } }
 		};
 	}
 

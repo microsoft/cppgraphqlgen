@@ -16,6 +16,7 @@
 #include <chrono>
 #include <condition_variable>
 #include <coroutine>
+#include <format>
 #include <future>
 #include <list>
 #include <map>
@@ -23,7 +24,6 @@
 #include <mutex>
 #include <optional>
 #include <ranges>
-#include <sstream>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -686,11 +686,7 @@ struct ModifiedArgument
 
 			for (auto& error : errors)
 			{
-				std::ostringstream message;
-
-				message << "Invalid argument: " << name << " error: " << error.message;
-
-				error.message = message.str();
+				error.message = std::format("Invalid argument: {} error: {}", name, error.message);
 			}
 
 			throw schema_exception(std::move(errors));
@@ -1201,12 +1197,11 @@ struct ModifiedResult
 			}
 			catch (const std::exception& ex)
 			{
-				std::ostringstream message;
+				auto message = std::format("Field error name: {} unknown error: {}",
+					params.fieldName,
+					ex.what());
 
-				message << "Field error name: " << params.fieldName
-						<< " unknown error: " << ex.what();
-
-				document.errors.emplace_back(schema_error { message.str(),
+				document.errors.emplace_back(schema_error { std::move(message),
 					params.getLocation(),
 					buildErrorPath(params.errorPath) });
 			}
@@ -1294,11 +1289,10 @@ struct ModifiedResult
 		}
 		catch (const std::exception& ex)
 		{
-			std::ostringstream message;
+			auto message =
+				std::format("Field name: {} unknown error: {}", params.fieldName, ex.what());
 
-			message << "Field name: " << params.fieldName << " unknown error: " << ex.what();
-
-			document.errors.emplace_back(schema_error { message.str(),
+			document.errors.emplace_back(schema_error { std::move(message),
 				params.getLocation(),
 				buildErrorPath(params.errorPath) });
 		}

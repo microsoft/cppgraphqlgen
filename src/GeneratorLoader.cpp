@@ -6,6 +6,7 @@
 #include "graphqlservice/internal/Grammar.h"
 
 #include <algorithm>
+#include <format>
 
 namespace graphql::generator {
 
@@ -96,13 +97,12 @@ void DefaultValueVisitor::visit(const peg::ast_node& value)
 	}
 	else if (value.is_type<peg::variable>())
 	{
-		std::ostringstream error;
 		const auto position = value.begin();
+		const auto error = std::format("Unexpected variable in default value line: {} column: {}",
+			position.line,
+			position.column);
 
-		error << "Unexpected variable in default value line: " << position.line
-			  << " column: " << position.column;
-
-		throw std::runtime_error(error.str());
+		throw std::runtime_error(error);
 	}
 }
 
