@@ -161,8 +161,8 @@ int main()
 										auto variables = (variablesItr != payload.end()
 															 && variablesItr->second.type()
 																 == response::Type::String)
-											? response::parseJSON(operationNameItr->second
-																	  .get<response::StringType>())
+											? response::parseJSON(
+												  variablesItr->second.get<response::StringType>())
 											: response::Value {};
 
 										msg = http::response<http::string_body> { http::status::ok,
