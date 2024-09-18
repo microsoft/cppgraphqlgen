@@ -28,6 +28,7 @@ namespace proxy {
 namespace object {
 
 class Query;
+class Results;
 
 } // namespace object
 
@@ -50,6 +51,7 @@ private:
 };
 
 void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema);
+void AddResultsDetails(const std::shared_ptr<schema::ObjectType>& typeResults, const std::shared_ptr<schema::Schema>& schema);
 
 std::shared_ptr<schema::Schema> GetSchema();
 

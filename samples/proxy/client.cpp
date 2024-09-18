@@ -5,6 +5,7 @@
 
 #include "schema/ProxySchema.h"
 #include "schema/QueryObject.h"
+#include "schema/ResultsObject.h"
 
 #include "graphqlservice/JSONResponse.h"
 
@@ -21,6 +22,7 @@
 #include <boost/asio/use_awaitable.hpp>
 #include <boost/asio/use_future.hpp>
 
+#include <algorithm>
 #include <cstdio>
 #include <cstdlib>
 #include <functional>
@@ -45,13 +47,111 @@ constexpr auto c_port = "8080"sv;
 constexpr auto c_target = "/graphql"sv;
 constexpr int c_version = 11; // HTTP 1.1
 
+struct AsyncIoWorker : service::RequestState
+{
+	AsyncIoWorker()
+		: worker { std::make_shared<service::await_worker_thread>() }
+	{
+	}
+
+	const service::await_async worker;
+};
+
+class Results
+{
+public:
+	explicit Results(response::Value&& data, std::vector<client::Error> errors) noexcept;
+
+	service::AwaitableScalar<std::optional<std::string>> getData(
+		service::FieldParams&& fieldParams) const;
+	service::AwaitableScalar<std::optional<std::vector<std::optional<std::string>>>> getErrors(
+		service::FieldParams&& fieldParams) const;
+
+private:
+	mutable response::Value m_data;
+	mutable std::vector<client::Error> m_errors;
+};
+
+Results::Results(response::Value&& data, std::vector<client::Error> errors) noexcept
+	: m_data { std::move(data) }
+	, m_errors { std::move(errors) }
+{
+}
+
+service::AwaitableScalar<std::optional<std::string>> Results::getData(
+	service::FieldParams&& fieldParams) const
+{
+	auto asyncIoWorker = std::static_pointer_cast<AsyncIoWorker>(fieldParams.state);
+	auto data = std::move(m_data);
+
+	// Jump to a worker thread for the resolver where we can run a separate I/O context without
+	// blocking the I/O context in Query::getRelay. This simulates how you might fan out to
+	// additional async I/O tasks for sub-field resolvers.
+	co_await asyncIoWorker->worker;
+
+	net::io_context ioc;
+	auto future = net::co_spawn(
+		ioc,
+		[](response::Value&& data) -> net::awaitable<std::optional<std::string>> {
+			co_return (data.type() == response::Type::Null)
+				? std::nullopt
+				: std::make_optional(response::toJSON(std::move(data)));
+		}(std::move(data)),
+		net::use_future);
+
+	ioc.run();
+
+	co_return future.get();
+}
+
+service::AwaitableScalar<std::optional<std::vector<std::optional<std::string>>>> Results::getErrors(
+	service::FieldParams&& fieldParams) const
+{
+	auto asyncIoWorker = std::static_pointer_cast<AsyncIoWorker>(fieldParams.state);
+	auto errors = std::move(m_errors);
+
+	// Jump to a worker thread for the resolver where we can run a separate I/O context without
+	// blocking the I/O context in Query::getRelay. This simulates how you might fan out to
+	// additional async I/O tasks for sub-field resolvers.
+	co_await asyncIoWorker->worker;
+
+	net::io_context ioc;
+	auto future = net::co_spawn(
+		ioc,
+		[](std::vector<client::Error> errors)
+			-> net::awaitable<std::optional<std::vector<std::optional<std::string>>>> {
+			if (errors.empty())
+			{
+				co_return std::nullopt;
+			}
+
+			std::vector<std::optional<std::string>> results { errors.size() };
+
+			std::transform(errors.begin(),
+				errors.end(),
+				results.begin(),
+				[](auto& error) noexcept -> std::optional<std::string> {
+					return error.message.empty()
+						? std::nullopt
+						: std::make_optional<std::string>(std::move(error.message));
+				});
+
+			co_return std::make_optional(results);
+		}(std::move(errors)),
+		net::use_future);
+
+	ioc.run();
+
+	co_return future.get();
+}
+
 class Query
 {
 public:
 	explicit Query(std::string_view host, std::string_view port, std::string_view target,
 		int version) noexcept;
 
-	std::future<std::optional<std::string>> getRelay(std::string&& queryArg,
+	std::future<std::shared_ptr<proxy::object::Results>> getRelay(std::string&& queryArg,
 		std::optional<std::string>&& operationNameArg,
 		std::optional<std::string>&& variablesArg) const;
 
@@ -73,7 +173,7 @@ Query::Query(
 
 // Based on:
 // https://www.boost.org/doc/libs/1_82_0/libs/beast/example/http/client/awaitable/http_client_awaitable.cpp
-std::future<std::optional<std::string>> Query::getRelay(std::string&& queryArg,
+std::future<std::shared_ptr<proxy::object::Results>> Query::getRelay(std::string&& queryArg,
 	std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const
 {
 	response::Value payload { response::Type::Map };
@@ -99,7 +199,7 @@ std::future<std::optional<std::string>> Query::getRelay(std::string&& queryArg,
 			const char* port,
 			const char* target,
 			int version,
-			std::string requestBody) -> net::awaitable<std::optional<std::string>> {
+			std::string requestBody) -> net::awaitable<std::shared_ptr<proxy::object::Results>> {
 			// These objects perform our I/O. They use an executor with a default completion token
 			// of use_awaitable. This makes our code easy, but will use exceptions as the default
 			// error handling, i.e. if the connection drops, we might see an exception.
@@ -150,7 +250,10 @@ std::future<std::optional<std::string>> Query::getRelay(std::string&& queryArg,
 				throw boost::system::system_error(ec, "shutdown");
 			}
 
-			co_return std::make_optional<std::string>(std::move(res.body()));
+			auto [data, errors] = client::parseServiceResponse(response::parseJSON(res.body()));
+
+			co_return std::make_shared<proxy::object::Results>(
+				std::make_shared<Results>(std::move(data), std::move(errors)));
 		}(m_host.c_str(), m_port.c_str(), m_target.c_str(), m_version, std::move(requestBody)),
 		net::use_future);
 
@@ -179,14 +282,25 @@ int main(int argc, char** argv)
 		auto variables = serializeVariables(
 			{ input, ((argc > 1) ? std::make_optional(argv[1]) : std::nullopt) });
 		auto launch = service::await_async { std::make_shared<service::await_worker_queue>() };
+		auto state = std::make_shared<AsyncIoWorker>();
 		auto serviceResponse = client::parseServiceResponse(
-			service->resolve({ query, GetOperationName(), std::move(variables), launch }).get());
+			service->resolve({ query, GetOperationName(), std::move(variables), launch, state })
+				.get());
 		auto result = client::query::relayQuery::parseResponse(std::move(serviceResponse.data));
 		auto errors = std::move(serviceResponse.errors);
 
-		if (result.relay)
+		if (result.relay.data)
 		{
-			std::cout << *result.relay << std::endl;
+			std::cout << "Data: " << *result.relay.data << std::endl;
+		}
+
+		if (result.relay.errors)
+		{
+			for (const auto& message : *result.relay.errors)
+			{
+				std::cerr << "Remote Error: "
+						  << (message ? std::string_view { *message } : "<empty>"sv) << std::endl;
+			}
 		}
 
 		if (!errors.empty())

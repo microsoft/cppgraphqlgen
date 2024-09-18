@@ -16,13 +16,13 @@ namespace methods::QueryHas {
 template <class TImpl>
 concept getRelayWithParams = requires (TImpl impl, service::FieldParams params, std::string queryArg, std::optional<std::string> operationNameArg, std::optional<std::string> variablesArg)
 {
-	{ service::AwaitableScalar<std::optional<std::string>> { impl.getRelay(std::move(params), std::move(queryArg), std::move(operationNameArg), std::move(variablesArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Results>> { impl.getRelay(std::move(params), std::move(queryArg), std::move(operationNameArg), std::move(variablesArg)) } };
 };
 
 template <class TImpl>
 concept getRelay = requires (TImpl impl, std::string queryArg, std::optional<std::string> operationNameArg, std::optional<std::string> variablesArg)
 {
-	{ service::AwaitableScalar<std::optional<std::string>> { impl.getRelay(std::move(queryArg), std::move(operationNameArg), std::move(variablesArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<Results>> { impl.getRelay(std::move(queryArg), std::move(operationNameArg), std::move(variablesArg)) } };
 };
 
 template <class TImpl>
@@ -58,7 +58,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getRelay(service::FieldParams&& params, std::string&& queryArg, std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Results>> getRelay(service::FieldParams&& params, std::string&& queryArg, std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const = 0;
 	};
 
 	template <class T>
@@ -70,7 +70,7 @@ private:
 		{
 		}
 
-		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getRelay(service::FieldParams&& params, std::string&& queryArg, std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Results>> getRelay(service::FieldParams&& params, std::string&& queryArg, std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const override
 		{
 			if constexpr (methods::QueryHas::getRelayWithParams<T>)
 			{
