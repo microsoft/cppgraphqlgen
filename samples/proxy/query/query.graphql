@@ -2,5 +2,8 @@
 # Licensed under the MIT License.
 
 query relayQuery($query: String!, $operationName: String, $variables: String) {
-  relay(query: $query, operationName: $operationName, variables: $variables)
+  relay(query: $query, operationName: $operationName, variables: $variables) {
+    data
+    errors
+  }
 }

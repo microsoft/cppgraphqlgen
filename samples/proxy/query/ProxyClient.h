@@ -32,7 +32,10 @@ namespace graphql::client {
 /// # Licensed under the MIT License.
 /// 
 /// query relayQuery($query: String!, $operationName: String, $variables: String) {
-///   relay(query: $query, operationName: $operationName, variables: $variables)
+///   relay(query: $query, operationName: $operationName, variables: $variables) {
+///     data
+///     errors
+///   }
 /// }
 /// </code>
 namespace proxy {
@@ -64,7 +67,13 @@ struct [[nodiscard("unnecessary construction")]] Variables
 
 struct [[nodiscard("unnecessary construction")]] Response
 {
-	std::optional<std::string> relay {};
+	struct [[nodiscard("unnecessary construction")]] relay_Results
+	{
+		std::optional<std::string> data {};
+		std::optional<std::vector<std::optional<std::string>>> errors {};
+	};
+
+	relay_Results relay {};
 };
 
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);

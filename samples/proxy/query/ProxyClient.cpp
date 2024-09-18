@@ -26,7 +26,10 @@ const std::string& GetRequestText() noexcept
 		# Licensed under the MIT License.
 		
 		query relayQuery($query: String!, $operationName: String, $variables: String) {
-		  relay(query: $query, operationName: $operationName, variables: $variables)
+		  relay(query: $query, operationName: $operationName, variables: $variables) {
+		    data
+		    errors
+		  }
 		}
 	)gql"s;
 
@@ -50,6 +53,33 @@ const peg::ast& GetRequestObject() noexcept
 } // namespace proxy
 
 using namespace proxy;
+
+template <>
+query::relayQuery::Response::relay_Results Response<query::relayQuery::Response::relay_Results>::parse(response::Value&& response)
+{
+	query::relayQuery::Response::relay_Results result;
+
+	if (response.type() == response::Type::Map)
+	{
+		auto members = response.release<response::MapType>();
+
+		for (auto& member : members)
+		{
+			if (member.first == R"js(data)js"sv)
+			{
+				result.data = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+			if (member.first == R"js(errors)js"sv)
+			{
+				result.errors = ModifiedResponse<std::string>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				continue;
+			}
+		}
+	}
+
+	return result;
+}
 
 namespace query::relayQuery {
 
@@ -83,7 +113,7 @@ Response parseResponse(response::Value&& response)
 		{
 			if (member.first == R"js(relay)js"sv)
 			{
-				result.relay = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.relay = ModifiedResponse<query::relayQuery::Response::relay_Results>::parse(std::move(member.second));
 				continue;
 			}
 		}

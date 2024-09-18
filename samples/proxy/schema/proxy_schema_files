@@ -1,2 +1,3 @@
 ProxySchema.cpp
 QueryObject.cpp
+ResultsObject.cpp

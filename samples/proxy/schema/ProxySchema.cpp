@@ -35,8 +35,11 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
 	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
+	auto typeResults = schema::ObjectType::Make(R"gql(Results)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Results)gql"sv, typeResults);
 
 	AddQueryDetails(typeQuery, schema);
+	AddResultsDetails(typeResults, schema);
 
 	schema->AddQueryType(typeQuery);
 }
