@@ -342,40 +342,14 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard("unexpected call")]] bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] constexpr bool await_ready() const noexcept
 	{
-		return std::visit(
-			[](const auto& value) noexcept {
-				using value_type = std::decay_t<decltype(value)>;
-
-				if constexpr (std::is_same_v<value_type, T>)
-				{
-					return true;
-				}
-				else if constexpr (std::is_same_v<value_type, std::future<T>>)
-				{
-					using namespace std::literals;
-
-					return value.wait_for(0s) != std::future_status::timeout;
-				}
-				else if constexpr (std::is_same_v<value_type,
-									   std::shared_ptr<const response::Value>>)
-				{
-					return true;
-				}
-			},
-			_value);
+		return true;
 	}
 
 	void await_suspend(std::coroutine_handle<> h) const
 	{
-		std::thread(
-			[this](std::coroutine_handle<> h) noexcept {
-				std::get<std::future<T>>(_value).wait();
-				h.resume();
-			},
-			std::move(h))
-			.detach();
+		h.resume();
 	}
 
 	[[nodiscard("unnecessary construction")]] T await_resume()
@@ -472,35 +446,14 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard("unexpected call")]] bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] constexpr bool await_ready() const noexcept
 	{
-		return std::visit(
-			[](const auto& value) noexcept {
-				using value_type = std::decay_t<decltype(value)>;
-
-				if constexpr (std::is_same_v<value_type, T>)
-				{
-					return true;
-				}
-				else if constexpr (std::is_same_v<value_type, std::future<T>>)
-				{
-					using namespace std::literals;
-
-					return value.wait_for(0s) != std::future_status::timeout;
-				}
-			},
-			_value);
+		return true;
 	}
 
 	void await_suspend(std::coroutine_handle<> h) const
 	{
-		std::thread(
-			[this](std::coroutine_handle<> h) noexcept {
-				std::get<std::future<T>>(_value).wait();
-				h.resume();
-			},
-			std::move(h))
-			.detach();
+		h.resume();
 	}
 
 	[[nodiscard("unnecessary construction")]] T await_resume()
