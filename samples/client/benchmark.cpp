@@ -16,8 +16,7 @@ import GraphQL.Client;
 import GraphQL.Service;
 
 import GraphQL.Today.Mock;
-
-import GraphQL.Benchmark.BenchmarkClient;
+import GraphQL.Today.TodayClient;
 
 using namespace graphql;
 
@@ -93,7 +92,7 @@ int main(int argc, char** argv)
 
 	try
 	{
-		using namespace client::query::Query;
+		using namespace today::client::query::Query;
 
 		auto query = GetRequestObject();
 		const auto& name = GetOperationName();

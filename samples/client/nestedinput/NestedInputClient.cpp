@@ -16,8 +16,9 @@
 
 using namespace std::literals;
 
-namespace graphql::client {
+namespace graphql {
 namespace nestedinput {
+namespace client {
 
 const std::string& GetRequestText() noexcept
 {
@@ -47,6 +48,10 @@ const peg::ast& GetRequestObject() noexcept
 
 	return s_request;
 }
+
+} // namespace client
+
+using namespace graphql::client;
 
 InputA::InputA() noexcept
 	: a {}
@@ -236,6 +241,8 @@ InputBC& InputBC::operator=(InputBC&& other) noexcept
 
 } // namespace nestedinput
 
+namespace client {
+
 using namespace nestedinput;
 
 template <>
@@ -284,9 +291,9 @@ response::Value Variable<InputBC>::serialize(InputBC&& inputValue)
 }
 
 template <>
-query::testQuery::Response::control_Control::test_Output Response<query::testQuery::Response::control_Control::test_Output>::parse(response::Value&& response)
+graphql::nestedinput::client::query::testQuery::Response::control_Control::test_Output Response<graphql::nestedinput::client::query::testQuery::Response::control_Control::test_Output>::parse(response::Value&& response)
 {
-	query::testQuery::Response::control_Control::test_Output result;
+	graphql::nestedinput::client::query::testQuery::Response::control_Control::test_Output result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -306,9 +313,9 @@ query::testQuery::Response::control_Control::test_Output Response<query::testQue
 }
 
 template <>
-query::testQuery::Response::control_Control Response<query::testQuery::Response::control_Control>::parse(response::Value&& response)
+graphql::nestedinput::client::query::testQuery::Response::control_Control Response<graphql::nestedinput::client::query::testQuery::Response::control_Control>::parse(response::Value&& response)
 {
-	query::testQuery::Response::control_Control result;
+	graphql::nestedinput::client::query::testQuery::Response::control_Control result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -318,7 +325,7 @@ query::testQuery::Response::control_Control Response<query::testQuery::Response:
 		{
 			if (member.first == R"js(test)js"sv)
 			{
-				result.test = ModifiedResponse<query::testQuery::Response::control_Control::test_Output>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.test = ModifiedResponse<graphql::nestedinput::client::query::testQuery::Response::control_Control::test_Output>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -327,7 +334,9 @@ query::testQuery::Response::control_Control Response<query::testQuery::Response:
 	return result;
 }
 
-namespace query::testQuery {
+} // namespace client
+
+namespace nestedinput::client::query::testQuery {
 
 const std::string& GetOperationName() noexcept
 {
@@ -338,6 +347,8 @@ const std::string& GetOperationName() noexcept
 
 response::Value serializeVariables(Variables&& variables)
 {
+	using namespace graphql::client;
+
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(stream)js"s, ModifiedVariable<InputABCD>::serialize(std::move(variables.stream)));
@@ -347,6 +358,8 @@ response::Value serializeVariables(Variables&& variables)
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -368,12 +381,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return nestedinput::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return nestedinput::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -391,5 +404,5 @@ Response parseResponse(response::Value&& response)
 	return testQuery::parseResponse(std::move(response));
 }
 
-} // namespace query::testQuery
-} // namespace graphql::client
+} // namespace nestedinput::client::query::testQuery
+} // namespace graphql

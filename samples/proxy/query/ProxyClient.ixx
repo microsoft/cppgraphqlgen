@@ -9,20 +9,30 @@ module;
 
 export module GraphQL.Proxy.ProxyClient;
 
-export namespace graphql::client {
+export namespace graphql::proxy {
 
-namespace proxy {
+namespace client {
 
-using proxy::GetRequestText;
-using proxy::GetRequestObject;
+using client::GetRequestText;
+using client::GetRequestObject;
 
-} // namespace proxy
+} // namespace client
+
+using proxy::OperationType;
+
+using proxy::QueryInput;
+
+namespace client {
 
 namespace query::relayQuery {
 
-using proxy::GetRequestText;
-using proxy::GetRequestObject;
+using graphql::proxy::client::GetRequestText;
+using graphql::proxy::client::GetRequestObject;
 using relayQuery::GetOperationName;
+
+using graphql::proxy::OperationType;
+
+using graphql::proxy::QueryInput;
 
 using relayQuery::Variables;
 using relayQuery::serializeVariables;
@@ -34,4 +44,5 @@ using relayQuery::Traits;
 
 } // namespace query::relayQuery
 
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::proxy

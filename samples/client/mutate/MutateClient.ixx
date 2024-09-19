@@ -9,28 +9,30 @@ module;
 
 export module GraphQL.Mutate.MutateClient;
 
-export namespace graphql::client {
+export namespace graphql::mutate {
 
-namespace mutate {
+namespace client {
 
-using mutate::GetRequestText;
-using mutate::GetRequestObject;
+using client::GetRequestText;
+using client::GetRequestObject;
+
+} // namespace client
 
 using mutate::TaskState;
 
 using mutate::CompleteTaskInput;
 
-} // namespace mutate
+namespace client {
 
 namespace mutation::CompleteTaskMutation {
 
-using mutate::GetRequestText;
-using mutate::GetRequestObject;
+using graphql::mutate::client::GetRequestText;
+using graphql::mutate::client::GetRequestObject;
 using CompleteTaskMutation::GetOperationName;
 
-using mutate::TaskState;
+using graphql::mutate::TaskState;
 
-using mutate::CompleteTaskInput;
+using graphql::mutate::CompleteTaskInput;
 
 using CompleteTaskMutation::Variables;
 using CompleteTaskMutation::serializeVariables;
@@ -42,4 +44,5 @@ using CompleteTaskMutation::Traits;
 
 } // namespace mutation::CompleteTaskMutation
 
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::mutate

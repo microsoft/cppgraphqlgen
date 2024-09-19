@@ -9,23 +9,25 @@ module;
 
 export module GraphQL.MultipleQueries.MultipleQueriesClient;
 
-export namespace graphql::client {
+export namespace graphql::multiple {
 
-namespace multiple {
+namespace client {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using client::GetRequestText;
+using client::GetRequestObject;
+
+} // namespace client
 
 using multiple::TaskState;
 
 using multiple::CompleteTaskInput;
 
-} // namespace multiple
+namespace client {
 
 namespace query::Appointments {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 using Appointments::GetOperationName;
 
 using Appointments::Response;
@@ -37,8 +39,8 @@ using Appointments::Traits;
 
 namespace query::Tasks {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 using Tasks::GetOperationName;
 
 using Tasks::Response;
@@ -50,8 +52,8 @@ using Tasks::Traits;
 
 namespace query::UnreadCounts {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 using UnreadCounts::GetOperationName;
 
 using UnreadCounts::Response;
@@ -63,11 +65,11 @@ using UnreadCounts::Traits;
 
 namespace query::Miscellaneous {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 using Miscellaneous::GetOperationName;
 
-using multiple::TaskState;
+using graphql::multiple::TaskState;
 
 using Miscellaneous::Response;
 using Miscellaneous::parseResponse;
@@ -78,13 +80,13 @@ using Miscellaneous::Traits;
 
 namespace mutation::CompleteTaskMutation {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 using CompleteTaskMutation::GetOperationName;
 
-using multiple::TaskState;
+using graphql::multiple::TaskState;
 
-using multiple::CompleteTaskInput;
+using graphql::multiple::CompleteTaskInput;
 
 using CompleteTaskMutation::Variables;
 using CompleteTaskMutation::serializeVariables;
@@ -96,4 +98,5 @@ using CompleteTaskMutation::Traits;
 
 } // namespace mutation::CompleteTaskMutation
 
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::multiple

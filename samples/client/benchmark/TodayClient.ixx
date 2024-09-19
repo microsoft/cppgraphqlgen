@@ -5,23 +5,21 @@
 
 module;
 
-#include "BenchmarkClient.h"
+#include "TodayClient.h"
 
-export module GraphQL.Benchmark.BenchmarkClient;
+export module GraphQL.Today.TodayClient;
 
-export namespace graphql::client {
+export namespace graphql::today {
 
-namespace benchmark {
+namespace client {
 
-using benchmark::GetRequestText;
-using benchmark::GetRequestObject;
-
-} // namespace benchmark
+using client::GetRequestText;
+using client::GetRequestObject;
 
 namespace query::Query {
 
-using benchmark::GetRequestText;
-using benchmark::GetRequestObject;
+using graphql::today::client::GetRequestText;
+using graphql::today::client::GetRequestObject;
 using Query::GetOperationName;
 
 using Query::Response;
@@ -31,4 +29,5 @@ using Query::Traits;
 
 } // namespace query::Query
 
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::today

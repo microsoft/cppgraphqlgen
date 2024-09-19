@@ -40,7 +40,7 @@ protected:
 
 TEST_F(ClientCase, QueryEverything)
 {
-	using namespace client::query::Query;
+	using namespace query::client::query::Query;
 
 	auto query = GetRequestObject();
 
@@ -114,7 +114,7 @@ TEST_F(ClientCase, QueryEverything)
 		EXPECT_EQ(3, unreadCountNode->unreadCount) << "unreadCount should match";
 		EXPECT_EQ("Folder", unreadCountNode->_typename) << "__typename should match";
 
-		EXPECT_EQ(client::query::Query::TaskState::Unassigned, response.testTaskState)
+		EXPECT_EQ(query::client::query::Query::TaskState::Unassigned, response.testTaskState)
 			<< "testTaskState should match";
 
 		ASSERT_EQ(std::size_t { 1 }, response.anyType.size()) << "anyType should have 1 entry";
@@ -139,7 +139,7 @@ TEST_F(ClientCase, QueryEverything)
 
 TEST_F(ClientCase, MutateCompleteTask)
 {
-	using namespace client::mutation::CompleteTaskMutation;
+	using namespace mutate::client::mutation::CompleteTaskMutation;
 
 	auto query = GetRequestObject();
 	auto variables = serializeVariables(
@@ -181,7 +181,7 @@ TEST_F(ClientCase, MutateCompleteTask)
 
 TEST_F(ClientCase, SubscribeNextAppointmentChangeDefault)
 {
-	using namespace client::subscription::TestSubscription;
+	using namespace subscribe::client::subscription::TestSubscription;
 
 	auto query = GetRequestObject();
 

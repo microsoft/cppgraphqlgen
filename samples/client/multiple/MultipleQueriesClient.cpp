@@ -16,8 +16,9 @@
 
 using namespace std::literals;
 
-namespace graphql::client {
+namespace graphql {
 namespace multiple {
+namespace client {
 
 const std::string& GetRequestText() noexcept
 {
@@ -121,6 +122,10 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+} // namespace client
+
+using namespace graphql::client;
+
 CompleteTaskInput::CompleteTaskInput() noexcept
 	: id {}
 	, testTaskState {}
@@ -179,13 +184,14 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 }
 
 } // namespace multiple
+namespace client {
 
 using namespace multiple;
 
 template <>
-query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
+graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
 {
-	query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
+	graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -225,9 +231,9 @@ query::Appointments::Response::appointments_AppointmentConnection::edges_Appoint
 }
 
 template <>
-query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
+graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
 {
-	query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
+	graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -237,7 +243,7 @@ query::Appointments::Response::appointments_AppointmentConnection::edges_Appoint
 		{
 			if (member.first == R"js(node)js"sv)
 			{
-				result.node = ModifiedResponse<query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.node = ModifiedResponse<graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -247,9 +253,9 @@ query::Appointments::Response::appointments_AppointmentConnection::edges_Appoint
 }
 
 template <>
-query::Appointments::Response::appointments_AppointmentConnection Response<query::Appointments::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
+graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection Response<graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
 {
-	query::Appointments::Response::appointments_AppointmentConnection result;
+	graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -259,7 +265,7 @@ query::Appointments::Response::appointments_AppointmentConnection Response<query
 		{
 			if (member.first == R"js(edges)js"sv)
 			{
-				result.edges = ModifiedResponse<query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				result.edges = ModifiedResponse<graphql::multiple::client::query::Appointments::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -268,7 +274,9 @@ query::Appointments::Response::appointments_AppointmentConnection Response<query
 	return result;
 }
 
-namespace query::Appointments {
+} // namespace client
+
+namespace multiple::client::query::Appointments {
 
 const std::string& GetOperationName() noexcept
 {
@@ -279,6 +287,8 @@ const std::string& GetOperationName() noexcept
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -300,12 +310,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return multiple::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return multiple::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -318,12 +328,15 @@ Response parseResponse(response::Value&& response)
 	return Appointments::parseResponse(std::move(response));
 }
 
-} // namespace query::Appointments
+} // namespace multiple::client::query::Appointments
+namespace client {
+
+using namespace multiple;
 
 template <>
-query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Response<query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
+graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Response<graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
 {
-	query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task result;
+	graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -358,9 +371,9 @@ query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Response
 }
 
 template <>
-query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge Response<query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
+graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge Response<graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
 {
-	query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge result;
+	graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -370,7 +383,7 @@ query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge Response<query::Tas
 		{
 			if (member.first == R"js(node)js"sv)
 			{
-				result.node = ModifiedResponse<query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.node = ModifiedResponse<graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -380,9 +393,9 @@ query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge Response<query::Tas
 }
 
 template <>
-query::Tasks::Response::tasks_TaskConnection Response<query::Tasks::Response::tasks_TaskConnection>::parse(response::Value&& response)
+graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection Response<graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection>::parse(response::Value&& response)
 {
-	query::Tasks::Response::tasks_TaskConnection result;
+	graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -392,7 +405,7 @@ query::Tasks::Response::tasks_TaskConnection Response<query::Tasks::Response::ta
 		{
 			if (member.first == R"js(edges)js"sv)
 			{
-				result.edges = ModifiedResponse<query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				result.edges = ModifiedResponse<graphql::multiple::client::query::Tasks::Response::tasks_TaskConnection::edges_TaskEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -401,7 +414,9 @@ query::Tasks::Response::tasks_TaskConnection Response<query::Tasks::Response::ta
 	return result;
 }
 
-namespace query::Tasks {
+} // namespace client
+
+namespace multiple::client::query::Tasks {
 
 const std::string& GetOperationName() noexcept
 {
@@ -412,6 +427,8 @@ const std::string& GetOperationName() noexcept
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -433,12 +450,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return multiple::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return multiple::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -451,12 +468,15 @@ Response parseResponse(response::Value&& response)
 	return Tasks::parseResponse(std::move(response));
 }
 
-} // namespace query::Tasks
+} // namespace multiple::client::query::Tasks
+namespace client {
+
+using namespace multiple;
 
 template <>
-query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder Response<query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
+graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder Response<graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
 {
-	query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder result;
+	graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -491,9 +511,9 @@ query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::
 }
 
 template <>
-query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge Response<query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
+graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge Response<graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
 {
-	query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge result;
+	graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -503,7 +523,7 @@ query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge R
 		{
 			if (member.first == R"js(node)js"sv)
 			{
-				result.node = ModifiedResponse<query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.node = ModifiedResponse<graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -513,9 +533,9 @@ query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge R
 }
 
 template <>
-query::UnreadCounts::Response::unreadCounts_FolderConnection Response<query::UnreadCounts::Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
+graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection Response<graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
 {
-	query::UnreadCounts::Response::unreadCounts_FolderConnection result;
+	graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -525,7 +545,7 @@ query::UnreadCounts::Response::unreadCounts_FolderConnection Response<query::Unr
 		{
 			if (member.first == R"js(edges)js"sv)
 			{
-				result.edges = ModifiedResponse<query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				result.edges = ModifiedResponse<graphql::multiple::client::query::UnreadCounts::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -534,7 +554,9 @@ query::UnreadCounts::Response::unreadCounts_FolderConnection Response<query::Unr
 	return result;
 }
 
-namespace query::UnreadCounts {
+} // namespace client
+
+namespace multiple::client::query::UnreadCounts {
 
 const std::string& GetOperationName() noexcept
 {
@@ -545,6 +567,8 @@ const std::string& GetOperationName() noexcept
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -566,12 +590,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return multiple::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return multiple::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -584,7 +608,11 @@ Response parseResponse(response::Value&& response)
 	return UnreadCounts::parseResponse(std::move(response));
 }
 
-} // namespace query::UnreadCounts
+} // namespace multiple::client::query::UnreadCounts
+
+namespace client {
+
+using namespace multiple;
 
 template <>
 TaskState Response<TaskState>::parse(response::Value&& value)
@@ -614,9 +642,9 @@ TaskState Response<TaskState>::parse(response::Value&& value)
 }
 
 template <>
-query::Miscellaneous::Response::anyType_UnionType Response<query::Miscellaneous::Response::anyType_UnionType>::parse(response::Value&& response)
+graphql::multiple::client::query::Miscellaneous::Response::anyType_UnionType Response<graphql::multiple::client::query::Miscellaneous::Response::anyType_UnionType>::parse(response::Value&& response)
 {
-	query::Miscellaneous::Response::anyType_UnionType result;
+	graphql::multiple::client::query::Miscellaneous::Response::anyType_UnionType result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -665,7 +693,9 @@ query::Miscellaneous::Response::anyType_UnionType Response<query::Miscellaneous:
 	return result;
 }
 
-namespace query::Miscellaneous {
+} // namespace client
+
+namespace multiple::client::query::Miscellaneous {
 
 const std::string& GetOperationName() noexcept
 {
@@ -676,6 +706,8 @@ const std::string& GetOperationName() noexcept
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -707,12 +739,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return multiple::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return multiple::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -725,7 +757,11 @@ Response parseResponse(response::Value&& response)
 	return Miscellaneous::parseResponse(std::move(response));
 }
 
-} // namespace query::Miscellaneous
+} // namespace multiple::client::query::Miscellaneous
+
+namespace client {
+
+using namespace multiple;
 
 template <>
 response::Value Variable<TaskState>::serialize(TaskState&& value)
@@ -758,9 +794,9 @@ response::Value Variable<CompleteTaskInput>::serialize(CompleteTaskInput&& input
 }
 
 template <>
-mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task Response<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
+graphql::multiple::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task Response<graphql::multiple::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
 {
-	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task result;
+	graphql::multiple::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -790,9 +826,9 @@ mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::com
 }
 
 template <>
-mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Response<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
+graphql::multiple::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Response<graphql::multiple::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
 {
-	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload result;
+	graphql::multiple::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -802,7 +838,7 @@ mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Resp
 		{
 			if (member.first == R"js(completedTask)js"sv)
 			{
-				result.completedTask = ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.completedTask = ModifiedResponse<graphql::multiple::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(clientMutationId)js"sv)
@@ -816,7 +852,9 @@ mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Resp
 	return result;
 }
 
-namespace mutation::CompleteTaskMutation {
+} // namespace client
+
+namespace multiple::client::mutation::CompleteTaskMutation {
 
 const std::string& GetOperationName() noexcept
 {
@@ -827,6 +865,8 @@ const std::string& GetOperationName() noexcept
 
 response::Value serializeVariables(Variables&& variables)
 {
+	using namespace graphql::client;
+
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(input)js"s, ModifiedVariable<CompleteTaskInput>::serialize<TypeModifier::Nullable>(std::move(variables.input)));
@@ -837,6 +877,8 @@ response::Value serializeVariables(Variables&& variables)
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -858,12 +900,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return multiple::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return multiple::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -881,5 +923,5 @@ Response parseResponse(response::Value&& response)
 	return CompleteTaskMutation::parseResponse(std::move(response));
 }
 
-} // namespace mutation::CompleteTaskMutation
-} // namespace graphql::client
+} // namespace multiple::client::mutation::CompleteTaskMutation
+} // namespace graphql

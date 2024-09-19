@@ -2,10 +2,23 @@
 # Licensed under the MIT License.
 
 type Query {
-  relay(query: String!, operationName: String, variables: String): Results!
+  relay(input: QueryInput!): QueryResults!
 }
 
-type Results {
+enum OperationType {
+  QUERY
+  MUTATION
+  SUBSCRIPTION
+}
+
+input QueryInput {
+  type: OperationType!
+  query: String!
+  operationName: String = null
+  variables: String = null
+}
+
+type QueryResults {
   data: String
   errors: [String]
 }

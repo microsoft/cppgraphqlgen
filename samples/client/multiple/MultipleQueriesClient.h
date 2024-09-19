@@ -22,12 +22,10 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-namespace graphql::client {
+namespace graphql::multiple {
 
-/// <summary>
-/// Operations: query Appointments, query Tasks, query UnreadCounts, query Miscellaneous, mutation CompleteTaskMutation
-/// </summary>
-/// <code class="language-graphql">
+/// # Operations: query Appointments, query Tasks, query UnreadCounts, query Miscellaneous, mutation CompleteTaskMutation
+/// ```graphql
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
@@ -108,14 +106,16 @@ namespace graphql::client {
 ///     clientMutationId @skip(if: $skipClientMutationId)
 ///   }
 /// }
-/// </code>
-namespace multiple {
+/// ```
+namespace client {
 
 // Return the original text of the request document.
 [[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
+
+} // namespace client
 
 enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
@@ -146,12 +146,12 @@ struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 	std::optional<std::string> clientMutationId;
 };
 
-} // namespace multiple
+namespace client {
 
 namespace query::Appointments {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -197,8 +197,8 @@ struct Traits
 
 namespace query::Tasks {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -243,8 +243,8 @@ struct Traits
 
 namespace query::UnreadCounts {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -289,13 +289,13 @@ struct Traits
 
 namespace query::Miscellaneous {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-using multiple::TaskState;
+using graphql::multiple::TaskState;
 
 struct [[nodiscard("unnecessary construction")]] Response
 {
@@ -332,15 +332,15 @@ struct Traits
 
 namespace mutation::CompleteTaskMutation {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-using multiple::TaskState;
+using graphql::multiple::TaskState;
 
-using multiple::CompleteTaskInput;
+using graphql::multiple::CompleteTaskInput;
 
 struct [[nodiscard("unnecessary construction")]] Variables
 {
@@ -386,6 +386,7 @@ struct Traits
 };
 
 } // namespace mutation::CompleteTaskMutation
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::multiple
 
 #endif // MULTIPLEQUERIESCLIENT_H

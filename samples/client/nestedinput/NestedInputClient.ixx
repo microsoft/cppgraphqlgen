@@ -9,30 +9,32 @@ module;
 
 export module GraphQL.NestedInput.NestedInputClient;
 
-export namespace graphql::client {
+export namespace graphql::nestedinput {
 
-namespace nestedinput {
+namespace client {
 
-using nestedinput::GetRequestText;
-using nestedinput::GetRequestObject;
+using client::GetRequestText;
+using client::GetRequestObject;
+
+} // namespace client
 
 using nestedinput::InputA;
 using nestedinput::InputB;
 using nestedinput::InputABCD;
 using nestedinput::InputBC;
 
-} // namespace nestedinput
+namespace client {
 
 namespace query::testQuery {
 
-using nestedinput::GetRequestText;
-using nestedinput::GetRequestObject;
+using graphql::nestedinput::client::GetRequestText;
+using graphql::nestedinput::client::GetRequestObject;
 using testQuery::GetOperationName;
 
-using nestedinput::InputA;
-using nestedinput::InputB;
-using nestedinput::InputABCD;
-using nestedinput::InputBC;
+using graphql::nestedinput::InputA;
+using graphql::nestedinput::InputB;
+using graphql::nestedinput::InputABCD;
+using graphql::nestedinput::InputBC;
 
 using testQuery::Variables;
 using testQuery::serializeVariables;
@@ -44,4 +46,5 @@ using testQuery::Traits;
 
 } // namespace query::testQuery
 
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::nestedinput
