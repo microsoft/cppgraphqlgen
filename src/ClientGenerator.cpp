@@ -99,7 +99,7 @@ std::string Generator::getSourcePath() const noexcept
 
 const std::string& Generator::getClientNamespace() const noexcept
 {
-	static const auto s_namespace = R"cpp(graphql::client)cpp"s;
+	static const auto s_namespace = R"cpp(client)cpp"s;
 
 	return s_namespace;
 }
@@ -209,12 +209,13 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 
-	PendingBlankLine pendingSeparator { headerFile };
-	NamespaceScope clientNamespaceScope { headerFile, getClientNamespace() };
+	const auto schemaNamespace = std::format("graphql::{}", _schemaLoader.getSchemaNamespace());
+	NamespaceScope schemaNamespaceScope { headerFile, schemaNamespace };
 
 	outputRequestComment(headerFile);
 
-	NamespaceScope schemaNamespaceScope { headerFile, _schemaLoader.getSchemaNamespace() };
+	NamespaceScope clientNamespaceScope { headerFile, getClientNamespace() };
+	PendingBlankLine pendingSeparator { headerFile };
 
 	outputGetRequestDeclaration(headerFile);
 
@@ -234,6 +235,11 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			}
 
 			pendingSeparator.reset();
+
+			if (clientNamespaceScope.exit())
+			{
+				headerFile << std::endl;
+			}
 
 			headerFile << R"cpp(enum class [[nodiscard("unnecessary conversion")]] )cpp" << cppType
 					   << R"cpp(
@@ -269,6 +275,11 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			}
 
 			pendingSeparator.reset();
+
+			if (clientNamespaceScope.exit())
+			{
+				headerFile << std::endl;
+			}
 
 			if (!inputType.declarations.empty())
 			{
@@ -348,8 +359,10 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	}
 
 	pendingSeparator.reset();
-	schemaNamespaceScope.exit();
-	pendingSeparator.add();
+	if (clientNamespaceScope.enter())
+	{
+		pendingSeparator.add();
+	}
 
 	for (const auto& operation : operations)
 	{
@@ -358,9 +371,11 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		NamespaceScope operationNamespaceScope { headerFile, getOperationNamespace(operation) };
 
 		headerFile << R"cpp(
-using )cpp" << _schemaLoader.getSchemaNamespace()
+using graphql::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestText;
-using )cpp" << _schemaLoader.getSchemaNamespace()
+using graphql::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestObject;
 )cpp";
 
@@ -369,8 +384,8 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 		// Alias all of the enums referenced either in variables or the response.
 		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
 		{
-			headerFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
+			headerFile << R"cpp(using graphql::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
 )cpp";
 
 			pendingSeparator.add();
@@ -381,8 +396,9 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 		// Alias all of the input object structs referenced in variables.
 		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
 		{
-			headerFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << _schemaLoader.getCppType(inputType.type->name()) << R"cpp(;
+			headerFile << R"cpp(using graphql::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(inputType.type->name())
+					   << R"cpp(;
 )cpp";
 
 			pendingSeparator.add();
@@ -484,8 +500,7 @@ struct Traits
 void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 {
 	headerFile << R"cpp(
-/// <summary>
-/// Operation)cpp";
+/// # Operation)cpp";
 
 	const auto& operations = _requestLoader.getOperations();
 
@@ -512,8 +527,7 @@ void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 	}
 
 	headerFile << R"cpp(
-/// </summary>
-/// <code class="language-graphql">
+/// ```graphql
 )cpp";
 
 	std::istringstream request { std::string { _requestLoader.getRequestText() } };
@@ -523,7 +537,7 @@ void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 		headerFile << R"cpp(/// )cpp" << line << std::endl;
 	}
 
-	headerFile << R"cpp(/// </code>
+	headerFile << R"cpp(/// ```
 )cpp";
 }
 
@@ -640,17 +654,18 @@ export module GraphQL.)cpp"
 
 export )cpp";
 
-	NamespaceScope graphqlNamespace { moduleFile, getClientNamespace() };
+	const auto schemaNamespace = std::format("graphql::{}", _schemaLoader.getSchemaNamespace());
+	NamespaceScope schemaNamespaceScope { moduleFile, schemaNamespace };
 
 	moduleFile << std::endl;
 
-	NamespaceScope schemaNamespace { moduleFile, _schemaLoader.getSchemaNamespace() };
+	NamespaceScope clientNamespaceScope { moduleFile, getClientNamespace() };
 	PendingBlankLine pendingSeparator { moduleFile };
 
 	moduleFile << R"cpp(
-using )cpp" << _schemaLoader.getSchemaNamespace()
+using )cpp" << getClientNamespace()
 			   << R"cpp(::GetRequestText;
-using )cpp" << _schemaLoader.getSchemaNamespace()
+using )cpp" << getClientNamespace()
 			   << R"cpp(::GetRequestObject;
 )cpp";
 
@@ -662,6 +677,11 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 		if (!_requestLoader.getReferencedEnums(operation).empty())
 		{
 			pendingSeparator.reset();
+
+			if (clientNamespaceScope.exit())
+			{
+				moduleFile << std::endl;
+			}
 
 			// Define all of the enums referenced either in variables or the response.
 			for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
@@ -694,6 +714,11 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 		{
 			pendingSeparator.reset();
 
+			if (clientNamespaceScope.exit())
+			{
+				moduleFile << std::endl;
+			}
+
 			// Define all of the input object structs referenced in variables.
 			for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
 			{
@@ -717,7 +742,7 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 	}
 
 	pendingSeparator.reset();
-	if (schemaNamespace.exit())
+	if (clientNamespaceScope.enter())
 	{
 		pendingSeparator.add();
 	}
@@ -730,9 +755,11 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 		const auto operationNamespace = _requestLoader.getOperationNamespace(operation);
 
 		moduleFile << R"cpp(
-using )cpp" << _schemaLoader.getSchemaNamespace()
+using graphql::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestText;
-using )cpp" << _schemaLoader.getSchemaNamespace()
+using graphql::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestObject;
 using )cpp" << operationNamespace
 				   << R"cpp(::GetOperationName;
@@ -742,8 +769,8 @@ using )cpp" << operationNamespace
 		// Alias all of the enums referenced either in variables or the response.
 		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
 		{
-			moduleFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
+			moduleFile << R"cpp(using graphql::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
 )cpp";
 
 			pendingSeparator.add();
@@ -754,8 +781,9 @@ using )cpp" << operationNamespace
 		// Alias all of the input object structs referenced in variables.
 		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
 		{
-			moduleFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << _schemaLoader.getCppType(inputType.type->name()) << R"cpp(;
+			moduleFile << R"cpp(using graphql::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(inputType.type->name())
+					   << R"cpp(;
 )cpp";
 
 			pendingSeparator.add();
@@ -819,8 +847,9 @@ using namespace std::literals;
 
 )cpp";
 
-	NamespaceScope clientNamespaceScope { sourceFile, getClientNamespace() };
+	NamespaceScope graphqlNamespaceScope { sourceFile, "graphql" };
 	NamespaceScope schemaNamespaceScope { sourceFile, _schemaLoader.getSchemaNamespace() };
+	NamespaceScope clientNamespaceScope { sourceFile, getClientNamespace() };
 	PendingBlankLine pendingSeparator { sourceFile };
 
 	outputGetRequestImplementation(sourceFile);
@@ -840,6 +869,15 @@ using namespace std::literals;
 			}
 
 			pendingSeparator.reset();
+
+			if (clientNamespaceScope.exit())
+			{
+				sourceFile << R"cpp(
+using namespace graphql::)cpp"
+						   << getClientNamespace() << R"cpp(;
+
+)cpp";
+			}
 
 			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept)cpp";
 
@@ -979,14 +1017,11 @@ using namespace std::literals;
 	}
 
 	pendingSeparator.reset();
-	schemaNamespaceScope.exit();
-
-	sourceFile << R"cpp(
-using namespace )cpp"
-			   << _schemaLoader.getSchemaNamespace() << R"cpp(;
-)cpp";
-
-	pendingSeparator.add();
+	clientNamespaceScope.exit();
+	if (schemaNamespaceScope.exit())
+	{
+		pendingSeparator.add();
+	}
 
 	std::unordered_set<std::string_view> outputModifiedVariableEnum;
 	std::unordered_set<std::string_view> outputModifiedVariableInput;
@@ -1008,6 +1043,15 @@ using namespace )cpp"
 				}
 
 				pendingSeparator.reset();
+
+				if (clientNamespaceScope.enter())
+				{
+					sourceFile << R"cpp(
+using namespace )cpp" << _schemaLoader.getSchemaNamespace()
+							   << R"cpp(;
+
+)cpp";
+				}
 
 				const auto& enumValues = enumType->enumValues();
 
@@ -1058,10 +1102,18 @@ response::Value Variable<)cpp"
 
 				pendingSeparator.reset();
 
+				if (clientNamespaceScope.enter())
+				{
+					sourceFile << R"cpp(
+using namespace )cpp" << _schemaLoader.getSchemaNamespace()
+							   << R"cpp(;
+
+)cpp";
+				}
+
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType
-						   << R"cpp(&& inputValue)
+						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -1100,6 +1152,15 @@ response::Value Variable<)cpp"
 			}
 
 			pendingSeparator.reset();
+
+			if (clientNamespaceScope.enter())
+			{
+				sourceFile << R"cpp(
+using namespace )cpp" << _schemaLoader.getSchemaNamespace()
+						   << R"cpp(;
+
+)cpp";
+			}
 
 			const auto& enumValues = enumType->enumValues();
 
@@ -1167,21 +1228,40 @@ response::Value Variable<)cpp"
 			pendingSeparator.add();
 		}
 
-		const auto currentScope =
-			std::format(R"cpp({}::Response)cpp", getOperationNamespace(operation));
+		const auto operationNamespace = std::format("{}::client::{}",
+			_schemaLoader.getSchemaNamespace(),
+			getOperationNamespace(operation));
+		const auto graphqlCurrentScope =
+			std::format(R"cpp(graphql::{}::Response)cpp", operationNamespace);
 		const auto& responseType = _requestLoader.getResponseType(operation);
 
 		for (const auto& responseField : responseType.fields)
 		{
-			if (outputModifiedResponseImplementation(sourceFile, currentScope, responseField))
+			if (clientNamespaceScope.enter())
+			{
+				sourceFile << R"cpp(
+using namespace )cpp" << _schemaLoader.getSchemaNamespace()
+						   << R"cpp(;
+)cpp";
+			}
+
+			if (outputModifiedResponseImplementation(sourceFile,
+					graphqlCurrentScope,
+					responseField))
 			{
 				pendingSeparator.add();
 			}
 		}
 
 		pendingSeparator.reset();
+		if (clientNamespaceScope.exit())
+		{
+			sourceFile << std::endl;
+		}
 
-		NamespaceScope operationNamespaceScope { sourceFile, getOperationNamespace(operation) };
+		NamespaceScope operationNamespaceScope { sourceFile, operationNamespace };
+		const auto schemaCurrentScope =
+			std::format("{}::Response", getOperationNamespace(operation));
 
 		outputGetOperationNameImplementation(sourceFile, operation);
 
@@ -1190,6 +1270,9 @@ response::Value Variable<)cpp"
 			sourceFile << R"cpp(
 response::Value serializeVariables(Variables&& variables)
 {
+	using namespace graphql::)cpp"
+					   << getClientNamespace() << R"cpp(;
+
 	response::Value result { response::Type::Map };
 
 )cpp";
@@ -1213,6 +1296,9 @@ response::Value serializeVariables(Variables&& variables)
 		sourceFile << R"cpp(
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::)cpp"
+				   << getClientNamespace() << R"cpp(;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -1234,7 +1320,7 @@ Response parseResponse(response::Value&& response)
 			{
 				result.)cpp"
 						   << responseField.cppName << R"cpp( = ModifiedResponse<)cpp"
-						   << getResponseFieldCppType(responseField, currentScope)
+						   << getResponseFieldCppType(responseField, schemaCurrentScope)
 						   << R"cpp(>::parse)cpp" << getTypeModifierList(responseField.modifiers)
 						   << R"cpp((std::move(member.second));
 				continue;
@@ -1251,13 +1337,13 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return )cpp" << _schemaLoader.getSchemaNamespace()
+	return )cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return )cpp" << _schemaLoader.getSchemaNamespace()
+	return )cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestObject();
 }
 

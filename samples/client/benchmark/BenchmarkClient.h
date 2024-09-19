@@ -22,12 +22,10 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-namespace graphql::client {
+namespace graphql::benchmark {
 
-/// <summary>
-/// Operation: query (unnamed)
-/// </summary>
-/// <code class="language-graphql">
+/// # Operation: query (unnamed)
+/// ```graphql
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
@@ -46,8 +44,8 @@ namespace graphql::client {
 ///     }
 ///   }
 /// }
-/// </code>
-namespace benchmark {
+/// ```
+namespace client {
 
 // Return the original text of the request document.
 [[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
@@ -55,12 +53,10 @@ namespace benchmark {
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 
-} // namespace benchmark
-
 namespace query::Query {
 
-using benchmark::GetRequestText;
-using benchmark::GetRequestObject;
+using graphql::benchmark::client::GetRequestText;
+using graphql::benchmark::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -108,6 +104,7 @@ struct Traits
 };
 
 } // namespace query::Query
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::benchmark
 
 #endif // BENCHMARKCLIENT_H

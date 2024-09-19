@@ -9,19 +9,17 @@ module;
 
 export module GraphQL.Benchmark.BenchmarkClient;
 
-export namespace graphql::client {
+export namespace graphql::benchmark {
 
-namespace benchmark {
+namespace client {
 
-using benchmark::GetRequestText;
-using benchmark::GetRequestObject;
-
-} // namespace benchmark
+using client::GetRequestText;
+using client::GetRequestObject;
 
 namespace query::Query {
 
-using benchmark::GetRequestText;
-using benchmark::GetRequestObject;
+using graphql::benchmark::client::GetRequestText;
+using graphql::benchmark::client::GetRequestObject;
 using Query::GetOperationName;
 
 using Query::Response;
@@ -31,4 +29,5 @@ using Query::Traits;
 
 } // namespace query::Query
 
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::benchmark

@@ -93,7 +93,7 @@ int main(int argc, char** argv)
 
 	try
 	{
-		using namespace client::query::Query;
+		using namespace benchmark::client::query::Query;
 
 		auto query = GetRequestObject();
 		const auto& name = GetOperationName();

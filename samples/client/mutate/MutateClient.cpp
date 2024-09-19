@@ -16,8 +16,9 @@
 
 using namespace std::literals;
 
-namespace graphql::client {
+namespace graphql {
 namespace mutate {
+namespace client {
 
 const std::string& GetRequestText() noexcept
 {
@@ -53,6 +54,10 @@ const peg::ast& GetRequestObject() noexcept
 
 	return s_request;
 }
+
+} // namespace client
+
+using namespace graphql::client;
 
 CompleteTaskInput::CompleteTaskInput() noexcept
 	: id {}
@@ -112,6 +117,8 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 }
 
 } // namespace mutate
+
+namespace client {
 
 using namespace mutate;
 
@@ -173,9 +180,9 @@ TaskState Response<TaskState>::parse(response::Value&& value)
 }
 
 template <>
-mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task Response<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
+graphql::mutate::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task Response<graphql::mutate::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse(response::Value&& response)
 {
-	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task result;
+	graphql::mutate::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -205,9 +212,9 @@ mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::com
 }
 
 template <>
-mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Response<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
+graphql::mutate::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Response<graphql::mutate::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload>::parse(response::Value&& response)
 {
-	mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload result;
+	graphql::mutate::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -217,7 +224,7 @@ mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Resp
 		{
 			if (member.first == R"js(completedTask)js"sv)
 			{
-				result.completedTask = ModifiedResponse<mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.completedTask = ModifiedResponse<graphql::mutate::client::mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(clientMutationId)js"sv)
@@ -231,7 +238,9 @@ mutation::CompleteTaskMutation::Response::completedTask_CompleteTaskPayload Resp
 	return result;
 }
 
-namespace mutation::CompleteTaskMutation {
+} // namespace client
+
+namespace mutate::client::mutation::CompleteTaskMutation {
 
 const std::string& GetOperationName() noexcept
 {
@@ -242,6 +251,8 @@ const std::string& GetOperationName() noexcept
 
 response::Value serializeVariables(Variables&& variables)
 {
+	using namespace graphql::client;
+
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(input)js"s, ModifiedVariable<CompleteTaskInput>::serialize<TypeModifier::Nullable>(std::move(variables.input)));
@@ -252,6 +263,8 @@ response::Value serializeVariables(Variables&& variables)
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -273,12 +286,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return mutate::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return mutate::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -296,5 +309,5 @@ Response parseResponse(response::Value&& response)
 	return CompleteTaskMutation::parseResponse(std::move(response));
 }
 
-} // namespace mutation::CompleteTaskMutation
-} // namespace graphql::client
+} // namespace mutate::client::mutation::CompleteTaskMutation
+} // namespace graphql

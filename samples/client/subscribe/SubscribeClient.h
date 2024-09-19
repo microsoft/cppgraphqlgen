@@ -22,12 +22,10 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-namespace graphql::client {
+namespace graphql::subscribe {
 
-/// <summary>
-/// Operation: subscription TestSubscription
-/// </summary>
-/// <code class="language-graphql">
+/// # Operation: subscription TestSubscription
+/// ```graphql
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
@@ -39,8 +37,8 @@ namespace graphql::client {
 ///     isNow
 ///   }
 /// }
-/// </code>
-namespace subscribe {
+/// ```
+namespace client {
 
 // Return the original text of the request document.
 [[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
@@ -48,12 +46,10 @@ namespace subscribe {
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
 
-} // namespace subscribe
-
 namespace subscription::TestSubscription {
 
-using subscribe::GetRequestText;
-using subscribe::GetRequestObject;
+using graphql::subscribe::client::GetRequestText;
+using graphql::subscribe::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -85,6 +81,7 @@ struct Traits
 };
 
 } // namespace subscription::TestSubscription
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::subscribe
 
 #endif // SUBSCRIBECLIENT_H

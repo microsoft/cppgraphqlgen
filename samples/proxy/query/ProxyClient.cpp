@@ -16,8 +16,9 @@
 
 using namespace std::literals;
 
-namespace graphql::client {
+namespace graphql {
 namespace proxy {
+namespace client {
 
 const std::string& GetRequestText() noexcept
 {
@@ -50,14 +51,16 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+} // namespace client
 } // namespace proxy
+namespace client {
 
 using namespace proxy;
 
 template <>
-query::relayQuery::Response::relay_Results Response<query::relayQuery::Response::relay_Results>::parse(response::Value&& response)
+graphql::proxy::client::query::relayQuery::Response::relay_Results Response<graphql::proxy::client::query::relayQuery::Response::relay_Results>::parse(response::Value&& response)
 {
-	query::relayQuery::Response::relay_Results result;
+	graphql::proxy::client::query::relayQuery::Response::relay_Results result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -81,7 +84,9 @@ query::relayQuery::Response::relay_Results Response<query::relayQuery::Response:
 	return result;
 }
 
-namespace query::relayQuery {
+} // namespace client
+
+namespace proxy::client::query::relayQuery {
 
 const std::string& GetOperationName() noexcept
 {
@@ -92,6 +97,8 @@ const std::string& GetOperationName() noexcept
 
 response::Value serializeVariables(Variables&& variables)
 {
+	using namespace graphql::client;
+
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(query)js"s, ModifiedVariable<std::string>::serialize(std::move(variables.query)));
@@ -103,6 +110,8 @@ response::Value serializeVariables(Variables&& variables)
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -124,12 +133,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return proxy::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return proxy::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -147,5 +156,5 @@ Response parseResponse(response::Value&& response)
 	return relayQuery::parseResponse(std::move(response));
 }
 
-} // namespace query::relayQuery
-} // namespace graphql::client
+} // namespace proxy::client::query::relayQuery
+} // namespace graphql

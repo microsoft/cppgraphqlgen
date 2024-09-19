@@ -16,8 +16,9 @@
 
 using namespace std::literals;
 
-namespace graphql::client {
+namespace graphql {
 namespace benchmark {
+namespace client {
 
 const std::string& GetRequestText() noexcept
 {
@@ -59,14 +60,16 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+} // namespace client
 } // namespace benchmark
+namespace client {
 
 using namespace benchmark;
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo Response<query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value&& response)
+graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo Response<graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value&& response)
 {
-	query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo result;
+	graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -86,9 +89,9 @@ query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo Re
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
+graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
 {
-	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
+	graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -123,9 +126,9 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
+graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
 {
-	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
+	graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -135,7 +138,7 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 		{
 			if (member.first == R"js(node)js"sv)
 			{
-				result.node = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.node = ModifiedResponse<graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -145,9 +148,9 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection Response<query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
+graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection Response<graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
 {
-	query::Query::Response::appointments_AppointmentConnection result;
+	graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -157,12 +160,12 @@ query::Query::Response::appointments_AppointmentConnection Response<query::Query
 		{
 			if (member.first == R"js(pageInfo)js"sv)
 			{
-				result.pageInfo = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(std::move(member.second));
+				result.pageInfo = ModifiedResponse<graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(std::move(member.second));
 				continue;
 			}
 			if (member.first == R"js(edges)js"sv)
 			{
-				result.edges = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				result.edges = ModifiedResponse<graphql::benchmark::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -171,7 +174,9 @@ query::Query::Response::appointments_AppointmentConnection Response<query::Query
 	return result;
 }
 
-namespace query::Query {
+} // namespace client
+
+namespace benchmark::client::query::Query {
 
 const std::string& GetOperationName() noexcept
 {
@@ -182,6 +187,8 @@ const std::string& GetOperationName() noexcept
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -203,12 +210,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return benchmark::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return benchmark::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -221,5 +228,5 @@ Response parseResponse(response::Value&& response)
 	return Query::parseResponse(std::move(response));
 }
 
-} // namespace query::Query
-} // namespace graphql::client
+} // namespace benchmark::client::query::Query
+} // namespace graphql

@@ -22,12 +22,10 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-namespace graphql::client {
+namespace graphql::mutate {
 
-/// <summary>
-/// Operation: mutation CompleteTaskMutation
-/// </summary>
-/// <code class="language-graphql">
+/// # Operation: mutation CompleteTaskMutation
+/// ```graphql
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
@@ -41,14 +39,16 @@ namespace graphql::client {
 ///     clientMutationId @skip(if: $skipClientMutationId)
 ///   }
 /// }
-/// </code>
-namespace mutate {
+/// ```
+namespace client {
 
 // Return the original text of the request document.
 [[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
+
+} // namespace client
 
 enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
@@ -79,19 +79,19 @@ struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 	std::optional<std::string> clientMutationId;
 };
 
-} // namespace mutate
+namespace client {
 
 namespace mutation::CompleteTaskMutation {
 
-using mutate::GetRequestText;
-using mutate::GetRequestObject;
+using graphql::mutate::client::GetRequestText;
+using graphql::mutate::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-using mutate::TaskState;
+using graphql::mutate::TaskState;
 
-using mutate::CompleteTaskInput;
+using graphql::mutate::CompleteTaskInput;
 
 struct [[nodiscard("unnecessary construction")]] Variables
 {
@@ -137,6 +137,7 @@ struct Traits
 };
 
 } // namespace mutation::CompleteTaskMutation
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::mutate
 
 #endif // MUTATECLIENT_H

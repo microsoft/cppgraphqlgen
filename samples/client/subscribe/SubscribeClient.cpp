@@ -16,8 +16,9 @@
 
 using namespace std::literals;
 
-namespace graphql::client {
+namespace graphql {
 namespace subscribe {
+namespace client {
 
 const std::string& GetRequestText() noexcept
 {
@@ -52,14 +53,16 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+} // namespace client
 } // namespace subscribe
+namespace client {
 
 using namespace subscribe;
 
 template <>
-subscription::TestSubscription::Response::nextAppointment_Appointment Response<subscription::TestSubscription::Response::nextAppointment_Appointment>::parse(response::Value&& response)
+graphql::subscribe::client::subscription::TestSubscription::Response::nextAppointment_Appointment Response<graphql::subscribe::client::subscription::TestSubscription::Response::nextAppointment_Appointment>::parse(response::Value&& response)
 {
-	subscription::TestSubscription::Response::nextAppointment_Appointment result;
+	graphql::subscribe::client::subscription::TestSubscription::Response::nextAppointment_Appointment result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -93,7 +96,9 @@ subscription::TestSubscription::Response::nextAppointment_Appointment Response<s
 	return result;
 }
 
-namespace subscription::TestSubscription {
+} // namespace client
+
+namespace subscribe::client::subscription::TestSubscription {
 
 const std::string& GetOperationName() noexcept
 {
@@ -104,6 +109,8 @@ const std::string& GetOperationName() noexcept
 
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -125,12 +132,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return subscribe::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return subscribe::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -143,5 +150,5 @@ Response parseResponse(response::Value&& response)
 	return TestSubscription::parseResponse(std::move(response));
 }
 
-} // namespace subscription::TestSubscription
-} // namespace graphql::client
+} // namespace subscribe::client::subscription::TestSubscription
+} // namespace graphql

@@ -22,12 +22,10 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-namespace graphql::client {
+namespace graphql::query {
 
-/// <summary>
-/// Operation: query (unnamed)
-/// </summary>
-/// <code class="language-graphql">
+/// # Operation: query (unnamed)
+/// ```graphql
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
@@ -89,14 +87,16 @@ namespace graphql::client {
 ///   # Try a field with a C++ keyword
 ///   default
 /// }
-/// </code>
-namespace query {
+/// ```
+namespace client {
 
 // Return the original text of the request document.
 [[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
+
+} // namespace client
 
 enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
@@ -106,17 +106,17 @@ enum class [[nodiscard("unnecessary conversion")]] TaskState
 	Complete,
 };
 
-} // namespace query
+namespace client {
 
 namespace query::Query {
 
-using query::GetRequestText;
-using query::GetRequestObject;
+using graphql::query::client::GetRequestText;
+using graphql::query::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-using query::TaskState;
+using graphql::query::TaskState;
 
 struct [[nodiscard("unnecessary construction")]] Response
 {
@@ -208,6 +208,7 @@ struct Traits
 };
 
 } // namespace query::Query
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::query
 
 #endif // QUERYCLIENT_H

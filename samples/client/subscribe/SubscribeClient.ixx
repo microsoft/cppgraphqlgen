@@ -9,19 +9,17 @@ module;
 
 export module GraphQL.Subscribe.SubscribeClient;
 
-export namespace graphql::client {
+export namespace graphql::subscribe {
 
-namespace subscribe {
+namespace client {
 
-using subscribe::GetRequestText;
-using subscribe::GetRequestObject;
-
-} // namespace subscribe
+using client::GetRequestText;
+using client::GetRequestObject;
 
 namespace subscription::TestSubscription {
 
-using subscribe::GetRequestText;
-using subscribe::GetRequestObject;
+using graphql::subscribe::client::GetRequestText;
+using graphql::subscribe::client::GetRequestObject;
 using TestSubscription::GetOperationName;
 
 using TestSubscription::Response;
@@ -31,4 +29,5 @@ using TestSubscription::Traits;
 
 } // namespace subscription::TestSubscription
 
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::subscribe

@@ -22,12 +22,10 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-namespace graphql::client {
+namespace graphql::nestedinput {
 
-/// <summary>
-/// Operation: query testQuery
-/// </summary>
-/// <code class="language-graphql">
+/// # Operation: query testQuery
+/// ```graphql
 /// query testQuery($stream: InputABCD!) {
 ///   control {
 ///     test(new: $stream) {
@@ -35,14 +33,16 @@ namespace graphql::client {
 ///     }
 ///   }
 /// }
-/// </code>
-namespace nestedinput {
+/// ```
+namespace client {
 
 // Return the original text of the request document.
 [[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
+
+} // namespace client
 
 struct [[nodiscard("unnecessary construction")]] InputA
 {
@@ -116,20 +116,20 @@ struct [[nodiscard("unnecessary construction")]] InputBC
 	InputB b;
 };
 
-} // namespace nestedinput
+namespace client {
 
 namespace query::testQuery {
 
-using nestedinput::GetRequestText;
-using nestedinput::GetRequestObject;
+using graphql::nestedinput::client::GetRequestText;
+using graphql::nestedinput::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-using nestedinput::InputA;
-using nestedinput::InputB;
-using nestedinput::InputABCD;
-using nestedinput::InputBC;
+using graphql::nestedinput::InputA;
+using graphql::nestedinput::InputB;
+using graphql::nestedinput::InputABCD;
+using graphql::nestedinput::InputBC;
 
 struct [[nodiscard("unnecessary construction")]] Variables
 {
@@ -171,6 +171,7 @@ struct Traits
 };
 
 } // namespace query::testQuery
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::nestedinput
 
 #endif // NESTEDINPUTCLIENT_H

@@ -276,7 +276,7 @@ int main(int argc, char** argv)
 
 		std::cout << "Executing query..." << std::endl;
 
-		using namespace client::query::relayQuery;
+		using namespace proxy::client::query::relayQuery;
 
 		auto query = GetRequestObject();
 		auto variables = serializeVariables(
@@ -286,7 +286,8 @@ int main(int argc, char** argv)
 		auto serviceResponse = client::parseServiceResponse(
 			service->resolve({ query, GetOperationName(), std::move(variables), launch, state })
 				.get());
-		auto result = client::query::relayQuery::parseResponse(std::move(serviceResponse.data));
+		auto result =
+			proxy::client::query::relayQuery::parseResponse(std::move(serviceResponse.data));
 		auto errors = std::move(serviceResponse.errors);
 
 		if (result.relay.data)
