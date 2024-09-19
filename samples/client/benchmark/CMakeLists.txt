@@ -7,7 +7,8 @@ cmake_minimum_required(VERSION 3.28)
 include(${CMAKE_CURRENT_SOURCE_DIR}/../../../cmake/cppgraphqlgen-functions.cmake)
 
 if(GRAPHQL_UPDATE_SAMPLES AND GRAPHQL_BUILD_CLIENTGEN)
-  update_graphql_client_files(benchmark ../../today/schema.today.graphql client.benchmark.today.graphql Benchmark benchmark)
+  update_graphql_client_files(benchmark ../../today/schema.today.graphql client.benchmark.today.graphql Today today --shared-types)
 endif()
 
 add_graphql_client_target(benchmark)
+target_link_libraries(benchmark_client PRIVATE todaygraphql)

@@ -5,14 +5,16 @@
 
 #pragma once
 
-#ifndef BENCHMARKCLIENT_H
-#define BENCHMARKCLIENT_H
+#ifndef TODAYCLIENT_H
+#define TODAYCLIENT_H
 
 #include "graphqlservice/GraphQLClient.h"
 #include "graphqlservice/GraphQLParse.h"
 #include "graphqlservice/GraphQLResponse.h"
 
 #include "graphqlservice/internal/Version.h"
+
+#include "TodaySchema.h"
 
 #include <optional>
 #include <string>
@@ -22,7 +24,7 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-namespace graphql::benchmark {
+namespace graphql::today {
 
 /// # Operation: query (unnamed)
 /// ```graphql
@@ -55,8 +57,8 @@ namespace client {
 
 namespace query::Query {
 
-using graphql::benchmark::client::GetRequestText;
-using graphql::benchmark::client::GetRequestObject;
+using graphql::today::client::GetRequestText;
+using graphql::today::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -105,6 +107,6 @@ struct Traits
 
 } // namespace query::Query
 } // namespace client
-} // namespace graphql::benchmark
+} // namespace graphql::today
 
-#endif // BENCHMARKCLIENT_H
+#endif // TODAYCLIENT_H

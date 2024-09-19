@@ -1134,7 +1134,8 @@ using namespace )cpp" << _schemaLoader.getSchemaNamespace()
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& inputValue)
+						   << cppType << R"cpp(>::serialize()cpp" << cppType
+						   << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
