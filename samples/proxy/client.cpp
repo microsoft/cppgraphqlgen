@@ -5,7 +5,7 @@
 
 #include "schema/ProxySchema.h"
 #include "schema/QueryObject.h"
-#include "schema/ResultsObject.h"
+#include "schema/QueryResultsObject.h"
 
 #include "graphqlservice/JSONResponse.h"
 
@@ -151,9 +151,8 @@ public:
 	explicit Query(std::string_view host, std::string_view port, std::string_view target,
 		int version) noexcept;
 
-	std::future<std::shared_ptr<proxy::object::Results>> getRelay(std::string&& queryArg,
-		std::optional<std::string>&& operationNameArg,
-		std::optional<std::string>&& variablesArg) const;
+	std::future<std::shared_ptr<proxy::object::QueryResults>> getRelay(
+		proxy::QueryInput&& inputArg) const;
 
 private:
 	const std::string m_host;
@@ -173,21 +172,22 @@ Query::Query(
 
 // Based on:
 // https://www.boost.org/doc/libs/1_82_0/libs/beast/example/http/client/awaitable/http_client_awaitable.cpp
-std::future<std::shared_ptr<proxy::object::Results>> Query::getRelay(std::string&& queryArg,
-	std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const
+std::future<std::shared_ptr<proxy::object::QueryResults>> Query::getRelay(
+	proxy::QueryInput&& inputArg) const
 {
 	response::Value payload { response::Type::Map };
 
-	payload.emplace_back("query"s, response::Value { std::move(queryArg) });
+	payload.emplace_back("query"s, response::Value { std::move(inputArg.query) });
 
-	if (operationNameArg)
+	if (inputArg.operationName)
 	{
-		payload.emplace_back("operationName"s, response::Value { std::move(*operationNameArg) });
+		payload.emplace_back("operationName"s,
+			response::Value { std::move(*inputArg.operationName) });
 	}
 
-	if (variablesArg)
+	if (inputArg.variables)
 	{
-		payload.emplace_back("variables"s, response::Value { std::move(*variablesArg) });
+		payload.emplace_back("variables"s, response::Value { std::move(*inputArg.variables) });
 	}
 
 	std::string requestBody = response::toJSON(std::move(payload));
@@ -199,7 +199,8 @@ std::future<std::shared_ptr<proxy::object::Results>> Query::getRelay(std::string
 			const char* port,
 			const char* target,
 			int version,
-			std::string requestBody) -> net::awaitable<std::shared_ptr<proxy::object::Results>> {
+			std::string requestBody)
+			-> net::awaitable<std::shared_ptr<proxy::object::QueryResults>> {
 			// These objects perform our I/O. They use an executor with a default completion token
 			// of use_awaitable. This makes our code easy, but will use exceptions as the default
 			// error handling, i.e. if the connection drops, we might see an exception.
@@ -252,7 +253,7 @@ std::future<std::shared_ptr<proxy::object::Results>> Query::getRelay(std::string
 
 			auto [data, errors] = client::parseServiceResponse(response::parseJSON(res.body()));
 
-			co_return std::make_shared<proxy::object::Results>(
+			co_return std::make_shared<proxy::object::QueryResults>(
 				std::make_shared<Results>(std::move(data), std::move(errors)));
 		}(m_host.c_str(), m_port.c_str(), m_target.c_str(), m_version, std::move(requestBody)),
 		net::use_future);
@@ -279,15 +280,16 @@ int main(int argc, char** argv)
 		using namespace proxy::client::query::relayQuery;
 
 		auto query = GetRequestObject();
-		auto variables = serializeVariables(
-			{ input, ((argc > 1) ? std::make_optional(argv[1]) : std::nullopt) });
+		auto variables = serializeVariables({ QueryInput { OperationType::QUERY,
+			input,
+			((argc > 1) ? std::make_optional(argv[1]) : std::nullopt),
+			std::nullopt } });
 		auto launch = service::await_async { std::make_shared<service::await_worker_queue>() };
 		auto state = std::make_shared<AsyncIoWorker>();
 		auto serviceResponse = client::parseServiceResponse(
 			service->resolve({ query, GetOperationName(), std::move(variables), launch, state })
 				.get());
-		auto result =
-			proxy::client::query::relayQuery::parseResponse(std::move(serviceResponse.data));
+		auto result = parseResponse(std::move(serviceResponse.data));
 		auto errors = std::move(serviceResponse.errors);
 
 		if (result.relay.data)

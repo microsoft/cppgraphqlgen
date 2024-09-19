@@ -26,8 +26,8 @@ const std::string& GetRequestText() noexcept
 		# Copyright (c) Microsoft Corporation. All rights reserved.
 		# Licensed under the MIT License.
 		
-		query relayQuery($query: String!, $operationName: String, $variables: String) {
-		  relay(query: $query, operationName: $operationName, variables: $variables) {
+		query relayQuery($input: QueryInput!) {
+		  relay(input: $input) {
 		    data
 		    errors
 		  }
@@ -53,14 +53,70 @@ const peg::ast& GetRequestObject() noexcept
 
 } // namespace client
 } // namespace proxy
+
 namespace client {
 
 using namespace proxy;
 
 template <>
-graphql::proxy::client::query::relayQuery::Response::relay_Results Response<graphql::proxy::client::query::relayQuery::Response::relay_Results>::parse(response::Value&& response)
+response::Value Variable<OperationType>::serialize(OperationType&& value)
 {
-	graphql::proxy::client::query::relayQuery::Response::relay_Results result;
+	static const std::array<std::string_view, 3> s_names = {
+		R"gql(QUERY)gql"sv,
+		R"gql(MUTATION)gql"sv,
+		R"gql(SUBSCRIPTION)gql"sv
+	};
+
+	response::Value result { response::Type::EnumValue };
+
+	result.set<std::string>(std::string { s_names[static_cast<std::size_t>(value)] });
+
+	return result;
+}
+
+template <>
+response::Value Variable<QueryInput>::serialize(QueryInput&& inputValue)
+{
+	response::Value result { response::Type::Map };
+
+	result.emplace_back(R"js(type)js"s, ModifiedVariable<OperationType>::serialize(std::move(inputValue.type)));
+	result.emplace_back(R"js(query)js"s, ModifiedVariable<std::string>::serialize(std::move(inputValue.query)));
+	result.emplace_back(R"js(operationName)js"s, ModifiedVariable<std::string>::serialize<TypeModifier::Nullable>(std::move(inputValue.operationName)));
+	result.emplace_back(R"js(variables)js"s, ModifiedVariable<std::string>::serialize<TypeModifier::Nullable>(std::move(inputValue.variables)));
+
+	return result;
+}
+
+template <>
+OperationType Response<OperationType>::parse(response::Value&& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw std::logic_error { R"ex(not a valid OperationType value)ex" };
+	}
+
+	static const std::array<std::pair<std::string_view, OperationType>, 3> s_values = {
+		std::make_pair(R"gql(QUERY)gql"sv, OperationType::QUERY),
+		std::make_pair(R"gql(MUTATION)gql"sv, OperationType::MUTATION),
+		std::make_pair(R"gql(SUBSCRIPTION)gql"sv, OperationType::SUBSCRIPTION)
+	};
+
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_values,
+		std::string_view { value.get<std::string>() });
+
+	if (!result)
+	{
+		throw std::logic_error { R"ex(not a valid OperationType value)ex" };
+	}
+
+	return *result;
+}
+
+template <>
+graphql::proxy::client::query::relayQuery::Response::relay_QueryResults Response<graphql::proxy::client::query::relayQuery::Response::relay_QueryResults>::parse(response::Value&& response)
+{
+	graphql::proxy::client::query::relayQuery::Response::relay_QueryResults result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -101,9 +157,7 @@ response::Value serializeVariables(Variables&& variables)
 
 	response::Value result { response::Type::Map };
 
-	result.emplace_back(R"js(query)js"s, ModifiedVariable<std::string>::serialize(std::move(variables.query)));
-	result.emplace_back(R"js(operationName)js"s, ModifiedVariable<std::string>::serialize<TypeModifier::Nullable>(std::move(variables.operationName)));
-	result.emplace_back(R"js(variables)js"s, ModifiedVariable<std::string>::serialize<TypeModifier::Nullable>(std::move(variables.variables)));
+	result.emplace_back(R"js(input)js"s, ModifiedVariable<QueryInput>::serialize(std::move(variables.input)));
 
 	return result;
 }
@@ -122,7 +176,7 @@ Response parseResponse(response::Value&& response)
 		{
 			if (member.first == R"js(relay)js"sv)
 			{
-				result.relay = ModifiedResponse<query::relayQuery::Response::relay_Results>::parse(std::move(member.second));
+				result.relay = ModifiedResponse<query::relayQuery::Response::relay_QueryResults>::parse(std::move(member.second));
 				continue;
 			}
 		}

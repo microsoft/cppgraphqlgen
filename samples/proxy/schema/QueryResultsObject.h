@@ -5,13 +5,13 @@
 
 #pragma once
 
-#ifndef RESULTSOBJECT_H
-#define RESULTSOBJECT_H
+#ifndef QUERYRESULTSOBJECT_H
+#define QUERYRESULTSOBJECT_H
 
 #include "ProxySchema.h"
 
 namespace graphql::proxy::object {
-namespace methods::ResultsHas {
+namespace methods::QueryResultsHas {
 
 template <class TImpl>
 concept getDataWithParams = requires (TImpl impl, service::FieldParams params)
@@ -49,9 +49,9 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 	{ impl.endSelectionSet(params) };
 };
 
-} // namespace methods::ResultsHas
+} // namespace methods::QueryResultsHas
 
-class [[nodiscard("unnecessary construction")]] Results final
+class [[nodiscard("unnecessary construction")]] QueryResults final
 	: public service::Object
 {
 private:
@@ -82,33 +82,33 @@ private:
 
 		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getData(service::FieldParams&& params) const override
 		{
-			if constexpr (methods::ResultsHas::getDataWithParams<T>)
+			if constexpr (methods::QueryResultsHas::getDataWithParams<T>)
 			{
 				return { _pimpl->getData(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::ResultsHas::getData<T>, R"msg(Results::getData is not implemented)msg");
+				static_assert(methods::QueryResultsHas::getData<T>, R"msg(QueryResults::getData is not implemented)msg");
 				return { _pimpl->getData() };
 			}
 		}
 
 		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::vector<std::optional<std::string>>>> getErrors(service::FieldParams&& params) const override
 		{
-			if constexpr (methods::ResultsHas::getErrorsWithParams<T>)
+			if constexpr (methods::QueryResultsHas::getErrorsWithParams<T>)
 			{
 				return { _pimpl->getErrors(std::move(params)) };
 			}
 			else
 			{
-				static_assert(methods::ResultsHas::getErrors<T>, R"msg(Results::getErrors is not implemented)msg");
+				static_assert(methods::QueryResultsHas::getErrors<T>, R"msg(QueryResults::getErrors is not implemented)msg");
 				return { _pimpl->getErrors() };
 			}
 		}
 
 		void beginSelectionSet(const service::SelectionSetParams& params) const override
 		{
-			if constexpr (methods::ResultsHas::beginSelectionSet<T>)
+			if constexpr (methods::QueryResultsHas::beginSelectionSet<T>)
 			{
 				_pimpl->beginSelectionSet(params);
 			}
@@ -116,7 +116,7 @@ private:
 
 		void endSelectionSet(const service::SelectionSetParams& params) const override
 		{
-			if constexpr (methods::ResultsHas::endSelectionSet<T>)
+			if constexpr (methods::QueryResultsHas::endSelectionSet<T>)
 			{
 				_pimpl->endSelectionSet(params);
 			}
@@ -126,7 +126,7 @@ private:
 		const std::shared_ptr<T> _pimpl;
 	};
 
-	explicit Results(std::unique_ptr<const Concept> pimpl) noexcept;
+	explicit QueryResults(std::unique_ptr<const Concept> pimpl) noexcept;
 
 	[[nodiscard("unnecessary call")]] service::TypeNames getTypeNames() const noexcept;
 	[[nodiscard("unnecessary call")]] service::ResolverMap getResolvers() const noexcept;
@@ -138,17 +138,17 @@ private:
 
 public:
 	template <class T>
-	explicit Results(std::shared_ptr<T> pimpl) noexcept
-		: Results { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
+	explicit QueryResults(std::shared_ptr<T> pimpl) noexcept
+		: QueryResults { std::unique_ptr<const Concept> { std::make_unique<Model<T>>(std::move(pimpl)) } }
 	{
 	}
 
 	[[nodiscard("unnecessary call")]] static constexpr std::string_view getObjectType() noexcept
 	{
-		return { R"gql(Results)gql" };
+		return { R"gql(QueryResults)gql" };
 	}
 };
 
 } // namespace graphql::proxy::object
 
-#endif // RESULTSOBJECT_H
+#endif // QUERYRESULTSOBJECT_H

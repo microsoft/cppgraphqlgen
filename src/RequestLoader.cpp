@@ -140,6 +140,11 @@ const RequestVariableList& RequestLoader::getVariables(const Operation& operatio
 	return operation.variables;
 }
 
+bool RequestLoader::useSharedTypes() const noexcept
+{
+	return _requestOptions.sharedTypes;
+}
+
 const RequestInputTypeList& RequestLoader::getReferencedInputTypes(
 	const Operation& operation) const noexcept
 {

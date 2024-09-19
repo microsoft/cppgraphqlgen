@@ -5,12 +5,12 @@
 
 module;
 
-#include "ResultsObject.h"
+#include "QueryResultsObject.h"
 
-export module GraphQL.Proxy.ResultsObject;
+export module GraphQL.Proxy.QueryResultsObject;
 
 export namespace graphql::proxy::object {
 
-using object::Results;
+using object::QueryResults;
 
 } // namespace graphql::proxy::object

@@ -192,7 +192,17 @@ bool Generator::outputHeader() const noexcept
 #include "graphqlservice/GraphQLResponse.h"
 
 #include "graphqlservice/internal/Version.h"
+)cpp";
 
+	if (_requestLoader.useSharedTypes())
+	{
+		headerFile << R"cpp(
+#include ")cpp" << _schemaLoader.getFilenamePrefix()
+				   << R"cpp(Schema.h"
+)cpp";
+	}
+
+	headerFile << R"cpp(
 #include <optional>
 #include <string>
 #include <vector>
@@ -220,141 +230,146 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	outputGetRequestDeclaration(headerFile);
 
 	const auto& operations = _requestLoader.getOperations();
-	std::unordered_set<std::string_view> declaredEnum;
 
-	for (const auto& operation : operations)
+	if (!_requestLoader.useSharedTypes())
 	{
-		// Define all of the enums referenced either in variables or the response.
-		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
+		std::unordered_set<std::string_view> declaredEnum;
+
+		for (const auto& operation : operations)
 		{
-			const auto cppType = _schemaLoader.getCppType(enumType->name());
-
-			if (!declaredEnum.insert(cppType).second)
+			// Define all of the enums referenced either in variables or the response.
+			for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
 			{
-				continue;
-			}
+				const auto cppType = _schemaLoader.getCppType(enumType->name());
 
-			pendingSeparator.reset();
-
-			if (clientNamespaceScope.exit())
-			{
-				headerFile << std::endl;
-			}
-
-			headerFile << R"cpp(enum class [[nodiscard("unnecessary conversion")]] )cpp" << cppType
-					   << R"cpp(
-{
-)cpp";
-			for (const auto& enumValue : enumType->enumValues())
-			{
-				headerFile << R"cpp(	)cpp" << SchemaLoader::getSafeCppName(enumValue->name())
-						   << R"cpp(,
-)cpp";
-			}
-
-			headerFile << R"cpp(};
-)cpp";
-
-			pendingSeparator.add();
-		}
-	}
-
-	std::unordered_set<std::string_view> declaredInput;
-	std::unordered_set<std::string_view> forwardDeclaredInput;
-
-	for (const auto& operation : operations)
-	{
-		// Define all of the input object structs referenced in variables.
-		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
-		{
-			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
-
-			if (!declaredInput.insert(cppType).second)
-			{
-				continue;
-			}
-
-			pendingSeparator.reset();
-
-			if (clientNamespaceScope.exit())
-			{
-				headerFile << std::endl;
-			}
-
-			if (!inputType.declarations.empty())
-			{
-				// Forward declare nullable dependencies
-				for (auto declaration : inputType.declarations)
+				if (!declaredEnum.insert(cppType).second)
 				{
-					if (declaredInput.find(declaration) == declaredInput.end()
-						&& forwardDeclaredInput.insert(declaration).second)
-					{
-						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
-)cpp";
-						pendingSeparator.add();
-					}
+					continue;
 				}
 
 				pendingSeparator.reset();
-			}
 
-			headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp" << cppType
-					   << R"cpp(
+				if (clientNamespaceScope.exit())
+				{
+					headerFile << std::endl;
+				}
+
+				headerFile << R"cpp(enum class [[nodiscard("unnecessary conversion")]] )cpp"
+						   << cppType << R"cpp(
+{
+)cpp";
+				for (const auto& enumValue : enumType->enumValues())
+				{
+					headerFile << R"cpp(	)cpp" << SchemaLoader::getSafeCppName(enumValue->name())
+							   << R"cpp(,
+)cpp";
+				}
+
+				headerFile << R"cpp(};
+)cpp";
+
+				pendingSeparator.add();
+			}
+		}
+
+		std::unordered_set<std::string_view> declaredInput;
+		std::unordered_set<std::string_view> forwardDeclaredInput;
+
+		for (const auto& operation : operations)
+		{
+			// Define all of the input object structs referenced in variables.
+			for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+			{
+				const auto cppType = _schemaLoader.getCppType(inputType.type->name());
+
+				if (!declaredInput.insert(cppType).second)
+				{
+					continue;
+				}
+
+				pendingSeparator.reset();
+
+				if (clientNamespaceScope.exit())
+				{
+					headerFile << std::endl;
+				}
+
+				if (!inputType.declarations.empty())
+				{
+					// Forward declare nullable dependencies
+					for (auto declaration : inputType.declarations)
+					{
+						if (declaredInput.find(declaration) == declaredInput.end()
+							&& forwardDeclaredInput.insert(declaration).second)
+						{
+							headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
+)cpp";
+							pendingSeparator.add();
+						}
+					}
+
+					pendingSeparator.reset();
+				}
+
+				headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp"
+						   << cppType << R"cpp(
 {
 	explicit )cpp" << cppType
-					   << R"cpp(()cpp";
+						   << R"cpp(()cpp";
 
-			bool firstField = true;
+				bool firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				if (firstField)
+				for (const auto& inputField : inputType.type->inputFields())
 				{
-					headerFile << R"cpp() noexcept;
+					if (firstField)
+					{
+						headerFile << R"cpp() noexcept;
 	explicit )cpp" << cppType << R"cpp(()cpp";
+					}
+					else
+					{
+						headerFile << R"cpp(,)cpp";
+					}
+
+					firstField = false;
+
+					const auto inputCppType =
+						_requestLoader.getInputCppType(inputField->type().lock());
+
+					headerFile << R"cpp(
+		)cpp" << inputCppType << R"cpp( )cpp"
+							   << SchemaLoader::getSafeCppName(inputField->name())
+							   << R"cpp(Arg)cpp";
 				}
-				else
-				{
-					headerFile << R"cpp(,)cpp";
-				}
 
-				firstField = false;
-
-				const auto inputCppType = _requestLoader.getInputCppType(inputField->type().lock());
-
-				headerFile << R"cpp(
-		)cpp" << inputCppType
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(Arg)cpp";
-			}
-
-			headerFile << R"cpp() noexcept;
+				headerFile << R"cpp() noexcept;
 	)cpp" << cppType << R"cpp((const )cpp"
-					   << cppType << R"cpp(& other);
+						   << cppType << R"cpp(& other);
 	)cpp" << cppType << R"cpp(()cpp"
-					   << cppType << R"cpp(&& other) noexcept;
+						   << cppType << R"cpp(&& other) noexcept;
 	~)cpp" << cppType << R"cpp(();
 
 	)cpp" << cppType << R"cpp(& operator=(const )cpp"
-					   << cppType << R"cpp(& other);
+						   << cppType << R"cpp(& other);
 	)cpp" << cppType << R"cpp(& operator=()cpp"
-					   << cppType << R"cpp(&& other) noexcept;
+						   << cppType << R"cpp(&& other) noexcept;
 
 )cpp";
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				headerFile << R"cpp(	)cpp"
-						   << _requestLoader.getInputCppType(inputField->type().lock())
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(;
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					headerFile << R"cpp(	)cpp"
+							   << _requestLoader.getInputCppType(inputField->type().lock())
+							   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+							   << R"cpp(;
 )cpp";
+				}
+
+				headerFile << R"cpp(};
+)cpp";
+
+				pendingSeparator.add();
 			}
-
-			headerFile << R"cpp(};
-)cpp";
-
-			pendingSeparator.add();
 		}
 	}
 
@@ -855,164 +870,170 @@ using namespace std::literals;
 	outputGetRequestImplementation(sourceFile);
 
 	const auto& operations = _requestLoader.getOperations();
-	std::unordered_set<std::string_view> outputInputMethods;
 
-	for (const auto& operation : operations)
+	if (!_requestLoader.useSharedTypes())
 	{
-		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+
+		std::unordered_set<std::string_view> outputInputMethods;
+
+		for (const auto& operation : operations)
 		{
-			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
-
-			if (!outputInputMethods.insert(cppType).second)
+			for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
 			{
-				continue;
-			}
+				const auto cppType = _schemaLoader.getCppType(inputType.type->name());
 
-			pendingSeparator.reset();
+				if (!outputInputMethods.insert(cppType).second)
+				{
+					continue;
+				}
 
-			if (clientNamespaceScope.exit())
-			{
-				sourceFile << R"cpp(
-using namespace graphql::)cpp"
-						   << getClientNamespace() << R"cpp(;
+				pendingSeparator.reset();
+
+				if (clientNamespaceScope.exit())
+				{
+					sourceFile << R"cpp(
+using namespace graphql::)cpp" << getClientNamespace()
+							   << R"cpp(;
 
 )cpp";
-			}
+				}
 
-			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept)cpp";
+				sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept)cpp";
 
-			bool firstField = true;
+				bool firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				sourceFile << R"cpp(
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					sourceFile << R"cpp(
 	)cpp" << (firstField ? R"cpp(:)cpp" : R"cpp(,)cpp")
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp( {})cpp";
-				firstField = false;
-			}
+							   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+							   << R"cpp( {})cpp";
+					firstField = false;
+				}
 
-			sourceFile << R"cpp(
+				sourceFile << R"cpp(
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 )cpp" << cppType << R"cpp(::)cpp"
-					   << cppType << R"cpp(()cpp";
+						   << cppType << R"cpp(()cpp";
 
-			firstField = true;
+				firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				if (!firstField)
+				for (const auto& inputField : inputType.type->inputFields())
 				{
-					sourceFile << R"cpp(,)cpp";
+					if (!firstField)
+					{
+						sourceFile << R"cpp(,)cpp";
+					}
+
+					firstField = false;
+					sourceFile << R"cpp(
+		)cpp" << _requestLoader.getInputCppType(inputField->type().lock())
+							   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+							   << R"cpp(Arg)cpp";
 				}
 
-				firstField = false;
-				sourceFile << R"cpp(
-		)cpp" << _requestLoader.getInputCppType(inputField->type().lock())
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(Arg)cpp";
-			}
-
-			sourceFile << R"cpp() noexcept
+				sourceFile << R"cpp() noexcept
 )cpp";
 
-			firstField = true;
+				firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-				firstField = false;
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+					firstField = false;
 
-				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+					const auto name = SchemaLoader::getSafeCppName(inputField->name());
 
-				sourceFile << name << R"cpp( { std::move()cpp" << name << R"cpp(Arg) }
+					sourceFile << name << R"cpp( { std::move()cpp" << name << R"cpp(Arg) }
 )cpp";
-			}
+				}
 
-			sourceFile << R"cpp({
+				sourceFile << R"cpp({
 }
 
 )cpp" << cppType << R"cpp(::)cpp"
-					   << cppType << R"cpp((const )cpp" << cppType << R"cpp(& other)
+						   << cppType << R"cpp((const )cpp" << cppType << R"cpp(& other)
 )cpp";
 
-			firstField = true;
+				firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-				firstField = false;
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+					firstField = false;
 
-				const auto name = SchemaLoader::getSafeCppName(inputField->name());
-				const auto [type, modifiers] =
-					RequestLoader::unwrapSchemaType(inputField->type().lock());
+					const auto name = SchemaLoader::getSafeCppName(inputField->name());
+					const auto [type, modifiers] =
+						RequestLoader::unwrapSchemaType(inputField->type().lock());
 
-				sourceFile << name << R"cpp( { ModifiedVariable<)cpp"
-						   << _schemaLoader.getCppType(type->name()) << R"cpp(>::duplicate)cpp"
-						   << getTypeModifierList(modifiers) << R"cpp((other.)cpp" << name
-						   << R"cpp() }
+					sourceFile << name << R"cpp( { ModifiedVariable<)cpp"
+							   << _schemaLoader.getCppType(type->name()) << R"cpp(>::duplicate)cpp"
+							   << getTypeModifierList(modifiers) << R"cpp((other.)cpp" << name
+							   << R"cpp() }
 )cpp";
-			}
+				}
 
-			sourceFile << R"cpp({
+				sourceFile << R"cpp({
 }
 
 )cpp" << cppType << R"cpp(::)cpp"
-					   << cppType << R"cpp(()cpp" << cppType << R"cpp(&& other) noexcept
+						   << cppType << R"cpp(()cpp" << cppType << R"cpp(&& other) noexcept
 )cpp";
 
-			firstField = true;
+				firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-				firstField = false;
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+					firstField = false;
 
-				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+					const auto name = SchemaLoader::getSafeCppName(inputField->name());
 
-				sourceFile << name << R"cpp( { std::move(other.)cpp" << name << R"cpp() }
+					sourceFile << name << R"cpp( { std::move(other.)cpp" << name << R"cpp() }
 )cpp";
-			}
+				}
 
-			sourceFile << R"cpp({
+				sourceFile << R"cpp({
 }
 
 )cpp" << cppType << R"cpp(::~)cpp"
-					   << cppType << R"cpp(()
+						   << cppType << R"cpp(()
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 )cpp" << cppType << R"cpp(& )cpp"
-					   << cppType << R"cpp(::operator=(const )cpp" << cppType << R"cpp(& other)
+						   << cppType << R"cpp(::operator=(const )cpp" << cppType << R"cpp(& other)
 {
-	return *this = )cpp"
-					   << cppType << R"cpp( { other };
+	return *this = )cpp" << cppType
+						   << R"cpp( { other };
 }
 
 )cpp" << cppType << R"cpp(& )cpp"
-					   << cppType << R"cpp(::operator=()cpp" << cppType << R"cpp(&& other) noexcept
+						   << cppType << R"cpp(::operator=()cpp" << cppType
+						   << R"cpp(&& other) noexcept
 {
 )cpp";
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					const auto name = SchemaLoader::getSafeCppName(inputField->name());
 
-				sourceFile << R"cpp(	)cpp" << name << R"cpp( = std::move(other.)cpp" << name
-						   << R"cpp();
+					sourceFile << R"cpp(	)cpp" << name << R"cpp( = std::move(other.)cpp" << name
+							   << R"cpp();
 )cpp";
-			}
+				}
 
-			sourceFile << R"cpp(
+				sourceFile << R"cpp(
 	return *this;
 }
 )cpp";
 
-			pendingSeparator.add();
+				pendingSeparator.add();
+			}
 		}
 	}
 
@@ -1586,6 +1607,7 @@ int main(int argc, char** argv)
 	bool buildCustom = false;
 	bool verbose = false;
 	bool noIntrospection = false;
+	bool sharedTypes = false;
 	std::string schemaFileName;
 	std::string requestFileName;
 	std::string operationName;
@@ -1615,7 +1637,9 @@ int main(int argc, char** argv)
 		po::value(&headerDir),
 		"Target path for the <prefix>Client.h header file")("no-introspection",
 		po::bool_switch(&noIntrospection),
-		"Do not expect support for Introspection");
+		"Do not expect support for Introspection")("shared-types",
+		po::bool_switch(&sharedTypes),
+		"Re-use shared types from <prefix>Schema.h");
 	positional.add("schema", 1).add("request", 1).add("prefix", 1).add("namespace", 1);
 
 	try
@@ -1677,6 +1701,7 @@ int main(int argc, char** argv)
 				{ operationName.empty() ? std::nullopt
 										: std::make_optional(std::move(operationName)) },
 				noIntrospection,
+				sharedTypes,
 			},
 			graphql::generator::client::GeneratorOptions {
 				{ std::move(headerDir), std::move(sourceDir) },

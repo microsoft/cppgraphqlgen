@@ -14,6 +14,8 @@
 
 #include "graphqlservice/internal/Version.h"
 
+#include "ProxySchema.h"
+
 #include <optional>
 #include <string>
 #include <vector>
@@ -29,8 +31,8 @@ namespace graphql::proxy {
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
-/// query relayQuery($query: String!, $operationName: String, $variables: String) {
-///   relay(query: $query, operationName: $operationName, variables: $variables) {
+/// query relayQuery($input: QueryInput!) {
+///   relay(input: $input) {
 ///     data
 ///     errors
 ///   }
@@ -52,24 +54,26 @@ using graphql::proxy::client::GetRequestObject;
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
+using graphql::proxy::OperationType;
+
+using graphql::proxy::QueryInput;
+
 struct [[nodiscard("unnecessary construction")]] Variables
 {
-	std::string query {};
-	std::optional<std::string> operationName {};
-	std::optional<std::string> variables {};
+	QueryInput input {};
 };
 
 [[nodiscard("unnecessary conversion")]] response::Value serializeVariables(Variables&& variables);
 
 struct [[nodiscard("unnecessary construction")]] Response
 {
-	struct [[nodiscard("unnecessary construction")]] relay_Results
+	struct [[nodiscard("unnecessary construction")]] relay_QueryResults
 	{
 		std::optional<std::string> data {};
 		std::optional<std::vector<std::optional<std::string>>> errors {};
 	};
 
-	relay_Results relay {};
+	relay_QueryResults relay {};
 };
 
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);

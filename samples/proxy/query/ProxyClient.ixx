@@ -16,11 +16,23 @@ namespace client {
 using client::GetRequestText;
 using client::GetRequestObject;
 
+} // namespace client
+
+using proxy::OperationType;
+
+using proxy::QueryInput;
+
+namespace client {
+
 namespace query::relayQuery {
 
 using graphql::proxy::client::GetRequestText;
 using graphql::proxy::client::GetRequestObject;
 using relayQuery::GetOperationName;
+
+using graphql::proxy::OperationType;
+
+using graphql::proxy::QueryInput;
 
 using relayQuery::Variables;
 using relayQuery::serializeVariables;
