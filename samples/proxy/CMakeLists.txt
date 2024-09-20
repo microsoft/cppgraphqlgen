@@ -3,8 +3,8 @@
 
 cmake_minimum_required(VERSION 3.28)
 
-add_subdirectory(query)
 add_subdirectory(schema)
+add_subdirectory(query)
 
 add_executable(client client.cpp)
 target_link_libraries(client PRIVATE
