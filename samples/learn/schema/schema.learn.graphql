@@ -45,3 +45,8 @@ type Review {
 type Mutation {
   createReview(ep: Episode! review: ReviewInput!): Review!
 }
+
+type Subscription {
+  characterChanged: Character!
+  newEpisode: Episode!
+}

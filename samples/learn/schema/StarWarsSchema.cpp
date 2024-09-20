@@ -5,6 +5,7 @@
 
 #include "QueryObject.h"
 #include "MutationObject.h"
+#include "SubscriptionObject.h"
 
 #include "graphqlservice/internal/Schema.h"
 
@@ -145,13 +146,15 @@ ReviewInput& ReviewInput::operator=(ReviewInput&& other) noexcept
 	return *this;
 }
 
-Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation)
+Operations::Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription)
 	: service::Request({
 		{ service::strQuery, query },
-		{ service::strMutation, mutation }
+		{ service::strMutation, mutation },
+		{ service::strSubscription, subscription }
 	}, GetSchema())
 	, _query(std::move(query))
 	, _mutation(std::move(mutation))
+	, _subscription(std::move(subscription))
 {
 }
 
@@ -173,6 +176,8 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(Review)gql"sv, typeReview);
 	auto typeMutation = schema::ObjectType::Make(R"gql(Mutation)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Mutation)gql"sv, typeMutation);
+	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(Subscription)gql"sv, typeSubscription);
 
 	typeEpisode->AddEnumValues({
 		{ service::s_namesEpisode[static_cast<std::size_t>(learn::Episode::NEW_HOPE)], R"md()md"sv, std::nullopt },
@@ -192,9 +197,11 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	AddQueryDetails(typeQuery, schema);
 	AddReviewDetails(typeReview, schema);
 	AddMutationDetails(typeMutation, schema);
+	AddSubscriptionDetails(typeSubscription, schema);
 
 	schema->AddQueryType(typeQuery);
 	schema->AddMutationType(typeMutation);
+	schema->AddSubscriptionType(typeSubscription);
 }
 
 std::shared_ptr<schema::Schema> GetSchema()

@@ -8,6 +8,7 @@
 #include "MutationData.h"
 #include "QueryData.h"
 #include "ReviewData.h"
+#include "SubscriptionData.h"
 
 using namespace std::literals;
 
@@ -113,7 +114,9 @@ std::shared_ptr<service::Request> GetService() noexcept
 	auto query =
 		std::make_shared<learn::Query>(std::move(heroes), std::move(humans), std::move(droids));
 	auto mutation = std::make_shared<learn::Mutation>();
-	auto service = std::make_shared<learn::Operations>(std::move(query), std::move(mutation));
+	auto service = std::make_shared<learn::Operations>(std::move(query),
+		std::move(mutation),
+		std::shared_ptr<learn::Subscription> {});
 
 	return service;
 }

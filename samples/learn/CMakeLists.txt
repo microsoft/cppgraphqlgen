@@ -11,7 +11,8 @@ add_library(star_wars STATIC
   QueryData.cpp
   ReviewData.cpp
   MutationData.cpp
-  StarWarsData.cpp)
+  StarWarsData.cpp
+  SubscriptionData.cpp)
 target_link_libraries(star_wars PUBLIC learn_schema)
 target_include_directories(star_wars INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 

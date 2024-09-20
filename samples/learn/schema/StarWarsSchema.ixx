@@ -15,6 +15,7 @@ export import GraphQL.StarWars.DroidObject;
 export import GraphQL.StarWars.QueryObject;
 export import GraphQL.StarWars.ReviewObject;
 export import GraphQL.StarWars.MutationObject;
+export import GraphQL.StarWars.SubscriptionObject;
 
 export namespace graphql::learn {
 
@@ -32,6 +33,7 @@ using learn::AddDroidDetails;
 using learn::AddQueryDetails;
 using learn::AddReviewDetails;
 using learn::AddMutationDetails;
+using learn::AddSubscriptionDetails;
 
 using learn::GetSchema;
 

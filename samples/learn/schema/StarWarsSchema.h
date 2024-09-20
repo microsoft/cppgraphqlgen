@@ -81,6 +81,7 @@ class Droid;
 class Query;
 class Review;
 class Mutation;
+class Subscription;
 
 } // namespace object
 
@@ -88,13 +89,14 @@ class [[nodiscard("unnecessary construction")]] Operations final
 	: public service::Request
 {
 public:
-	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation);
+	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
 
-	template <class TQuery, class TMutation>
-	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation)
+	template <class TQuery, class TMutation, class TSubscription = service::SubscriptionPlaceholder>
+	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation, std::shared_ptr<TSubscription> subscription = {})
 		: Operations {
 			std::make_shared<object::Query>(std::move(query)),
-			std::make_shared<object::Mutation>(std::move(mutation))
+			std::make_shared<object::Mutation>(std::move(mutation)),
+			subscription ? std::make_shared<object::Subscription>(std::move(subscription)) : std::shared_ptr<object::Subscription> {}
 		}
 	{
 	}
@@ -102,6 +104,7 @@ public:
 private:
 	std::shared_ptr<object::Query> _query;
 	std::shared_ptr<object::Mutation> _mutation;
+	std::shared_ptr<object::Subscription> _subscription;
 };
 
 void AddCharacterDetails(const std::shared_ptr<schema::InterfaceType>& typeCharacter, const std::shared_ptr<schema::Schema>& schema);
@@ -111,6 +114,7 @@ void AddDroidDetails(const std::shared_ptr<schema::ObjectType>& typeDroid, const
 void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema);
 void AddReviewDetails(const std::shared_ptr<schema::ObjectType>& typeReview, const std::shared_ptr<schema::Schema>& schema);
 void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema);
+void AddSubscriptionDetails(const std::shared_ptr<schema::ObjectType>& typeSubscription, const std::shared_ptr<schema::Schema>& schema);
 
 std::shared_ptr<schema::Schema> GetSchema();
 
