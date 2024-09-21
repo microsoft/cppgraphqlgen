@@ -36,16 +36,23 @@ function(update_graphql_schema_files SCHEMA_TARGET SCHEMA_GRAPHQL SCHEMA_PREFIX 
     DEPENDS ${SCHEMA_GRAPHQL} ${GRAPHQL_UPDATE_SCHEMA_FILES_SCRIPT} cppgraphqlgen::schemagen
     COMMENT "Generating ${SCHEMA_TARGET} GraphQL schema"
     VERBATIM)
+
+  add_custom_target(${SCHEMA_TARGET}_update_schema ALL
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_TARGET}_schema_files)
+  file(REAL_PATH ${SCHEMA_GRAPHQL} SCHEMA_GRAPHQL BASE_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+  set_target_properties(${SCHEMA_TARGET}_update_schema PROPERTIES
+    SCHEMA_GRAPHQL ${SCHEMA_GRAPHQL}
+    SCHEMA_PREFIX ${SCHEMA_PREFIX}
+    SCHEMA_NAMESPACE ${SCHEMA_NAMESPACE})
 endfunction()
 
 function(add_graphql_schema_target SCHEMA_TARGET)
-  add_custom_target(${SCHEMA_TARGET}_update_schema ALL
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_TARGET}_schema_files)
-
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_TARGET}_schema_files)
     file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/${SCHEMA_TARGET}_schema_files SCHEMA_FILES)
     add_library(${SCHEMA_TARGET}_schema STATIC ${SCHEMA_FILES})
-    add_dependencies(${SCHEMA_TARGET}_schema ${SCHEMA_TARGET}_update_schema)
+    if(TARGET ${SCHEMA_TARGET}_update_schema)
+      add_dependencies(${SCHEMA_TARGET}_schema ${SCHEMA_TARGET}_update_schema)
+    endif()
     target_compile_features(${SCHEMA_TARGET}_schema PUBLIC cxx_std_20)
     target_include_directories(${SCHEMA_TARGET}_schema PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
     target_link_libraries(${SCHEMA_TARGET}_schema PUBLIC cppgraphqlgen::graphqlservice)
@@ -90,19 +97,63 @@ function(update_graphql_client_files CLIENT_TARGET SCHEMA_GRAPHQL REQUEST_GRAPHQ
     DEPENDS ${SCHEMA_GRAPHQL} ${REQUEST_GRAPHQL} ${GRAPHQL_UPDATE_CLIENT_FILES_SCRIPT} cppgraphqlgen::clientgen
     COMMENT "Generating ${CLIENT_TARGET} client"
     VERBATIM)
+
+  add_custom_target(${CLIENT_TARGET}_update_client ALL
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${CLIENT_TARGET}_client_files)
+endfunction()
+
+function(update_graphql_shared_client_files CLIENT_TARGET SCHEMA_TARGET REQUEST_GRAPHQL)
+  set_property(DIRECTORY APPEND
+    PROPERTY CMAKE_CONFIGURE_DEPENDS ${CLIENT_TARGET}_client_files)
+  get_target_property(SCHEMA_GRAPHQL ${SCHEMA_TARGET}_update_schema SCHEMA_GRAPHQL)
+  file(RELATIVE_PATH SCHEMA_GRAPHQL  ${CMAKE_CURRENT_SOURCE_DIR} ${SCHEMA_GRAPHQL})
+  get_target_property(SCHEMA_PREFIX ${SCHEMA_TARGET}_update_schema SCHEMA_PREFIX)
+  get_target_property(SCHEMA_NAMESPACE ${SCHEMA_TARGET}_update_schema SCHEMA_NAMESPACE)
+
+  # Collect optional arguments
+  set(ADDITIONAL_CLIENTGEN_ARGS "--shared-types")
+  if(ARGC GREATER 4)
+    math(EXPR LAST_ARG "${ARGC} - 1")
+    foreach(ARGN RANGE 4 ${LAST_ARG})
+      set(NEXT_ARG "${ARGV${ARGN}}")
+      list(APPEND ADDITIONAL_CLIENTGEN_ARGS "${NEXT_ARG}")
+    endforeach()
+  endif()
+
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/${CLIENT_TARGET}_client_files
+    COMMAND
+      ${CMAKE_COMMAND} "-DCLIENT_SOURCE_DIR=${CMAKE_CURRENT_SOURCE_DIR}"
+      "-DCLIENT_BINARY_DIR=${CMAKE_CURRENT_BINARY_DIR}"
+      "-DCLIENTGEN_PROGRAM=$<TARGET_FILE:cppgraphqlgen::clientgen>" "-DCLIENT_TARGET=${CLIENT_TARGET}"
+      "-DSCHEMA_GRAPHQL=${SCHEMA_GRAPHQL}" "-DREQUEST_GRAPHQL=${REQUEST_GRAPHQL}"
+      "-DCLIENT_PREFIX=${SCHEMA_PREFIX}" "-DCLIENT_NAMESPACE=${SCHEMA_NAMESPACE}"
+      "-DADDITIONAL_CLIENTGEN_ARGS=${ADDITIONAL_CLIENTGEN_ARGS}"
+      -P ${GRAPHQL_UPDATE_CLIENT_FILES_SCRIPT}
+    DEPENDS ${SCHEMA_GRAPHQL} ${REQUEST_GRAPHQL} ${GRAPHQL_UPDATE_CLIENT_FILES_SCRIPT} cppgraphqlgen::clientgen
+    COMMENT "Generating ${CLIENT_TARGET} client"
+    VERBATIM)
+
+  add_custom_target(${CLIENT_TARGET}_update_client ALL
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${CLIENT_TARGET}_client_files)
+  set_target_properties(${CLIENT_TARGET}_update_client PROPERTIES
+    SCHEMA_TARGET ${SCHEMA_TARGET})
 endfunction()
 
 function(add_graphql_client_target CLIENT_TARGET)
-  add_custom_target(${CLIENT_TARGET}_update_client ALL
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${CLIENT_TARGET}_client_files)
-
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${CLIENT_TARGET}_client_files)
     file(STRINGS ${CMAKE_CURRENT_SOURCE_DIR}/${CLIENT_TARGET}_client_files CLIENT_FILES)
     add_library(${CLIENT_TARGET}_client STATIC ${CLIENT_FILES})
-    add_dependencies(${CLIENT_TARGET}_client ${CLIENT_TARGET}_update_client)
+    if(TARGET ${CLIENT_TARGET}_update_client)
+      add_dependencies(${CLIENT_TARGET}_client ${CLIENT_TARGET}_update_client)
+    endif()
     target_compile_features(${CLIENT_TARGET}_client PUBLIC cxx_std_20)
     target_include_directories(${CLIENT_TARGET}_client PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>)
     target_link_libraries(${CLIENT_TARGET}_client PUBLIC cppgraphqlgen::graphqlclient)
+    get_target_property(SCHEMA_TARGET ${CLIENT_TARGET}_update_client SCHEMA_TARGET)
+    if(SCHEMA_TARGET)
+      target_link_libraries(${CLIENT_TARGET}_client PUBLIC ${SCHEMA_TARGET}_schema)
+    endif()
     file(GLOB CLIENT_HEADERS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
     target_sources(${CLIENT_TARGET}_client PUBLIC FILE_SET HEADERS
       BASE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}

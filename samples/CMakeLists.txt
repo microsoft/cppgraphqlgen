@@ -3,13 +3,13 @@
 
 cmake_minimum_required(VERSION 3.28)
 
-add_subdirectory(client)
-add_subdirectory(learn)
-add_subdirectory(validation)
-
 if(GRAPHQL_BUILD_MODULES)
   add_subdirectory(today)
 endif()
+
+add_subdirectory(client)
+add_subdirectory(learn)
+add_subdirectory(validation)
 
 if(GRAPHQL_BUILD_HTTP_SAMPLE)
   find_package(boost_beast CONFIG QUIET)

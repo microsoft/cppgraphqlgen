@@ -5,3 +5,4 @@ DroidObject.cpp
 QueryObject.cpp
 ReviewObject.cpp
 MutationObject.cpp
+SubscriptionObject.cpp

@@ -49,8 +49,8 @@ private:
 		std::ostream& moduleFile, std::string_view objectNamespace, std::string_view cppType) const;
 	void outputObjectImplements(std::ostream& headerFile, const ObjectType& objectType) const;
 	void outputObjectStubs(std::ostream& headerFile, const ObjectType& objectType) const;
-	void outputObjectDeclaration(
-		std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const;
+	void outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType,
+		bool isQueryType, bool isSubscriptionType) const;
 	[[nodiscard("unnecessary memory copy")]] std::string getFieldDeclaration(
 		const InputField& inputField) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getFieldDeclaration(

@@ -157,20 +157,6 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 	NamespaceScope objectNamespace { headerFile, "object", true };
 	PendingBlankLine pendingSeparator { headerFile };
 
-	std::string_view queryType;
-
-	if (!_loader.isIntrospection())
-	{
-		for (const auto& operation : _loader.getOperationTypes())
-		{
-			if (operation.operation == service::strQuery)
-			{
-				queryType = operation.type;
-				break;
-			}
-		}
-	}
-
 	if (!_loader.getEnumTypes().empty())
 	{
 		pendingSeparator.reset();
@@ -1069,8 +1055,8 @@ concept endSelectionSet = requires (TImpl impl, const service::SelectionSetParam
 )cpp";
 }
 
-void Generator::outputObjectDeclaration(
-	std::ostream& headerFile, const ObjectType& objectType, bool isQueryType) const
+void Generator::outputObjectDeclaration(std::ostream& headerFile, const ObjectType& objectType,
+	bool isQueryType, bool isSubscriptionType) const
 {
 	headerFile << R"cpp(class [[nodiscard("unnecessary construction")]] )cpp" << objectType.cppType
 			   << R"cpp( final
@@ -1128,7 +1114,37 @@ private:
 		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
+)cpp";
+
+	if (isSubscriptionType && !_options.stubs)
+	{
+		headerFile << R"cpp(			static_assert()cpp";
+
+		bool firstField = true;
+
+		for (const auto& outputField : objectType.fields)
+		{
+			const auto accessorName = SchemaLoader::getOutputCppAccessor(outputField);
+
+			if (!firstField)
+			{
+				headerFile << R"cpp(
+				|| )cpp";
+			}
+
+			firstField = false;
+			headerFile << R"cpp(methods::)cpp" << objectType.cppType << R"cpp(Has::)cpp"
+					   << accessorName << R"cpp(WithParams<T>
+				|| methods::)cpp"
+					   << objectType.cppType << R"cpp(Has::)cpp" << accessorName << R"cpp(<T>)cpp";
 		}
+
+		headerFile << R"cpp(, R"msg()cpp" << objectType.cppType
+				   << R"cpp( fields are not implemented)msg");
+)cpp";
+	}
+
+	headerFile << R"cpp(		}
 )cpp";
 
 	for (const auto& outputField : objectType.fields)
@@ -1207,7 +1223,7 @@ private:
 			}
 			else)cpp";
 
-			if (!_options.stubs)
+			if (!isSubscriptionType && !_options.stubs)
 			{
 				headerFile << R"cpp(
 			{
@@ -1235,7 +1251,7 @@ private:
 			headerFile << R"cpp() };
 			})cpp";
 
-			if (_options.stubs)
+			if (isSubscriptionType || _options.stubs)
 			{
 				headerFile << R"cpp(
 			else
@@ -1680,7 +1696,6 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 	}
 
 	NamespaceScope schemaNamespace { sourceFile, _loader.getSchemaNamespace() };
-	std::string_view queryType;
 
 	for (const auto& inputType : _loader.getInputTypes())
 	{
@@ -1844,18 +1859,6 @@ void Result<)cpp" << _loader.getSchemaNamespace()
 	return *this;
 }
 )cpp";
-	}
-
-	if (!_loader.isIntrospection())
-	{
-		for (const auto& operation : _loader.getOperationTypes())
-		{
-			if (operation.operation == service::strQuery)
-			{
-				queryType = operation.type;
-				break;
-			}
-		}
 	}
 
 	if (!_loader.isIntrospection())
@@ -2289,8 +2292,7 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
-					   << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
 )cpp";
 		}
 	}
@@ -3208,16 +3210,6 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 	const std::filesystem::path headerDir(_headerDir);
 	const std::filesystem::path sourceDir(_sourceDir);
 	std::vector<std::string> files;
-	std::string_view queryType;
-
-	for (const auto& operation : _loader.getOperationTypes())
-	{
-		if (operation.operation == service::strQuery)
-		{
-			queryType = operation.type;
-			break;
-		}
-	}
 
 	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
 	const auto objectNamespace = std::format(R"cpp({}::object)cpp", schemaNamespace);
@@ -3392,7 +3384,26 @@ using namespace std::literals;
 
 	for (const auto& objectType : _loader.getObjectTypes())
 	{
-		const bool isQueryType = objectType.type == queryType;
+		bool isQueryType = false;
+		bool isSubscriptionType = false;
+
+		for (const auto& operation : _loader.getOperationTypes())
+		{
+			if (objectType.type == operation.type)
+			{
+				if (operation.operation == service::strQuery)
+				{
+					isQueryType = true;
+				}
+				else if (operation.operation == service::strSubscription)
+				{
+					isSubscriptionType = true;
+				}
+
+				break;
+			}
+		}
+
 		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
 		auto headerPath = (headerDir / headerFilename).string();
 
@@ -3430,7 +3441,7 @@ using namespace std::literals;
 
 			// Output the full declaration
 			headerFile << std::endl;
-			outputObjectDeclaration(headerFile, objectType, isQueryType);
+			outputObjectDeclaration(headerFile, objectType, isQueryType, isSubscriptionType);
 			headerFile << std::endl;
 		}
 

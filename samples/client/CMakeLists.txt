@@ -14,6 +14,7 @@ if(GRAPHQL_BUILD_MODULES)
   add_subdirectory(benchmark)
   add_executable(client_benchmark benchmark.cpp)
   target_link_libraries(client_benchmark PRIVATE
+    todaygraphql
     benchmark_client)
 
   if(WIN32 AND BUILD_SHARED_LIBS)
