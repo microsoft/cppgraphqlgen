@@ -9,16 +9,12 @@ module;
 
 export module GraphQL.Proxy.ProxySchema;
 
+export import GraphQL.Proxy.ProxySharedTypes;
+
 export import GraphQL.Proxy.QueryObject;
 export import GraphQL.Proxy.QueryResultsObject;
 
 export namespace graphql::proxy {
-
-using proxy::OperationType;
-using proxy::getOperationTypeNames;
-using proxy::getOperationTypeValues;
-
-using proxy::QueryInput;
 
 using proxy::Operations;
 

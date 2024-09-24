@@ -14,6 +14,8 @@
 #include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
 
+#include "ValidationSharedTypes.h"
+
 #include <array>
 #include <memory>
 #include <string>
@@ -23,78 +25,7 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql {
-namespace validation {
-
-enum class [[nodiscard("unnecessary conversion")]] DogCommand
-{
-	SIT,
-	DOWN,
-	HEEL
-};
-
-[[nodiscard("unnecessary call")]] constexpr auto getDogCommandNames() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::string_view, 3> {
-		R"gql(SIT)gql"sv,
-		R"gql(DOWN)gql"sv,
-		R"gql(HEEL)gql"sv
-	};
-}
-
-[[nodiscard("unnecessary call")]] constexpr auto getDogCommandValues() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::pair<std::string_view, DogCommand>, 3> {
-		std::make_pair(R"gql(SIT)gql"sv, DogCommand::SIT),
-		std::make_pair(R"gql(DOWN)gql"sv, DogCommand::DOWN),
-		std::make_pair(R"gql(HEEL)gql"sv, DogCommand::HEEL)
-	};
-}
-
-enum class [[nodiscard("unnecessary conversion")]] CatCommand
-{
-	JUMP
-};
-
-[[nodiscard("unnecessary call")]] constexpr auto getCatCommandNames() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::string_view, 1> {
-		R"gql(JUMP)gql"sv
-	};
-}
-
-[[nodiscard("unnecessary call")]] constexpr auto getCatCommandValues() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::pair<std::string_view, CatCommand>, 1> {
-		std::make_pair(R"gql(JUMP)gql"sv, CatCommand::JUMP)
-	};
-}
-
-struct [[nodiscard("unnecessary construction")]] ComplexInput
-{
-	explicit ComplexInput() noexcept;
-	explicit ComplexInput(
-		std::optional<std::string> nameArg,
-		std::optional<std::string> ownerArg) noexcept;
-	ComplexInput(const ComplexInput& other);
-	ComplexInput(ComplexInput&& other) noexcept;
-	~ComplexInput();
-
-	ComplexInput& operator=(const ComplexInput& other);
-	ComplexInput& operator=(ComplexInput&& other) noexcept;
-
-	std::optional<std::string> name;
-	std::optional<std::string> owner;
-};
-
+namespace graphql::validation {
 namespace object {
 
 class Sentient;
@@ -163,7 +94,6 @@ void AddArgumentsDetails(const std::shared_ptr<schema::ObjectType>& typeArgument
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} // namespace validation
-} // namespace graphql
+} // namespace graphql::validation
 
 #endif // VALIDATIONSCHEMA_H

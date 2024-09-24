@@ -14,6 +14,8 @@
 #include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
 
+#include "ProxySharedTypes.h"
+
 #include <array>
 #include <memory>
 #include <string>
@@ -23,59 +25,7 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql {
-namespace proxy {
-
-enum class [[nodiscard("unnecessary conversion")]] OperationType
-{
-	QUERY,
-	MUTATION,
-	SUBSCRIPTION
-};
-
-[[nodiscard("unnecessary call")]] constexpr auto getOperationTypeNames() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::string_view, 3> {
-		R"gql(QUERY)gql"sv,
-		R"gql(MUTATION)gql"sv,
-		R"gql(SUBSCRIPTION)gql"sv
-	};
-}
-
-[[nodiscard("unnecessary call")]] constexpr auto getOperationTypeValues() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::pair<std::string_view, OperationType>, 3> {
-		std::make_pair(R"gql(QUERY)gql"sv, OperationType::QUERY),
-		std::make_pair(R"gql(MUTATION)gql"sv, OperationType::MUTATION),
-		std::make_pair(R"gql(SUBSCRIPTION)gql"sv, OperationType::SUBSCRIPTION)
-	};
-}
-
-struct [[nodiscard("unnecessary construction")]] QueryInput
-{
-	explicit QueryInput() noexcept;
-	explicit QueryInput(
-		OperationType typeArg,
-		std::string queryArg,
-		std::optional<std::string> operationNameArg,
-		std::optional<std::string> variablesArg) noexcept;
-	QueryInput(const QueryInput& other);
-	QueryInput(QueryInput&& other) noexcept;
-	~QueryInput();
-
-	QueryInput& operator=(const QueryInput& other);
-	QueryInput& operator=(QueryInput&& other) noexcept;
-
-	OperationType type;
-	std::string query;
-	std::optional<std::string> operationName;
-	std::optional<std::string> variables;
-};
-
+namespace graphql::proxy {
 namespace object {
 
 class Query;
@@ -106,7 +56,6 @@ void AddQueryResultsDetails(const std::shared_ptr<schema::ObjectType>& typeQuery
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} // namespace proxy
-} // namespace graphql
+} // namespace graphql::proxy
 
 #endif // PROXYSCHEMA_H

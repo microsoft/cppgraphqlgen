@@ -9,6 +9,8 @@ module;
 
 export module GraphQL.Today.TodaySchema;
 
+export import GraphQL.Today.TodaySharedTypes;
+
 export import GraphQL.Today.NodeObject;
 export import GraphQL.Today.UnionTypeObject;
 export import GraphQL.Today.QueryObject;
@@ -29,20 +31,6 @@ export import GraphQL.Today.NestedTypeObject;
 export import GraphQL.Today.ExpensiveObject;
 
 export namespace graphql::today {
-
-using today::TaskState;
-using today::getTaskStateNames;
-using today::getTaskStateValues;
-
-using today::CompleteTaskInput;
-using today::ThirdNestedInput;
-using today::FourthNestedInput;
-using today::IncludeNullableSelfInput;
-using today::IncludeNonNullableListSelfInput;
-using today::StringOperationFilterInput;
-using today::SecondNestedInput;
-using today::ForwardDeclaredInput;
-using today::FirstNestedInput;
 
 using today::Operations;
 

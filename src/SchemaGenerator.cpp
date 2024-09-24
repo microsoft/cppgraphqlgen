@@ -40,9 +40,12 @@ Generator::Generator(SchemaOptions&& schemaOptions, GeneratorOptions&& options)
 	, _options(std::move(options))
 	, _headerDir(getHeaderDir())
 	, _sourceDir(getSourceDir())
-	, _headerPath(getHeaderPath())
-	, _modulePath(getModulePath())
-	, _sourcePath(getSourcePath())
+	, _schemaHeaderPath(getSchemaHeaderPath())
+	, _schemaModulePath(getSchemaModulePath())
+	, _schemaSourcePath(getSchemaSourcePath())
+	, _sharedTypesHeaderPath(getSharedTypesHeaderPath())
+	, _sharedTypesModulePath(getSharedTypesModulePath())
+	, _sharedTypesSourcePath(getSharedTypesSourcePath())
 {
 }
 
@@ -70,7 +73,7 @@ std::string Generator::getSourceDir() const noexcept
 	}
 }
 
-std::string Generator::getHeaderPath() const noexcept
+std::string Generator::getSchemaHeaderPath() const noexcept
 {
 	std::filesystem::path fullPath { _headerDir };
 
@@ -78,7 +81,7 @@ std::string Generator::getHeaderPath() const noexcept
 	return fullPath.string();
 }
 
-std::string Generator::getModulePath() const noexcept
+std::string Generator::getSchemaModulePath() const noexcept
 {
 	std::filesystem::path fullPath { _headerDir };
 
@@ -86,7 +89,7 @@ std::string Generator::getModulePath() const noexcept
 	return fullPath.string();
 }
 
-std::string Generator::getSourcePath() const noexcept
+std::string Generator::getSchemaSourcePath() const noexcept
 {
 	std::filesystem::path fullPath { _sourceDir };
 
@@ -94,23 +97,62 @@ std::string Generator::getSourcePath() const noexcept
 	return fullPath.string();
 }
 
+std::string Generator::getSharedTypesHeaderPath() const noexcept
+{
+	std::filesystem::path fullPath { _headerDir };
+
+	fullPath /= (std::string { _loader.getFilenamePrefix() } + "SharedTypes.h");
+	return fullPath.string();
+}
+
+std::string Generator::getSharedTypesModulePath() const noexcept
+{
+	std::filesystem::path fullPath { _headerDir };
+
+	fullPath /= (std::string { _loader.getFilenamePrefix() } + "SharedTypes.ixx");
+	return fullPath.string();
+}
+
+std::string Generator::getSharedTypesSourcePath() const noexcept
+{
+	std::filesystem::path fullPath { _sourceDir };
+
+	fullPath /= (std::string { _loader.getFilenamePrefix() } + "SharedTypes.cpp");
+	return fullPath.string();
+}
+
 std::vector<std::string> Generator::Build() const noexcept
 {
 	std::vector<std::string> builtFiles;
 
-	if (outputHeader() && _options.verbose)
+	if (outputSharedTypesHeader() && _options.verbose)
 	{
-		builtFiles.push_back(_headerPath);
+		builtFiles.push_back(_sharedTypesHeaderPath);
 	}
 
-	if (outputModule() && _options.verbose)
+	if (outputSharedTypesModule() && _options.verbose)
 	{
-		builtFiles.push_back(_modulePath);
+		builtFiles.push_back(_sharedTypesModulePath);
 	}
 
-	if (outputSource())
+	if (outputSchemaHeader() && _options.verbose)
 	{
-		builtFiles.push_back(_sourcePath);
+		builtFiles.push_back(_schemaHeaderPath);
+	}
+
+	if (outputSchemaModule() && _options.verbose)
+	{
+		builtFiles.push_back(_schemaModulePath);
+	}
+
+	if (outputSharedTypesSource())
+	{
+		builtFiles.push_back(_sharedTypesSourcePath);
+	}
+
+	if (outputSchemaSource())
+	{
+		builtFiles.push_back(_schemaSourcePath);
 	}
 
 	auto separateFiles = outputSeparateFiles();
@@ -123,18 +165,36 @@ std::vector<std::string> Generator::Build() const noexcept
 	return builtFiles;
 }
 
-bool Generator::outputHeader() const noexcept
+bool Generator::outputSchemaHeader() const noexcept
 {
-	std::ofstream headerFile(_headerPath, std::ios_base::trunc);
+	std::ofstream headerFile(_schemaHeaderPath, std::ios_base::trunc);
 	IncludeGuardScope includeGuard { headerFile,
-		std::filesystem::path(_headerPath).filename().string() };
+		std::filesystem::path(_schemaHeaderPath).filename().string() };
 
 	headerFile << R"cpp(#include "graphqlservice/GraphQLResponse.h"
 #include "graphqlservice/GraphQLService.h"
 
-#include "graphqlservice/internal/Version.h"
-#include "graphqlservice/internal/Schema.h"
+)cpp";
 
+	if (_loader.isIntrospection())
+	{
+		headerFile << R"cpp(#include "graphqlservice/internal/DllExports.h"
+)cpp";
+	}
+
+	headerFile << R"cpp(#include "graphqlservice/internal/Version.h"
+#include "graphqlservice/internal/Schema.h"
+)cpp";
+
+	if (!_loader.getEnumTypes().empty() || !_loader.getInputTypes().empty())
+	{
+		headerFile << R"cpp(
+#include ")cpp" << _loader.getFilenamePrefix()
+				   << R"cpp(SharedTypes.h"
+)cpp";
+	}
+
+	headerFile << R"cpp(
 #include <array>
 #include <memory>
 #include <string>
@@ -152,213 +212,10 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 
-	NamespaceScope graphqlNamespace { headerFile, "graphql" };
-	NamespaceScope schemaNamespace { headerFile, _loader.getSchemaNamespace() };
+	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
+	NamespaceScope schemaNamespaceScope { headerFile, schemaNamespace };
 	NamespaceScope objectNamespace { headerFile, "object", true };
 	PendingBlankLine pendingSeparator { headerFile };
-
-	if (!_loader.getEnumTypes().empty())
-	{
-		pendingSeparator.reset();
-
-		for (const auto& enumType : _loader.getEnumTypes())
-		{
-			headerFile << R"cpp(enum class )cpp";
-
-			if (!_loader.isIntrospection())
-			{
-				headerFile << R"cpp([[nodiscard("unnecessary conversion")]] )cpp";
-			}
-
-			headerFile << enumType.cppType << R"cpp(
-{
-)cpp";
-
-			bool firstValue = true;
-
-			for (const auto& value : enumType.values)
-			{
-				if (!firstValue)
-				{
-					headerFile << R"cpp(,
-)cpp";
-				}
-
-				firstValue = false;
-				headerFile << R"cpp(	)cpp" << value.cppValue;
-			}
-			headerFile << R"cpp(
-};
-
-)cpp";
-
-			headerFile << R"cpp([[nodiscard("unnecessary call")]] constexpr auto get)cpp"
-					   << enumType.cppType << R"cpp(Names() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::string_view, )cpp"
-					   << enumType.values.size() << R"cpp(> {
-)cpp";
-
-			firstValue = true;
-
-			for (const auto& value : enumType.values)
-			{
-				if (!firstValue)
-				{
-					headerFile << R"cpp(,
-)cpp";
-				}
-
-				firstValue = false;
-				headerFile << R"cpp(		R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
-			}
-
-			headerFile << R"cpp(
-	};
-}
-
-[[nodiscard("unnecessary call")]] constexpr auto get)cpp"
-					   << enumType.cppType << R"cpp(Values() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::pair<std::string_view, )cpp"
-					   << enumType.cppType << R"cpp(>, )cpp" << enumType.values.size() << R"cpp(> {
-)cpp";
-
-			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
-				enumType.values.size());
-
-			std::ranges::transform(enumType.values,
-				sortedValues.begin(),
-				[](const auto& value) noexcept {
-					return std::make_pair(value.value, value.cppValue);
-				});
-			std::ranges::sort(sortedValues, [](const auto& lhs, const auto& rhs) noexcept {
-				return internal::shorter_or_less {}(lhs.first, rhs.first);
-			});
-
-			firstValue = true;
-
-			for (const auto& [enumName, enumValue] : sortedValues)
-			{
-				if (!firstValue)
-				{
-					headerFile << R"cpp(,
-)cpp";
-				}
-
-				firstValue = false;
-				headerFile << R"cpp(		std::make_pair(R"gql()cpp" << enumName
-						   << R"cpp()gql"sv, )cpp" << enumType.cppType << R"cpp(::)cpp" << enumValue
-						   << R"cpp())cpp";
-			}
-
-			headerFile << R"cpp(
-	};
-}
-
-)cpp";
-		}
-	}
-
-	if (!_loader.getInputTypes().empty())
-	{
-		pendingSeparator.reset();
-
-		std::unordered_set<std::string_view> forwardDeclared;
-		const auto introspectionExport =
-			(_loader.isIntrospection() ? "GRAPHQLSERVICE_EXPORT "sv : ""sv);
-
-		// Output the full declarations
-		for (const auto& inputType : _loader.getInputTypes())
-		{
-			forwardDeclared.insert(inputType.cppType);
-
-			if (!inputType.declarations.empty())
-			{
-				// Forward declare nullable dependencies
-				for (auto declaration : inputType.declarations)
-				{
-					if (forwardDeclared.insert(declaration).second)
-					{
-						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
-)cpp";
-						pendingSeparator.add();
-					}
-				}
-
-				pendingSeparator.reset();
-			}
-
-			headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp"
-					   << inputType.cppType << R"cpp(
-{
-	)cpp" << introspectionExport
-					   << R"cpp(explicit )cpp" << inputType.cppType << R"cpp(()cpp";
-
-			bool firstField = true;
-
-			for (const auto& inputField : inputType.fields)
-			{
-				if (firstField)
-				{
-					headerFile << R"cpp() noexcept;
-	explicit )cpp" << inputType.cppType
-							   << R"cpp(()cpp";
-				}
-				else
-				{
-					headerFile << R"cpp(,)cpp";
-				}
-
-				firstField = false;
-
-				const auto inputCppType = _loader.getInputCppType(inputField);
-
-				headerFile << R"cpp(
-		)cpp" << inputCppType
-						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg)cpp";
-			}
-
-			headerFile << R"cpp() noexcept;
-	)cpp" << introspectionExport
-					   << inputType.cppType << R"cpp((const )cpp" << inputType.cppType
-					   << R"cpp(& other);
-	)cpp" << introspectionExport
-					   << inputType.cppType << R"cpp(()cpp" << inputType.cppType
-					   << R"cpp(&& other) noexcept;
-	~)cpp" << inputType.cppType
-					   << R"cpp(();
-
-	)cpp" << introspectionExport
-					   << inputType.cppType << R"cpp(& operator=(const )cpp" << inputType.cppType
-					   << R"cpp(& other);
-	)cpp" << introspectionExport
-					   << inputType.cppType << R"cpp(& operator=()cpp" << inputType.cppType
-					   << R"cpp(&& other) noexcept;
-)cpp";
-
-			firstField = true;
-
-			for (const auto& inputField : inputType.fields)
-			{
-				if (firstField)
-				{
-					headerFile << std::endl;
-				}
-
-				firstField = false;
-
-				headerFile << getFieldDeclaration(inputField);
-			}
-			headerFile << R"cpp(};
-
-)cpp";
-		}
-	}
 
 	if (!_loader.getInterfaceTypes().empty())
 	{
@@ -600,66 +457,12 @@ private:
 		headerFile << std::endl;
 	}
 
-	NamespaceScope serviceNamespace { headerFile, "service", true };
-
 	if (_loader.isIntrospection())
 	{
 		headerFile
 			<< R"cpp(GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 )cpp";
-
-		if (!_loader.getEnumTypes().empty() || !_loader.getInputTypes().empty())
-		{
-			if (schemaNamespace.exit())
-			{
-				headerFile << std::endl;
-			}
-
-			serviceNamespace.enter();
-
-			headerFile << R"cpp(
-#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-)cpp";
-
-			for (const auto& enumType : _loader.getEnumTypes())
-			{
-				headerFile << R"cpp(template <>
-GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( Argument<)cpp"
-						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver Result<)cpp"
-						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(>::convert(
-	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(> result, ResolverParams&& params);
-template <>
-GRAPHQLSERVICE_EXPORT void Result<)cpp"
-						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(>::validateScalar(
-	const response::Value& value);
-)cpp";
-			}
-
-			for (const auto& inputType : _loader.getInputTypes())
-			{
-				headerFile << R"cpp(template <>
-GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( Argument<)cpp"
-						   << inputType.cppType << R"cpp(>::convert(
-	const response::Value& value);
-)cpp";
-			}
-
-			headerFile << R"cpp(#endif // GRAPHQL_DLLEXPORTS
-
-)cpp";
-		}
 	}
 	else
 	{
@@ -671,9 +474,9 @@ GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
 	return true;
 }
 
-bool Generator::outputModule() const noexcept
+bool Generator::outputSchemaModule() const noexcept
 {
-	std::ofstream moduleFile(_modulePath, std::ios_base::trunc);
+	std::ofstream moduleFile(_schemaModulePath, std::ios_base::trunc);
 	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
 
 	moduleFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
@@ -691,6 +494,15 @@ export module GraphQL.)cpp"
 			   << _loader.getFilenamePrefix() << R"cpp(.)cpp" << _loader.getFilenamePrefix() <<
 		R"cpp(Schema;
 )cpp";
+
+	if (!_loader.getEnumTypes().empty() || !_loader.getInputTypes().empty())
+	{
+		moduleFile << R"cpp(
+export import GraphQL.)cpp"
+				   << _loader.getFilenamePrefix() << R"cpp(.)cpp" << _loader.getFilenamePrefix() <<
+			R"cpp(SharedTypes;
+)cpp";
+	}
 
 	PendingBlankLine pendingSeparator { moduleFile };
 
@@ -736,37 +548,6 @@ export )cpp";
 	NamespaceScope graphqlNamespace { moduleFile, schemaNamespace };
 
 	pendingSeparator.add();
-
-	if (!_loader.getEnumTypes().empty())
-	{
-		pendingSeparator.reset();
-
-		for (const auto& enumType : _loader.getEnumTypes())
-		{
-			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << enumType.cppType << R"cpp(;
-using )cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Names;
-using )cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Values;
-
-)cpp";
-		}
-	}
-
-	if (!_loader.getInputTypes().empty())
-	{
-		pendingSeparator.reset();
-
-		for (const auto& inputType : _loader.getInputTypes())
-		{
-			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << inputType.cppType << R"cpp(;
-)cpp";
-		}
-
-		moduleFile << std::endl;
-	}
 
 	if (!_loader.isIntrospection())
 	{
@@ -828,6 +609,381 @@ using )cpp" << _loader.getSchemaNamespace()
 				   << R"cpp(::GetSchema;
 
 )cpp";
+	}
+
+	return true;
+}
+
+bool Generator::outputSharedTypesHeader() const noexcept
+{
+	if (_loader.getEnumTypes().empty() && _loader.getInputTypes().empty())
+	{
+		return false;
+	}
+
+	std::ofstream headerFile(_sharedTypesHeaderPath, std::ios_base::trunc);
+	IncludeGuardScope includeGuard { headerFile,
+		std::filesystem::path(_sharedTypesHeaderPath).filename().string() };
+
+	headerFile << R"cpp(#include "graphqlservice/GraphQLResponse.h"
+
+)cpp";
+
+	if (_loader.isIntrospection())
+	{
+		headerFile << R"cpp(#include "graphqlservice/internal/DllExports.h"
+)cpp";
+	}
+
+	headerFile << R"cpp(#include "graphqlservice/internal/Version.h"
+
+#include <array>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
+
+// Check if the library version is compatible with schemagen )cpp"
+			   << graphql::internal::MajorVersion << R"cpp(.)cpp" << graphql::internal::MinorVersion
+			   << R"cpp(.0
+static_assert(graphql::internal::MajorVersion == )cpp"
+			   << graphql::internal::MajorVersion
+			   << R"cpp(, "regenerate with schemagen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == )cpp"
+			   << graphql::internal::MinorVersion
+			   << R"cpp(, "regenerate with schemagen: minor version mismatch");
+
+)cpp";
+
+	NamespaceScope graphqlNamespace { headerFile, "graphql" };
+	NamespaceScope schemaNamespace { headerFile, _loader.getSchemaNamespace() };
+	PendingBlankLine pendingSeparator { headerFile };
+
+	if (!_loader.getEnumTypes().empty())
+	{
+		pendingSeparator.reset();
+
+		for (const auto& enumType : _loader.getEnumTypes())
+		{
+			headerFile << R"cpp(enum class )cpp";
+
+			if (!_loader.isIntrospection())
+			{
+				headerFile << R"cpp([[nodiscard("unnecessary conversion")]] )cpp";
+			}
+
+			headerFile << enumType.cppType << R"cpp(
+{
+)cpp";
+
+			bool firstValue = true;
+
+			for (const auto& value : enumType.values)
+			{
+				if (!firstValue)
+				{
+					headerFile << R"cpp(,
+)cpp";
+				}
+
+				firstValue = false;
+				headerFile << R"cpp(	)cpp" << value.cppValue;
+			}
+			headerFile << R"cpp(
+};
+
+)cpp";
+
+			headerFile << R"cpp([[nodiscard("unnecessary call")]] constexpr auto get)cpp"
+					   << enumType.cppType << R"cpp(Names() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::string_view, )cpp"
+					   << enumType.values.size() << R"cpp(> {
+)cpp";
+
+			firstValue = true;
+
+			for (const auto& value : enumType.values)
+			{
+				if (!firstValue)
+				{
+					headerFile << R"cpp(,
+)cpp";
+				}
+
+				firstValue = false;
+				headerFile << R"cpp(		R"gql()cpp" << value.value << R"cpp()gql"sv)cpp";
+			}
+
+			headerFile << R"cpp(
+	};
+}
+
+[[nodiscard("unnecessary call")]] constexpr auto get)cpp"
+					   << enumType.cppType << R"cpp(Values() noexcept
+{
+	using namespace std::literals;
+
+	return std::array<std::pair<std::string_view, )cpp"
+					   << enumType.cppType << R"cpp(>, )cpp" << enumType.values.size() << R"cpp(> {
+)cpp";
+
+			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
+				enumType.values.size());
+
+			std::ranges::transform(enumType.values,
+				sortedValues.begin(),
+				[](const auto& value) noexcept {
+					return std::make_pair(value.value, value.cppValue);
+				});
+			std::ranges::sort(sortedValues, [](const auto& lhs, const auto& rhs) noexcept {
+				return internal::shorter_or_less {}(lhs.first, rhs.first);
+			});
+
+			firstValue = true;
+
+			for (const auto& [enumName, enumValue] : sortedValues)
+			{
+				if (!firstValue)
+				{
+					headerFile << R"cpp(,
+)cpp";
+				}
+
+				firstValue = false;
+				headerFile << R"cpp(		std::make_pair(R"gql()cpp" << enumName
+						   << R"cpp()gql"sv, )cpp" << enumType.cppType << R"cpp(::)cpp" << enumValue
+						   << R"cpp())cpp";
+			}
+
+			headerFile << R"cpp(
+	};
+}
+
+)cpp";
+		}
+	}
+
+	if (!_loader.getInputTypes().empty())
+	{
+		pendingSeparator.reset();
+
+		std::unordered_set<std::string_view> forwardDeclared;
+		const auto introspectionExport =
+			(_loader.isIntrospection() ? "GRAPHQLSERVICE_EXPORT "sv : ""sv);
+
+		// Output the full declarations
+		for (const auto& inputType : _loader.getInputTypes())
+		{
+			forwardDeclared.insert(inputType.cppType);
+
+			if (!inputType.declarations.empty())
+			{
+				// Forward declare nullable dependencies
+				for (auto declaration : inputType.declarations)
+				{
+					if (forwardDeclared.insert(declaration).second)
+					{
+						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
+)cpp";
+						pendingSeparator.add();
+					}
+				}
+
+				pendingSeparator.reset();
+			}
+
+			headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp"
+					   << inputType.cppType << R"cpp(
+{
+	)cpp" << introspectionExport
+					   << R"cpp(explicit )cpp" << inputType.cppType << R"cpp(()cpp";
+
+			bool firstField = true;
+
+			for (const auto& inputField : inputType.fields)
+			{
+				if (firstField)
+				{
+					headerFile << R"cpp() noexcept;
+	explicit )cpp" << inputType.cppType
+							   << R"cpp(()cpp";
+				}
+				else
+				{
+					headerFile << R"cpp(,)cpp";
+				}
+
+				firstField = false;
+
+				const auto inputCppType = _loader.getInputCppType(inputField);
+
+				headerFile << R"cpp(
+		)cpp" << inputCppType
+						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg)cpp";
+			}
+
+			headerFile << R"cpp() noexcept;
+	)cpp" << introspectionExport
+					   << inputType.cppType << R"cpp((const )cpp" << inputType.cppType
+					   << R"cpp(& other);
+	)cpp" << introspectionExport
+					   << inputType.cppType << R"cpp(()cpp" << inputType.cppType
+					   << R"cpp(&& other) noexcept;
+	~)cpp" << inputType.cppType
+					   << R"cpp(();
+
+	)cpp" << introspectionExport
+					   << inputType.cppType << R"cpp(& operator=(const )cpp" << inputType.cppType
+					   << R"cpp(& other);
+	)cpp" << introspectionExport
+					   << inputType.cppType << R"cpp(& operator=()cpp" << inputType.cppType
+					   << R"cpp(&& other) noexcept;
+)cpp";
+
+			firstField = true;
+
+			for (const auto& inputField : inputType.fields)
+			{
+				if (firstField)
+				{
+					headerFile << std::endl;
+				}
+
+				firstField = false;
+
+				headerFile << getFieldDeclaration(inputField);
+			}
+			headerFile << R"cpp(};
+
+)cpp";
+		}
+	}
+
+	if (_loader.isIntrospection())
+	{
+		if (schemaNamespace.exit())
+		{
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		NamespaceScope serviceNamespace { headerFile, "service" };
+
+		headerFile << R"cpp(
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+)cpp";
+
+		for (const auto& enumType : _loader.getEnumTypes())
+		{
+			headerFile << R"cpp(template <>
+GRAPHQLSERVICE_EXPORT )cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp( Argument<)cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << enumType.cppType << R"cpp(>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(>::convert(
+	AwaitableScalar<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(> result, ResolverParams&& params);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(>::validateScalar(
+	const response::Value& value);
+)cpp";
+		}
+
+		for (const auto& inputType : _loader.getInputTypes())
+		{
+			headerFile << R"cpp(template <>
+GRAPHQLSERVICE_EXPORT )cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
+					   << R"cpp( Argument<)cpp" << inputType.cppType << R"cpp(>::convert(
+	const response::Value& value);
+)cpp";
+		}
+
+		headerFile << R"cpp(#endif // GRAPHQL_DLLEXPORTS
+
+)cpp";
+	}
+
+	return true;
+}
+
+bool Generator::outputSharedTypesModule() const noexcept
+{
+	if (_loader.getEnumTypes().empty() && _loader.getInputTypes().empty())
+	{
+		return false;
+	}
+
+	std::ofstream moduleFile(_sharedTypesModulePath, std::ios_base::trunc);
+	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
+
+	moduleFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+// WARNING! Do not edit this file manually, your changes will be overwritten.
+
+module;
+
+#include ")cpp" << _loader.getFilenamePrefix()
+			   <<
+		R"cpp(SharedTypes.h"
+
+export module GraphQL.)cpp"
+			   << _loader.getFilenamePrefix() << R"cpp(.)cpp" << _loader.getFilenamePrefix() <<
+		R"cpp(SharedTypes;
+)cpp";
+
+	PendingBlankLine pendingSeparator { moduleFile };
+
+	moduleFile << R"cpp(
+export )cpp";
+
+	NamespaceScope graphqlNamespace { moduleFile, schemaNamespace };
+
+	pendingSeparator.add();
+
+	if (!_loader.getEnumTypes().empty())
+	{
+		pendingSeparator.reset();
+
+		for (const auto& enumType : _loader.getEnumTypes())
+		{
+			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << enumType.cppType << R"cpp(;
+using )cpp" << _loader.getSchemaNamespace()
+					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Names;
+using )cpp" << _loader.getSchemaNamespace()
+					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Values;
+
+)cpp";
+		}
+	}
+
+	if (!_loader.getInputTypes().empty())
+	{
+		pendingSeparator.reset();
+
+		for (const auto& inputType : _loader.getInputTypes())
+		{
+			moduleFile << R"cpp(using )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << inputType.cppType << R"cpp(;
+)cpp";
+		}
+
+		moduleFile << std::endl;
 	}
 
 	return true;
@@ -1443,9 +1599,407 @@ std::string Generator::getResolverDeclaration(const OutputField& outputField) co
 		resolverName);
 }
 
-bool Generator::outputSource() const noexcept
+bool Generator::outputSharedTypesSource() const noexcept
 {
-	std::ofstream sourceFile(_sourcePath, std::ios_base::trunc);
+	if (_loader.getEnumTypes().empty() && _loader.getInputTypes().empty())
+	{
+		return false;
+	}
+
+	std::ofstream sourceFile(_sharedTypesSourcePath, std::ios_base::trunc);
+
+	sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+// WARNING! Do not edit this file manually, your changes will be overwritten.
+
+#include "graphqlservice/GraphQLService.h"
+
+#include ")cpp" << getSharedTypesHeaderPath()
+			   << R"cpp("
+
+#include <algorithm>
+#include <array>
+#include <cstddef>
+#include <functional>
+#include <stdexcept>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+using namespace std::literals;
+
+)cpp";
+
+	NamespaceScope graphqlNamespace { sourceFile, "graphql" };
+	NamespaceScope serviceNamespace { sourceFile, "service" };
+	PendingBlankLine pendingSeparator { sourceFile };
+
+	pendingSeparator.reset();
+
+	for (const auto& enumType : _loader.getEnumTypes())
+	{
+		sourceFile << R"cpp(static const auto s_names)cpp" << enumType.cppType << R"cpp( = )cpp"
+				   << _loader.getSchemaNamespace() << R"cpp(::get)cpp" << enumType.cppType
+				   << R"cpp(Names();
+static const auto s_values)cpp"
+				   << enumType.cppType << R"cpp( = )cpp" << _loader.getSchemaNamespace()
+				   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Values();
+
+template <>
+)cpp" << _loader.getSchemaNamespace()
+				   << R"cpp(::)cpp" << enumType.cppType << R"cpp( Argument<)cpp"
+				   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+				   << R"cpp(>::convert(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid )cpp"
+				   << enumType.type << R"cpp( value)ex" } };
+	}
+
+	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
+		s_values)cpp"
+				   << enumType.cppType << R"cpp(,
+		std::string_view { value.get<std::string>() });
+
+	if (!result)
+	{
+		throw service::schema_exception { { R"ex(not a valid )cpp"
+				   << enumType.type << R"cpp( value)ex" } };
+	}
+
+	return *result;
+}
+
+template <>
+service::AwaitableResolver Result<)cpp"
+				   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+				   << R"cpp(>::convert(service::AwaitableScalar<)cpp"
+				   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+				   << R"cpp(> result, ResolverParams&& params)
+{
+	return ModifiedResult<)cpp"
+				   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+				   << R"cpp(>::resolve(std::move(result), std::move(params),
+		[]()cpp" << _loader.getSchemaNamespace()
+				   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
+		{
+			response::Value resolvedResult(response::Type::EnumValue);
+
+			resolvedResult.set<std::string>(std::string { s_names)cpp"
+				   << enumType.cppType << R"cpp([static_cast<std::size_t>(value)] });
+
+			return resolvedResult;
+		});
+}
+
+template <>
+void Result<)cpp" << _loader.getSchemaNamespace()
+				   << R"cpp(::)cpp" << enumType.cppType
+				   << R"cpp(>::validateScalar(const response::Value& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw service::schema_exception { { R"ex(not a valid )cpp"
+				   << enumType.type << R"cpp( value)ex" } };
+	}
+
+	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
+		s_values)cpp"
+				   << enumType.cppType << R"cpp(.begin(),
+		s_values)cpp"
+				   << enumType.cppType << R"cpp(.end(),
+		std::string_view { value.get<std::string>() });
+
+	if (itr == itrEnd)
+	{
+		throw service::schema_exception { { R"ex(not a valid )cpp"
+				   << enumType.type << R"cpp( value)ex" } };
+	}
+}
+
+)cpp";
+	}
+
+	for (const auto& inputType : _loader.getInputTypes())
+	{
+		bool firstField = true;
+
+		sourceFile << R"cpp(template <>
+)cpp" << _loader.getSchemaNamespace()
+				   << R"cpp(::)cpp" << inputType.cppType << R"cpp( Argument<)cpp"
+				   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
+				   << R"cpp(>::convert(const response::Value& value)
+{
+)cpp";
+
+		for (const auto& inputField : inputType.fields)
+		{
+			if (inputField.defaultValue.type() != response::Type::Null)
+			{
+				if (firstField)
+				{
+					firstField = false;
+					sourceFile << R"cpp(	const auto defaultValue = []()
+	{
+		response::Value values(response::Type::Map);
+		response::Value entry;
+
+)cpp";
+				}
+
+				sourceFile << getArgumentDefaultValue(0, inputField.defaultValue)
+						   << R"cpp(		values.emplace_back(")cpp" << inputField.name
+						   << R"cpp(", std::move(entry));
+)cpp";
+			}
+		}
+
+		if (!firstField)
+		{
+			sourceFile << R"cpp(
+		return values;
+	}();
+
+)cpp";
+		}
+
+		for (const auto& inputField : inputType.fields)
+		{
+			sourceFile << getArgumentDeclaration(inputField, "value", "value", "defaultValue");
+		}
+
+		if (!inputType.fields.empty())
+		{
+			sourceFile << std::endl;
+		}
+
+		sourceFile << R"cpp(	return )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
+				   << inputType.cppType << R"cpp( {
+)cpp";
+
+		firstField = true;
+
+		for (const auto& inputField : inputType.fields)
+		{
+			std::string fieldName(inputField.cppName);
+
+			if (!firstField)
+			{
+				sourceFile << R"cpp(,
+)cpp";
+			}
+
+			const bool shouldMove = SchemaLoader::shouldMoveInputField(inputField);
+
+			firstField = false;
+			fieldName[0] =
+				static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
+
+			sourceFile << R"cpp(		)cpp";
+
+			if (shouldMove)
+			{
+				sourceFile << R"cpp(std::move()cpp";
+			}
+
+			sourceFile << R"cpp(value)cpp" << fieldName;
+
+			if (shouldMove)
+			{
+				sourceFile << R"cpp())cpp";
+			}
+		}
+
+		sourceFile << R"cpp(
+	};
+}
+
+)cpp";
+	}
+
+	serviceNamespace.exit();
+	pendingSeparator.add();
+
+	if (!_loader.getInputTypes().empty())
+	{
+		pendingSeparator.reset();
+
+		NamespaceScope schemaNamespace { sourceFile, _loader.getSchemaNamespace() };
+
+		for (const auto& inputType : _loader.getInputTypes())
+		{
+			sourceFile << std::endl
+					   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType
+					   << R"cpp(() noexcept)cpp";
+
+			bool firstField = true;
+
+			for (const auto& inputField : inputType.fields)
+			{
+				sourceFile << R"cpp(
+	)cpp" << (firstField ? R"cpp(:)cpp" : R"cpp(,)cpp")
+						   << R"cpp( )cpp" << inputField.cppName << R"cpp( {})cpp";
+				firstField = false;
+			}
+
+			sourceFile << R"cpp(
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
+)cpp" << inputType.cppType
+					   << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp";
+
+			firstField = true;
+
+			for (const auto& inputField : inputType.fields)
+			{
+				if (!firstField)
+				{
+					sourceFile << R"cpp(,)cpp";
+				}
+
+				firstField = false;
+				sourceFile << R"cpp(
+		)cpp" << _loader.getInputCppType(inputField)
+						   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg)cpp";
+			}
+
+			sourceFile << R"cpp() noexcept
+)cpp";
+
+			firstField = true;
+
+			for (const auto& inputField : inputType.fields)
+			{
+				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+				firstField = false;
+
+				sourceFile << inputField.cppName << R"cpp( { std::move()cpp" << inputField.cppName
+						   << R"cpp(Arg) }
+)cpp";
+			}
+
+			sourceFile << R"cpp({
+}
+
+)cpp" << inputType.cppType
+					   << R"cpp(::)cpp" << inputType.cppType << R"cpp((const )cpp"
+					   << inputType.cppType << R"cpp(& other)
+)cpp";
+
+			firstField = true;
+
+			for (const auto& inputField : inputType.fields)
+			{
+				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+				firstField = false;
+
+				sourceFile << inputField.cppName << R"cpp( { service::ModifiedArgument<)cpp"
+						   << _loader.getCppType(inputField.type) << R"cpp(>::duplicate)cpp";
+
+				if (!inputField.modifiers.empty())
+				{
+					bool firstModifier = true;
+
+					for (const auto modifier : inputField.modifiers)
+					{
+						sourceFile << (firstModifier ? R"cpp(<)cpp" : R"cpp(, )cpp");
+						firstModifier = false;
+
+						switch (modifier)
+						{
+							case service::TypeModifier::None:
+								sourceFile << R"cpp(service::TypeModifier::None)cpp";
+								break;
+
+							case service::TypeModifier::Nullable:
+								sourceFile << R"cpp(service::TypeModifier::Nullable)cpp";
+								break;
+
+							case service::TypeModifier::List:
+								sourceFile << R"cpp(service::TypeModifier::List)cpp";
+								break;
+						}
+					}
+
+					sourceFile << R"cpp(>)cpp";
+				}
+
+				sourceFile << R"cpp((other.)cpp" << inputField.cppName << R"cpp() }
+)cpp";
+			}
+
+			sourceFile << R"cpp({
+}
+
+)cpp" << inputType.cppType
+					   << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp" << inputType.cppType
+					   << R"cpp(&& other) noexcept
+)cpp";
+
+			firstField = true;
+
+			for (const auto& inputField : inputType.fields)
+			{
+				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+				firstField = false;
+
+				sourceFile << inputField.cppName << R"cpp( { std::move(other.)cpp"
+						   << inputField.cppName << R"cpp() }
+)cpp";
+			}
+
+			sourceFile << R"cpp({
+}
+
+)cpp" << inputType.cppType
+					   << R"cpp(::~)cpp" << inputType.cppType << R"cpp(()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
+)cpp" << inputType.cppType
+					   << R"cpp(& )cpp" << inputType.cppType << R"cpp(::operator=(const )cpp"
+					   << inputType.cppType << R"cpp(& other)
+{
+	)cpp" << inputType.cppType
+					   << R"cpp( value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+)cpp" << inputType.cppType
+					   << R"cpp(& )cpp" << inputType.cppType << R"cpp(::operator=()cpp"
+					   << inputType.cppType << R"cpp(&& other) noexcept
+{
+)cpp";
+
+			for (const auto& inputField : inputType.fields)
+			{
+				sourceFile << R"cpp(	)cpp" << inputField.cppName
+						   << R"cpp( = std::move(other.)cpp" << inputField.cppName << R"cpp();
+)cpp";
+			}
+
+			sourceFile << R"cpp(
+	return *this;
+}
+
+)cpp";
+		}
+	}
+
+	return true;
+}
+
+bool Generator::outputSchemaSource() const noexcept
+{
+	std::ofstream sourceFile(_schemaSourcePath, std::ios_base::trunc);
 
 	sourceFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
@@ -1459,7 +2013,7 @@ bool Generator::outputSource() const noexcept
 		if (_loader.getOperationTypes().empty())
 		{
 			// Normally this would be included by each of the operation object headers.
-			sourceFile << R"cpp(#include ")cpp" << getHeaderPath() << R"cpp("
+			sourceFile << R"cpp(#include ")cpp" << getSchemaHeaderPath() << R"cpp("
 )cpp";
 		}
 		else
@@ -1501,365 +2055,8 @@ using namespace std::literals;
 
 )cpp";
 
-	NamespaceScope graphqlNamespace { sourceFile, "graphql" };
-
-	if (!_loader.getEnumTypes().empty() || !_loader.getInputTypes().empty())
-	{
-		NamespaceScope serviceNamespace { sourceFile, "service" };
-
-		sourceFile << std::endl;
-
-		for (const auto& enumType : _loader.getEnumTypes())
-		{
-			sourceFile << R"cpp(static const auto s_names)cpp" << enumType.cppType << R"cpp( = )cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::get)cpp" << enumType.cppType
-					   << R"cpp(Names();
-static const auto s_values)cpp"
-					   << enumType.cppType << R"cpp( = )cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::get)cpp" << enumType.cppType << R"cpp(Values();
-
-template <>
-)cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( Argument<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(>::convert(const response::Value& value)
-{
-	if (!value.maybe_enum())
-	{
-		throw service::schema_exception { { R"ex(not a valid )cpp"
-					   << enumType.type << R"cpp( value)ex" } };
-	}
-
-	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_values)cpp" << enumType.cppType
-					   << R"cpp(,
-		std::string_view { value.get<std::string>() });
-
-	if (!result)
-	{
-		throw service::schema_exception { { R"ex(not a valid )cpp"
-					   << enumType.type << R"cpp( value)ex" } };
-	}
-
-	return *result;
-}
-
-template <>
-service::AwaitableResolver Result<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(>::convert(service::AwaitableScalar<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(> result, ResolverParams&& params)
-{
-	return ModifiedResult<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(>::resolve(std::move(result), std::move(params),
-		[]()cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
-		{
-			response::Value resolvedResult(response::Type::EnumValue);
-
-			resolvedResult.set<std::string>(std::string { s_names)cpp"
-					   << enumType.cppType << R"cpp([static_cast<std::size_t>(value)] });
-
-			return resolvedResult;
-		});
-}
-
-template <>
-void Result<)cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << enumType.cppType
-					   << R"cpp(>::validateScalar(const response::Value& value)
-{
-	if (!value.maybe_enum())
-	{
-		throw service::schema_exception { { R"ex(not a valid )cpp"
-					   << enumType.type << R"cpp( value)ex" } };
-	}
-
-	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
-		s_values)cpp" << enumType.cppType
-					   << R"cpp(.begin(),
-		s_values)cpp" << enumType.cppType
-					   << R"cpp(.end(),
-		std::string_view { value.get<std::string>() });
-
-	if (itr == itrEnd)
-	{
-		throw service::schema_exception { { R"ex(not a valid )cpp"
-					   << enumType.type << R"cpp( value)ex" } };
-	}
-}
-
-)cpp";
-		}
-
-		for (const auto& inputType : _loader.getInputTypes())
-		{
-			bool firstField = true;
-
-			sourceFile << R"cpp(template <>
-)cpp" << _loader.getSchemaNamespace()
-					   << R"cpp(::)cpp" << inputType.cppType << R"cpp( Argument<)cpp"
-					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
-					   << R"cpp(>::convert(const response::Value& value)
-{
-)cpp";
-
-			for (const auto& inputField : inputType.fields)
-			{
-				if (inputField.defaultValue.type() != response::Type::Null)
-				{
-					if (firstField)
-					{
-						firstField = false;
-						sourceFile << R"cpp(	const auto defaultValue = []()
-	{
-		response::Value values(response::Type::Map);
-		response::Value entry;
-
-)cpp";
-					}
-
-					sourceFile << getArgumentDefaultValue(0, inputField.defaultValue)
-							   << R"cpp(		values.emplace_back(")cpp" << inputField.name
-							   << R"cpp(", std::move(entry));
-)cpp";
-				}
-			}
-
-			if (!firstField)
-			{
-				sourceFile << R"cpp(
-		return values;
-	}();
-
-)cpp";
-			}
-
-			for (const auto& inputField : inputType.fields)
-			{
-				sourceFile << getArgumentDeclaration(inputField, "value", "value", "defaultValue");
-			}
-
-			if (!inputType.fields.empty())
-			{
-				sourceFile << std::endl;
-			}
-
-			sourceFile << R"cpp(	return )cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << inputType.cppType << R"cpp( {
-)cpp";
-
-			firstField = true;
-
-			for (const auto& inputField : inputType.fields)
-			{
-				std::string fieldName(inputField.cppName);
-
-				if (!firstField)
-				{
-					sourceFile << R"cpp(,
-)cpp";
-				}
-
-				const bool shouldMove = SchemaLoader::shouldMoveInputField(inputField);
-
-				firstField = false;
-				fieldName[0] =
-					static_cast<char>(std::toupper(static_cast<unsigned char>(fieldName[0])));
-
-				sourceFile << R"cpp(		)cpp";
-
-				if (shouldMove)
-				{
-					sourceFile << R"cpp(std::move()cpp";
-				}
-
-				sourceFile << R"cpp(value)cpp" << fieldName;
-
-				if (shouldMove)
-				{
-					sourceFile << R"cpp())cpp";
-				}
-			}
-
-			sourceFile << R"cpp(
-	};
-}
-
-)cpp";
-		}
-
-		serviceNamespace.exit();
-		sourceFile << std::endl;
-	}
-
-	NamespaceScope schemaNamespace { sourceFile, _loader.getSchemaNamespace() };
-
-	for (const auto& inputType : _loader.getInputTypes())
-	{
-		sourceFile << std::endl
-				   << inputType.cppType << R"cpp(::)cpp" << inputType.cppType
-				   << R"cpp(() noexcept)cpp";
-
-		bool firstField = true;
-
-		for (const auto& inputField : inputType.fields)
-		{
-			sourceFile << R"cpp(
-	)cpp" << (firstField ? R"cpp(:)cpp" : R"cpp(,)cpp")
-					   << R"cpp( )cpp" << inputField.cppName << R"cpp( {})cpp";
-			firstField = false;
-		}
-
-		sourceFile << R"cpp(
-{
-	// Explicit definition to prevent ODR violations when LTO is enabled.
-}
-
-)cpp" << inputType.cppType
-				   << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp";
-
-		firstField = true;
-
-		for (const auto& inputField : inputType.fields)
-		{
-			if (!firstField)
-			{
-				sourceFile << R"cpp(,)cpp";
-			}
-
-			firstField = false;
-			sourceFile << R"cpp(
-		)cpp" << _loader.getInputCppType(inputField)
-					   << R"cpp( )cpp" << inputField.cppName << R"cpp(Arg)cpp";
-		}
-
-		sourceFile << R"cpp() noexcept
-)cpp";
-
-		firstField = true;
-
-		for (const auto& inputField : inputType.fields)
-		{
-			sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-			firstField = false;
-
-			sourceFile << inputField.cppName << R"cpp( { std::move()cpp" << inputField.cppName
-					   << R"cpp(Arg) }
-)cpp";
-		}
-
-		sourceFile << R"cpp({
-}
-
-)cpp" << inputType.cppType
-				   << R"cpp(::)cpp" << inputType.cppType << R"cpp((const )cpp" << inputType.cppType
-				   << R"cpp(& other)
-)cpp";
-
-		firstField = true;
-
-		for (const auto& inputField : inputType.fields)
-		{
-			sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-			firstField = false;
-
-			sourceFile << inputField.cppName << R"cpp( { service::ModifiedArgument<)cpp"
-					   << _loader.getCppType(inputField.type) << R"cpp(>::duplicate)cpp";
-
-			if (!inputField.modifiers.empty())
-			{
-				bool firstModifier = true;
-
-				for (const auto modifier : inputField.modifiers)
-				{
-					sourceFile << (firstModifier ? R"cpp(<)cpp" : R"cpp(, )cpp");
-					firstModifier = false;
-
-					switch (modifier)
-					{
-						case service::TypeModifier::None:
-							sourceFile << R"cpp(service::TypeModifier::None)cpp";
-							break;
-
-						case service::TypeModifier::Nullable:
-							sourceFile << R"cpp(service::TypeModifier::Nullable)cpp";
-							break;
-
-						case service::TypeModifier::List:
-							sourceFile << R"cpp(service::TypeModifier::List)cpp";
-							break;
-					}
-				}
-
-				sourceFile << R"cpp(>)cpp";
-			}
-
-			sourceFile << R"cpp((other.)cpp" << inputField.cppName << R"cpp() }
-)cpp";
-		}
-
-		sourceFile << R"cpp({
-}
-
-)cpp" << inputType.cppType
-				   << R"cpp(::)cpp" << inputType.cppType << R"cpp(()cpp" << inputType.cppType
-				   << R"cpp(&& other) noexcept
-)cpp";
-
-		firstField = true;
-
-		for (const auto& inputField : inputType.fields)
-		{
-			sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-			firstField = false;
-
-			sourceFile << inputField.cppName << R"cpp( { std::move(other.)cpp" << inputField.cppName
-					   << R"cpp() }
-)cpp";
-		}
-
-		sourceFile << R"cpp({
-}
-
-)cpp" << inputType.cppType
-				   << R"cpp(::~)cpp" << inputType.cppType << R"cpp(()
-{
-	// Explicit definition to prevent ODR violations when LTO is enabled.
-}
-
-)cpp" << inputType.cppType
-				   << R"cpp(& )cpp" << inputType.cppType << R"cpp(::operator=(const )cpp"
-				   << inputType.cppType << R"cpp(& other)
-{
-	)cpp" << inputType.cppType
-				   << R"cpp( value { other };
-
-	std::swap(*this, value);
-
-	return *this;
-}
-
-)cpp" << inputType.cppType
-				   << R"cpp(& )cpp" << inputType.cppType << R"cpp(::operator=()cpp"
-				   << inputType.cppType << R"cpp(&& other) noexcept
-{
-)cpp";
-
-		for (const auto& inputField : inputType.fields)
-		{
-			sourceFile << R"cpp(	)cpp" << inputField.cppName << R"cpp( = std::move(other.)cpp"
-					   << inputField.cppName << R"cpp();
-)cpp";
-		}
-
-		sourceFile << R"cpp(
-	return *this;
-}
-)cpp";
-	}
+	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
+	NamespaceScope schemaNamespaceScope { sourceFile, schemaNamespace };
 
 	if (!_loader.isIntrospection())
 	{
@@ -2094,7 +2291,10 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	type)cpp" << enumType.cppType << R"cpp(->AddEnumValues({
+				sourceFile << R"cpp(	static const auto s_names)cpp" << enumType.cppType
+						   << R"cpp( = get)cpp" << enumType.cppType << R"cpp(Names();
+	type)cpp" << enumType.cppType
+						   << R"cpp(->AddEnumValues({
 )cpp";
 
 				for (const auto& enumValue : enumType.values)
@@ -2106,7 +2306,7 @@ Operations::Operations()cpp";
 					}
 
 					firstValue = false;
-					sourceFile << R"cpp(		{ service::s_names)cpp" << enumType.cppType
+					sourceFile << R"cpp(		{ s_names)cpp" << enumType.cppType
 							   << R"cpp([static_cast<std::size_t>()cpp"
 							   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
 							   << R"cpp(::)cpp" << enumValue.cppValue << R"cpp()], R"md()cpp";
@@ -2292,7 +2492,8 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
+					   << R"cpp());
 )cpp";
 		}
 	}
@@ -3224,7 +3425,7 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 			IncludeGuardScope includeGuard { headerFile, headerFilename };
 
 			headerFile << R"cpp(#include ")cpp"
-					   << std::filesystem::path(_headerPath).filename().string() << R"cpp("
+					   << std::filesystem::path(_schemaHeaderPath).filename().string() << R"cpp("
 
 )cpp";
 
@@ -3308,7 +3509,7 @@ using namespace std::literals;
 			IncludeGuardScope includeGuard { headerFile, headerFilename };
 
 			headerFile << R"cpp(#include ")cpp"
-					   << std::filesystem::path(_headerPath).filename().string() << R"cpp("
+					   << std::filesystem::path(_schemaHeaderPath).filename().string() << R"cpp("
 
 )cpp";
 
@@ -3412,7 +3613,7 @@ using namespace std::literals;
 			IncludeGuardScope includeGuard { headerFile, headerFilename };
 
 			headerFile << R"cpp(#include ")cpp"
-					   << std::filesystem::path(_headerPath).filename().string() << R"cpp("
+					   << std::filesystem::path(_schemaHeaderPath).filename().string() << R"cpp("
 
 )cpp";
 
