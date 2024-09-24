@@ -9,6 +9,8 @@ module;
 
 export module GraphQL.Introspection.IntrospectionSchema;
 
+export import GraphQL.Introspection.IntrospectionSharedTypes;
+
 export import GraphQL.Introspection.SchemaObject;
 export import GraphQL.Introspection.TypeObject;
 export import GraphQL.Introspection.FieldObject;
@@ -17,14 +19,6 @@ export import GraphQL.Introspection.EnumValueObject;
 export import GraphQL.Introspection.DirectiveObject;
 
 export namespace graphql::introspection {
-
-using introspection::TypeKind;
-using introspection::getTypeKindNames;
-using introspection::getTypeKindValues;
-
-using introspection::DirectiveLocation;
-using introspection::getDirectiveLocationNames;
-using introspection::getDirectiveLocationValues;
 
 using introspection::AddSchemaDetails;
 using introspection::AddTypeDetails;

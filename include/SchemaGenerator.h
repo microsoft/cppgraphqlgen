@@ -38,12 +38,16 @@ public:
 private:
 	[[nodiscard("unnecessary memory copy")]] std::string getHeaderDir() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSourceDir() const noexcept;
-	[[nodiscard("unnecessary memory copy")]] std::string getHeaderPath() const noexcept;
-	[[nodiscard("unnecessary memory copy")]] std::string getModulePath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getSchemaHeaderPath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getSchemaModulePath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getSharedTypesHeaderPath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getSharedTypesModulePath() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSourcePath() const noexcept;
 
-	[[nodiscard("unnecessary call")]] bool outputHeader() const noexcept;
-	[[nodiscard("unnecessary call")]] bool outputModule() const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputSchemaHeader() const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputSchemaModule() const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputSharedTypesHeader() const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputSharedTypesModule() const noexcept;
 	void outputInterfaceDeclaration(std::ostream& headerFile, std::string_view cppType) const;
 	void outputObjectModule(
 		std::ostream& moduleFile, std::string_view objectNamespace, std::string_view cppType) const;
@@ -94,8 +98,10 @@ private:
 	const std::string _headerDir;
 	const std::string _moduleDir;
 	const std::string _sourceDir;
-	const std::string _headerPath;
-	const std::string _modulePath;
+	const std::string _schemaHeaderPath;
+	const std::string _schemaModulePath;
+	const std::string _sharedTypesHeaderPath;
+	const std::string _sharedTypesModulePath;
 	const std::string _sourcePath;
 };
 

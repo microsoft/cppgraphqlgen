@@ -52,7 +52,9 @@ foreach(OLD_FILE ${OLD_FILES})
       file(REMOVE "${SCHEMA_SOURCE_DIR}/${OLD_FILE}")
     elseif(NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.h" AND
         NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.ixx" AND
-        NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.cpp")
+        NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}Schema.cpp" AND
+        NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}SharedTypes.h" AND
+        NOT OLD_FILE STREQUAL "${SCHEMA_PREFIX}SharedTypes.ixx")
       message(WARNING "Unexpected file in ${SCHEMA_TARGET} GraphQL schema sources: ${OLD_FILE}")
     endif()
   endif()

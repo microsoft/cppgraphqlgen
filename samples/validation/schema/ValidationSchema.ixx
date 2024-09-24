@@ -9,6 +9,8 @@ module;
 
 export module GraphQL.Validation.ValidationSchema;
 
+export import GraphQL.Validation.ValidationSharedTypes;
+
 export import GraphQL.Validation.SentientObject;
 export import GraphQL.Validation.PetObject;
 export import GraphQL.Validation.NodeObject;
@@ -28,16 +30,6 @@ export import GraphQL.Validation.MessageObject;
 export import GraphQL.Validation.ArgumentsObject;
 
 export namespace graphql::validation {
-
-using validation::DogCommand;
-using validation::getDogCommandNames;
-using validation::getDogCommandValues;
-
-using validation::CatCommand;
-using validation::getCatCommandNames;
-using validation::getCatCommandValues;
-
-using validation::ComplexInput;
 
 using validation::Operations;
 

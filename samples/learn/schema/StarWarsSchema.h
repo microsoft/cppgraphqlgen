@@ -14,6 +14,8 @@
 #include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
 
+#include "StarWarsSharedTypes.h"
+
 #include <array>
 #include <memory>
 #include <string>
@@ -25,53 +27,6 @@ static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: 
 
 namespace graphql {
 namespace learn {
-
-enum class [[nodiscard("unnecessary conversion")]] Episode
-{
-	NEW_HOPE,
-	EMPIRE,
-	JEDI
-};
-
-[[nodiscard("unnecessary call")]] constexpr auto getEpisodeNames() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::string_view, 3> {
-		R"gql(NEW_HOPE)gql"sv,
-		R"gql(EMPIRE)gql"sv,
-		R"gql(JEDI)gql"sv
-	};
-}
-
-[[nodiscard("unnecessary call")]] constexpr auto getEpisodeValues() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::pair<std::string_view, Episode>, 3> {
-		std::make_pair(R"gql(JEDI)gql"sv, Episode::JEDI),
-		std::make_pair(R"gql(EMPIRE)gql"sv, Episode::EMPIRE),
-		std::make_pair(R"gql(NEW_HOPE)gql"sv, Episode::NEW_HOPE)
-	};
-}
-
-struct [[nodiscard("unnecessary construction")]] ReviewInput
-{
-	explicit ReviewInput() noexcept;
-	explicit ReviewInput(
-		int starsArg,
-		std::optional<std::string> commentaryArg) noexcept;
-	ReviewInput(const ReviewInput& other);
-	ReviewInput(ReviewInput&& other) noexcept;
-	~ReviewInput();
-
-	ReviewInput& operator=(const ReviewInput& other);
-	ReviewInput& operator=(ReviewInput&& other) noexcept;
-
-	int stars;
-	std::optional<std::string> commentary;
-};
-
 namespace object {
 
 class Character;

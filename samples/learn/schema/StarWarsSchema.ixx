@@ -9,6 +9,8 @@ module;
 
 export module GraphQL.StarWars.StarWarsSchema;
 
+export import GraphQL.StarWars.StarWarsSharedTypes;
+
 export import GraphQL.StarWars.CharacterObject;
 export import GraphQL.StarWars.HumanObject;
 export import GraphQL.StarWars.DroidObject;
@@ -18,12 +20,6 @@ export import GraphQL.StarWars.MutationObject;
 export import GraphQL.StarWars.SubscriptionObject;
 
 export namespace graphql::learn {
-
-using learn::Episode;
-using learn::getEpisodeNames;
-using learn::getEpisodeValues;
-
-using learn::ReviewInput;
 
 using learn::Operations;
 
