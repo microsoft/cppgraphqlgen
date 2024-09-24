@@ -14,7 +14,7 @@
 
 #include "graphqlservice/internal/Version.h"
 
-#include "ProxySchema.h"
+#include "ProxySharedTypes.h"
 
 #include <optional>
 #include <string>

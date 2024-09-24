@@ -198,7 +198,7 @@ bool Generator::outputHeader() const noexcept
 	{
 		headerFile << R"cpp(
 #include ")cpp" << _schemaLoader.getFilenamePrefix()
-				   << R"cpp(Schema.h"
+				   << R"cpp(SharedTypes.h"
 )cpp";
 	}
 
@@ -1640,7 +1640,7 @@ int main(int argc, char** argv)
 		po::bool_switch(&noIntrospection),
 		"Do not expect support for Introspection")("shared-types",
 		po::bool_switch(&sharedTypes),
-		"Re-use shared types from <prefix>Schema.h");
+		"Re-use shared types from <prefix>SharedTypes.h");
 	positional.add("schema", 1).add("request", 1).add("prefix", 1).add("namespace", 1);
 
 	try

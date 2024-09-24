@@ -14,7 +14,7 @@
 
 #include "graphqlservice/internal/Version.h"
 
-#include "TodaySchema.h"
+#include "TodaySharedTypes.h"
 
 #include <optional>
 #include <string>
