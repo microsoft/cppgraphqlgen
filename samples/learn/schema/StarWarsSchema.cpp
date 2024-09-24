@@ -57,7 +57,6 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	auto typeSubscription = schema::ObjectType::Make(R"gql(Subscription)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Subscription)gql"sv, typeSubscription);
 
-
 	static const auto s_namesEpisode = getEpisodeNames();
 	typeEpisode->AddEnumValues({
 		{ s_namesEpisode[static_cast<std::size_t>(learn::Episode::NEW_HOPE)], R"md()md"sv, std::nullopt },

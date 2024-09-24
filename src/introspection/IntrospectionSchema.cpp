@@ -42,7 +42,6 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	auto typeDirective = schema::ObjectType::Make(R"gql(__Directive)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(__Directive)gql"sv, typeDirective);
 
-
 	static const auto s_namesTypeKind = getTypeKindNames();
 	typeTypeKind->AddEnumValues({
 		{ s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::SCALAR)], R"md()md"sv, std::nullopt },
@@ -54,7 +53,6 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 		{ s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::LIST)], R"md()md"sv, std::nullopt },
 		{ s_namesTypeKind[static_cast<std::size_t>(introspection::TypeKind::NON_NULL)], R"md()md"sv, std::nullopt }
 	});
-
 	static const auto s_namesDirectiveLocation = getDirectiveLocationNames();
 	typeDirectiveLocation->AddEnumValues({
 		{ s_namesDirectiveLocation[static_cast<std::size_t>(introspection::DirectiveLocation::QUERY)], R"md()md"sv, std::nullopt },

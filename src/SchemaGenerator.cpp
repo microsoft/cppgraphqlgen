@@ -2275,8 +2275,7 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(
-	static const auto s_names)cpp"
+				sourceFile << R"cpp(	static const auto s_names)cpp"
 						   << enumType.cppType << R"cpp( = get)cpp" << enumType.cppType
 						   << R"cpp(Names();
 	type)cpp" << enumType.cppType

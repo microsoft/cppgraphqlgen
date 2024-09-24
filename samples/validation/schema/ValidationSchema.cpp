@@ -79,14 +79,12 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	auto typeArguments = schema::ObjectType::Make(R"gql(Arguments)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Arguments)gql"sv, typeArguments);
 
-
 	static const auto s_namesDogCommand = getDogCommandNames();
 	typeDogCommand->AddEnumValues({
 		{ s_namesDogCommand[static_cast<std::size_t>(validation::DogCommand::SIT)], R"md()md"sv, std::nullopt },
 		{ s_namesDogCommand[static_cast<std::size_t>(validation::DogCommand::DOWN)], R"md()md"sv, std::nullopt },
 		{ s_namesDogCommand[static_cast<std::size_t>(validation::DogCommand::HEEL)], R"md()md"sv, std::nullopt }
 	});
-
 	static const auto s_namesCatCommand = getCatCommandNames();
 	typeCatCommand->AddEnumValues({
 		{ s_namesCatCommand[static_cast<std::size_t>(validation::CatCommand::JUMP)], R"md()md"sv, std::nullopt }

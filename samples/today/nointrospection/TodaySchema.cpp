@@ -97,7 +97,6 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	auto typeExpensive = schema::ObjectType::Make(R"gql(Expensive)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Expensive)gql"sv, typeExpensive);
 
-
 	static const auto s_namesTaskState = getTaskStateNames();
 	typeTaskState->AddEnumValues({
 		{ s_namesTaskState[static_cast<std::size_t>(today::TaskState::Unassigned)], R"md()md"sv, std::make_optional(R"md(Need to deprecate an [enum value](https://spec.graphql.org/October2021/#sec-Schema-Introspection.Deprecation))md"sv) },

@@ -41,7 +41,6 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	auto typeQueryResults = schema::ObjectType::Make(R"gql(QueryResults)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(QueryResults)gql"sv, typeQueryResults);
 
-
 	static const auto s_namesOperationType = getOperationTypeNames();
 	typeOperationType->AddEnumValues({
 		{ s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::QUERY)], R"md()md"sv, std::nullopt },
