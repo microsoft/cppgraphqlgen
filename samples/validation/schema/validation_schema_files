@@ -1,3 +1,4 @@
+ValidationSharedTypes.cpp
 ValidationSchema.cpp
 SentientObject.cpp
 PetObject.cpp

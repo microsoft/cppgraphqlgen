@@ -1,3 +1,4 @@
+ProxySharedTypes.cpp
 ProxySchema.cpp
 QueryObject.cpp
 QueryResultsObject.cpp

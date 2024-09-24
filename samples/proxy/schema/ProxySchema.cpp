@@ -20,145 +20,7 @@
 
 using namespace std::literals;
 
-namespace graphql {
-namespace service {
-
-static const auto s_namesOperationType = proxy::getOperationTypeNames();
-static const auto s_valuesOperationType = proxy::getOperationTypeValues();
-
-template <>
-proxy::OperationType Argument<proxy::OperationType>::convert(const response::Value& value)
-{
-	if (!value.maybe_enum())
-	{
-		throw service::schema_exception { { R"ex(not a valid OperationType value)ex" } };
-	}
-
-	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_valuesOperationType,
-		std::string_view { value.get<std::string>() });
-
-	if (!result)
-	{
-		throw service::schema_exception { { R"ex(not a valid OperationType value)ex" } };
-	}
-
-	return *result;
-}
-
-template <>
-service::AwaitableResolver Result<proxy::OperationType>::convert(service::AwaitableScalar<proxy::OperationType> result, ResolverParams&& params)
-{
-	return ModifiedResult<proxy::OperationType>::resolve(std::move(result), std::move(params),
-		[](proxy::OperationType value, const ResolverParams&)
-		{
-			response::Value resolvedResult(response::Type::EnumValue);
-
-			resolvedResult.set<std::string>(std::string { s_namesOperationType[static_cast<std::size_t>(value)] });
-
-			return resolvedResult;
-		});
-}
-
-template <>
-void Result<proxy::OperationType>::validateScalar(const response::Value& value)
-{
-	if (!value.maybe_enum())
-	{
-		throw service::schema_exception { { R"ex(not a valid OperationType value)ex" } };
-	}
-
-	const auto [itr, itrEnd] = internal::sorted_map_equal_range<internal::shorter_or_less>(
-		s_valuesOperationType.begin(),
-		s_valuesOperationType.end(),
-		std::string_view { value.get<std::string>() });
-
-	if (itr == itrEnd)
-	{
-		throw service::schema_exception { { R"ex(not a valid OperationType value)ex" } };
-	}
-}
-
-template <>
-proxy::QueryInput Argument<proxy::QueryInput>::convert(const response::Value& value)
-{
-	auto valueType = service::ModifiedArgument<proxy::OperationType>::require("type", value);
-	auto valueQuery = service::ModifiedArgument<std::string>::require("query", value);
-	auto valueOperationName = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("operationName", value);
-	auto valueVariables = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("variables", value);
-
-	return proxy::QueryInput {
-		std::move(valueType),
-		std::move(valueQuery),
-		std::move(valueOperationName),
-		std::move(valueVariables)
-	};
-}
-
-} // namespace service
-
-namespace proxy {
-
-QueryInput::QueryInput() noexcept
-	: type {}
-	, query {}
-	, operationName {}
-	, variables {}
-{
-	// Explicit definition to prevent ODR violations when LTO is enabled.
-}
-
-QueryInput::QueryInput(
-		OperationType typeArg,
-		std::string queryArg,
-		std::optional<std::string> operationNameArg,
-		std::optional<std::string> variablesArg) noexcept
-	: type { std::move(typeArg) }
-	, query { std::move(queryArg) }
-	, operationName { std::move(operationNameArg) }
-	, variables { std::move(variablesArg) }
-{
-}
-
-QueryInput::QueryInput(const QueryInput& other)
-	: type { service::ModifiedArgument<OperationType>::duplicate(other.type) }
-	, query { service::ModifiedArgument<std::string>::duplicate(other.query) }
-	, operationName { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.operationName) }
-	, variables { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.variables) }
-{
-}
-
-QueryInput::QueryInput(QueryInput&& other) noexcept
-	: type { std::move(other.type) }
-	, query { std::move(other.query) }
-	, operationName { std::move(other.operationName) }
-	, variables { std::move(other.variables) }
-{
-}
-
-QueryInput::~QueryInput()
-{
-	// Explicit definition to prevent ODR violations when LTO is enabled.
-}
-
-QueryInput& QueryInput::operator=(const QueryInput& other)
-{
-	QueryInput value { other };
-
-	std::swap(*this, value);
-
-	return *this;
-}
-
-QueryInput& QueryInput::operator=(QueryInput&& other) noexcept
-{
-	type = std::move(other.type);
-	query = std::move(other.query);
-	operationName = std::move(other.operationName);
-	variables = std::move(other.variables);
-
-	return *this;
-}
+namespace graphql::proxy {
 
 Operations::Operations(std::shared_ptr<object::Query> query)
 	: service::Request({
@@ -179,10 +41,12 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	auto typeQueryResults = schema::ObjectType::Make(R"gql(QueryResults)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(QueryResults)gql"sv, typeQueryResults);
 
+
+	static const auto s_namesOperationType = getOperationTypeNames();
 	typeOperationType->AddEnumValues({
-		{ service::s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::QUERY)], R"md()md"sv, std::nullopt },
-		{ service::s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::MUTATION)], R"md()md"sv, std::nullopt },
-		{ service::s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::SUBSCRIPTION)], R"md()md"sv, std::nullopt }
+		{ s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::QUERY)], R"md()md"sv, std::nullopt },
+		{ s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::MUTATION)], R"md()md"sv, std::nullopt },
+		{ s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::SUBSCRIPTION)], R"md()md"sv, std::nullopt }
 	});
 
 	typeQueryInput->AddInputValues({
@@ -214,5 +78,4 @@ std::shared_ptr<schema::Schema> GetSchema()
 	return schema;
 }
 
-} // namespace proxy
-} // namespace graphql
+} // namespace graphql::proxy

@@ -40,9 +40,10 @@ private:
 	[[nodiscard("unnecessary memory copy")]] std::string getSourceDir() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSchemaHeaderPath() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSchemaModulePath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getSchemaSourcePath() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSharedTypesHeaderPath() const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getSharedTypesModulePath() const noexcept;
-	[[nodiscard("unnecessary memory copy")]] std::string getSourcePath() const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getSharedTypesSourcePath() const noexcept;
 
 	[[nodiscard("unnecessary call")]] bool outputSchemaHeader() const noexcept;
 	[[nodiscard("unnecessary call")]] bool outputSchemaModule() const noexcept;
@@ -62,7 +63,8 @@ private:
 	[[nodiscard("unnecessary memory copy")]] std::string getResolverDeclaration(
 		const OutputField& outputField) const noexcept;
 
-	[[nodiscard("unnecessary call")]] bool outputSource() const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputSchemaSource() const noexcept;
+	[[nodiscard("unnecessary call")]] bool outputSharedTypesSource() const noexcept;
 	void outputInterfaceImplementation(std::ostream& sourceFile, std::string_view cppType) const;
 	void outputInterfaceIntrospection(
 		std::ostream& sourceFile, const InterfaceType& interfaceType) const;
@@ -100,9 +102,10 @@ private:
 	const std::string _sourceDir;
 	const std::string _schemaHeaderPath;
 	const std::string _schemaModulePath;
+	const std::string _schemaSourcePath;
 	const std::string _sharedTypesHeaderPath;
 	const std::string _sharedTypesModulePath;
-	const std::string _sourcePath;
+	const std::string _sharedTypesSourcePath;
 };
 
 } // namespace graphql::generator::schema

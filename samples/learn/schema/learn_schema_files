@@ -1,3 +1,4 @@
+StarWarsSharedTypes.cpp
 StarWarsSchema.cpp
 CharacterObject.cpp
 HumanObject.cpp
