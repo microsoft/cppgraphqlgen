@@ -25,8 +25,7 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql {
-namespace today {
+namespace graphql::today {
 namespace object {
 
 class Node;
@@ -97,7 +96,6 @@ void AddExpensiveDetails(const std::shared_ptr<schema::ObjectType>& typeExpensiv
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} // namespace today
-} // namespace graphql
+} // namespace graphql::today
 
 #endif // TODAYSCHEMA_H

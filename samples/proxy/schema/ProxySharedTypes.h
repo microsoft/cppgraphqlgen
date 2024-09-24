@@ -23,7 +23,8 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql::proxy {
+namespace graphql {
+namespace proxy {
 
 enum class [[nodiscard("unnecessary conversion")]] OperationType
 {
@@ -75,6 +76,7 @@ struct [[nodiscard("unnecessary construction")]] QueryInput
 	std::optional<std::string> variables;
 };
 
-} // namespace graphql::proxy
+} // namespace proxy
+} // namespace graphql
 
 #endif // PROXYSHAREDTYPES_H

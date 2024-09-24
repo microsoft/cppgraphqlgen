@@ -23,7 +23,8 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql::today {
+namespace graphql {
+namespace today {
 
 enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
@@ -232,6 +233,7 @@ struct [[nodiscard("unnecessary construction")]] FirstNestedInput
 	ThirdNestedInput third;
 };
 
-} // namespace graphql::today
+} // namespace today
+} // namespace graphql
 
 #endif // TODAYSHAREDTYPES_H

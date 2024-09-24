@@ -10,6 +10,7 @@
 
 #include "graphqlservice/GraphQLResponse.h"
 
+#include "graphqlservice/internal/DllExports.h"
 #include "graphqlservice/internal/Version.h"
 
 #include <array>
@@ -23,7 +24,8 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql::introspection {
+namespace graphql {
+namespace introspection {
 
 enum class TypeKind
 {
@@ -146,6 +148,33 @@ enum class DirectiveLocation
 	};
 }
 
-} // namespace graphql::introspection
+} // namespace introspection
+
+namespace service {
+
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+template <>
+GRAPHQLSERVICE_EXPORT introspection::TypeKind Argument<introspection::TypeKind>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<introspection::TypeKind>::convert(
+	AwaitableScalar<introspection::TypeKind> result, ResolverParams&& params);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<introspection::TypeKind>::validateScalar(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT introspection::DirectiveLocation Argument<introspection::DirectiveLocation>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<introspection::DirectiveLocation>::convert(
+	AwaitableScalar<introspection::DirectiveLocation> result, ResolverParams&& params);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<introspection::DirectiveLocation>::validateScalar(
+	const response::Value& value);
+#endif // GRAPHQL_DLLEXPORTS
+
+} // namespace service
+} // namespace graphql
 
 #endif // INTROSPECTIONSHAREDTYPES_H

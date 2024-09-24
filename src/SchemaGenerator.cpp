@@ -174,7 +174,15 @@ bool Generator::outputSchemaHeader() const noexcept
 	headerFile << R"cpp(#include "graphqlservice/GraphQLResponse.h"
 #include "graphqlservice/GraphQLService.h"
 
-#include "graphqlservice/internal/Version.h"
+)cpp";
+
+	if (_loader.isIntrospection())
+	{
+		headerFile << R"cpp(#include "graphqlservice/internal/DllExports.h"
+)cpp";
+	}
+
+	headerFile << R"cpp(#include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
 )cpp";
 
@@ -204,8 +212,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 
-	NamespaceScope graphqlNamespace { headerFile, "graphql" };
-	NamespaceScope schemaNamespace { headerFile, _loader.getSchemaNamespace() };
+	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
+	NamespaceScope schemaNamespaceScope { headerFile, schemaNamespace };
 	NamespaceScope objectNamespace { headerFile, "object", true };
 	PendingBlankLine pendingSeparator { headerFile };
 
@@ -449,66 +457,12 @@ private:
 		headerFile << std::endl;
 	}
 
-	NamespaceScope serviceNamespace { headerFile, "service", true };
-
 	if (_loader.isIntrospection())
 	{
 		headerFile
 			<< R"cpp(GRAPHQLSERVICE_EXPORT void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema);
 
 )cpp";
-
-		if (!_loader.getEnumTypes().empty() || !_loader.getInputTypes().empty())
-		{
-			if (schemaNamespace.exit())
-			{
-				headerFile << std::endl;
-			}
-
-			serviceNamespace.enter();
-
-			headerFile << R"cpp(
-#ifdef GRAPHQL_DLLEXPORTS
-// Export all of the built-in converters
-)cpp";
-
-			for (const auto& enumType : _loader.getEnumTypes())
-			{
-				headerFile << R"cpp(template <>
-GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << enumType.cppType << R"cpp( Argument<)cpp"
-						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(>::convert(
-	const response::Value& value);
-template <>
-GRAPHQLSERVICE_EXPORT AwaitableResolver Result<)cpp"
-						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(>::convert(
-	AwaitableScalar<)cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(> result, ResolverParams&& params);
-template <>
-GRAPHQLSERVICE_EXPORT void Result<)cpp"
-						   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
-						   << R"cpp(>::validateScalar(
-	const response::Value& value);
-)cpp";
-			}
-
-			for (const auto& inputType : _loader.getInputTypes())
-			{
-				headerFile << R"cpp(template <>
-GRAPHQLSERVICE_EXPORT )cpp" << _loader.getSchemaNamespace()
-						   << R"cpp(::)cpp" << inputType.cppType << R"cpp( Argument<)cpp"
-						   << inputType.cppType << R"cpp(>::convert(
-	const response::Value& value);
-)cpp";
-			}
-
-			headerFile << R"cpp(#endif // GRAPHQL_DLLEXPORTS
-
-)cpp";
-		}
 	}
 	else
 	{
@@ -673,7 +627,15 @@ bool Generator::outputSharedTypesHeader() const noexcept
 
 	headerFile << R"cpp(#include "graphqlservice/GraphQLResponse.h"
 
-#include "graphqlservice/internal/Version.h"
+)cpp";
+
+	if (_loader.isIntrospection())
+	{
+		headerFile << R"cpp(#include "graphqlservice/internal/DllExports.h"
+)cpp";
+	}
+
+	headerFile << R"cpp(#include "graphqlservice/internal/Version.h"
 
 #include <array>
 #include <memory>
@@ -694,8 +656,8 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 
-	const auto schemaNamespace = std::format(R"cpp(graphql::{})cpp", _loader.getSchemaNamespace());
-	NamespaceScope schemaNamespaceScope { headerFile, schemaNamespace };
+	NamespaceScope graphqlNamespace { headerFile, "graphql" };
+	NamespaceScope schemaNamespace { headerFile, _loader.getSchemaNamespace() };
 	PendingBlankLine pendingSeparator { headerFile };
 
 	if (!_loader.getEnumTypes().empty())
@@ -899,6 +861,60 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 		}
+	}
+
+	if (_loader.isIntrospection())
+	{
+		if (schemaNamespace.exit())
+		{
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		NamespaceScope serviceNamespace { headerFile, "service" };
+
+		headerFile << R"cpp(
+#ifdef GRAPHQL_DLLEXPORTS
+// Export all of the built-in converters
+)cpp";
+
+		for (const auto& enumType : _loader.getEnumTypes())
+		{
+			headerFile << R"cpp(template <>
+GRAPHQLSERVICE_EXPORT )cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp( Argument<)cpp" << _loader.getSchemaNamespace() << R"cpp(::)cpp"
+					   << enumType.cppType << R"cpp(>::convert(
+	const response::Value& value);
+template <>
+GRAPHQLSERVICE_EXPORT AwaitableResolver Result<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(>::convert(
+	AwaitableScalar<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(> result, ResolverParams&& params);
+template <>
+GRAPHQLSERVICE_EXPORT void Result<)cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << enumType.cppType
+					   << R"cpp(>::validateScalar(
+	const response::Value& value);
+)cpp";
+		}
+
+		for (const auto& inputType : _loader.getInputTypes())
+		{
+			headerFile << R"cpp(template <>
+GRAPHQLSERVICE_EXPORT )cpp"
+					   << _loader.getSchemaNamespace() << R"cpp(::)cpp" << inputType.cppType
+					   << R"cpp( Argument<)cpp" << inputType.cppType << R"cpp(>::convert(
+	const response::Value& value);
+)cpp";
+		}
+
+		headerFile << R"cpp(#endif // GRAPHQL_DLLEXPORTS
+
+)cpp";
 	}
 
 	return true;
@@ -2275,9 +2291,8 @@ Operations::Operations()cpp";
 			{
 				bool firstValue = true;
 
-				sourceFile << R"cpp(	static const auto s_names)cpp"
-						   << enumType.cppType << R"cpp( = get)cpp" << enumType.cppType
-						   << R"cpp(Names();
+				sourceFile << R"cpp(	static const auto s_names)cpp" << enumType.cppType
+						   << R"cpp( = get)cpp" << enumType.cppType << R"cpp(Names();
 	type)cpp" << enumType.cppType
 						   << R"cpp(->AddEnumValues({
 )cpp";

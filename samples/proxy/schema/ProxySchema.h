@@ -25,8 +25,7 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql {
-namespace proxy {
+namespace graphql::proxy {
 namespace object {
 
 class Query;
@@ -57,7 +56,6 @@ void AddQueryResultsDetails(const std::shared_ptr<schema::ObjectType>& typeQuery
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} // namespace proxy
-} // namespace graphql
+} // namespace graphql::proxy
 
 #endif // PROXYSCHEMA_H

@@ -23,7 +23,8 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql::validation {
+namespace graphql {
+namespace validation {
 
 enum class [[nodiscard("unnecessary conversion")]] DogCommand
 {
@@ -94,6 +95,7 @@ struct [[nodiscard("unnecessary construction")]] ComplexInput
 	std::optional<std::string> owner;
 };
 
-} // namespace graphql::validation
+} // namespace validation
+} // namespace graphql
 
 #endif // VALIDATIONSHAREDTYPES_H

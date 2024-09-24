@@ -25,8 +25,7 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql {
-namespace validation {
+namespace graphql::validation {
 namespace object {
 
 class Sentient;
@@ -95,7 +94,6 @@ void AddArgumentsDetails(const std::shared_ptr<schema::ObjectType>& typeArgument
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} // namespace validation
-} // namespace graphql
+} // namespace graphql::validation
 
 #endif // VALIDATIONSCHEMA_H

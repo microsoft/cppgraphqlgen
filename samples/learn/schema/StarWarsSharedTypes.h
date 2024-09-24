@@ -23,7 +23,8 @@
 static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
 static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-namespace graphql::learn {
+namespace graphql {
+namespace learn {
 
 enum class [[nodiscard("unnecessary conversion")]] Episode
 {
@@ -71,6 +72,7 @@ struct [[nodiscard("unnecessary construction")]] ReviewInput
 	std::optional<std::string> commentary;
 };
 
-} // namespace graphql::learn
+} // namespace learn
+} // namespace graphql
 
 #endif // STARWARSSHAREDTYPES_H
