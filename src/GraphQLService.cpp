@@ -1446,9 +1446,9 @@ void OperationDefinitionVisitor::visit(
 		_resolverContext,
 		_params->state,
 		_params->directives,
-		{},
-		{},
-		{},
+		std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+		std::shared_ptr<FragmentSpreadDirectiveStack> {},
+		std::shared_ptr<FragmentSpreadDirectiveStack> {},
 		std::nullopt,
 		_launch,
 	};
@@ -1863,10 +1863,10 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 			ResolverContext::NotifySubscribe,
 			registration->data->state,
 			registration->data->directives,
-			{},
-			{},
-			{},
-			{},
+			std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::nullopt,
 			launch,
 		};
 
@@ -1925,10 +1925,10 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 			ResolverContext::NotifyUnsubscribe,
 			registration->data->state,
 			registration->data->directives,
-			{},
-			{},
-			{},
-			{},
+			std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::nullopt,
 			params.launch,
 		};
 
