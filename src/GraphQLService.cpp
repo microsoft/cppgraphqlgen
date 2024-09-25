@@ -244,7 +244,7 @@ void await_worker_queue::resumePending()
 // Default to immediate synchronous execution.
 await_async::await_async()
 	: _pimpl { std::static_pointer_cast<const Concept>(
-		std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
+		  std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -252,9 +252,9 @@ await_async::await_async()
 await_async::await_async(std::launch launch)
 	: _pimpl { ((launch & std::launch::async) == std::launch::async)
 			? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
-				std::make_shared<await_worker_thread>()))
+				  std::make_shared<await_worker_thread>()))
 			: std::static_pointer_cast<const Concept>(std::make_shared<Model<std::suspend_never>>(
-				std::make_shared<std::suspend_never>())) }
+				  std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -896,12 +896,16 @@ private:
 	const TypeNames& _typeNames;
 	const ResolverMap& _resolvers;
 
+	static const Directives s_emptyFragmentDefinitionDirectives;
+
 	std::shared_ptr<FragmentDefinitionDirectiveStack> _fragmentDefinitionDirectives;
 	std::shared_ptr<FragmentSpreadDirectiveStack> _fragmentSpreadDirectives;
 	std::shared_ptr<FragmentSpreadDirectiveStack> _inlineFragmentDirectives;
 	internal::string_view_set _names;
 	std::vector<VisitorValue> _values;
 };
+
+const Directives SelectionVisitor::s_emptyFragmentDefinitionDirectives {};
 
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
@@ -917,19 +921,17 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	, _variables(variables)
 	, _typeNames(typeNames)
 	, _resolvers(resolvers)
-	, _fragmentDefinitionDirectives { selectionSetParams.fragmentDefinitionDirectives }
-	, _fragmentSpreadDirectives { selectionSetParams.fragmentSpreadDirectives }
-	, _inlineFragmentDirectives { selectionSetParams.inlineFragmentDirectives }
+	, _fragmentDefinitionDirectives { std::make_shared<FragmentDefinitionDirectiveStack>(
+		  FragmentDefinitionDirectiveStack { std::cref(s_emptyFragmentDefinitionDirectives),
+			  selectionSetParams.fragmentDefinitionDirectives }) }
+	, _fragmentSpreadDirectives { std::make_shared<FragmentSpreadDirectiveStack>(
+		  FragmentSpreadDirectiveStack { {}, selectionSetParams.fragmentSpreadDirectives }) }
+	, _inlineFragmentDirectives { std::make_shared<FragmentSpreadDirectiveStack>(
+		  FragmentSpreadDirectiveStack { {}, selectionSetParams.inlineFragmentDirectives }) }
 {
-	static const Directives s_emptyFragmentDefinitionDirectives;
-
 	// Traversing a SelectionSet from an Object type field should start tracking new fragment
 	// directives. The outer fragment directives are still there in the FragmentSpreadDirectiveStack
 	// if the field accessors want to inspect them.
-	_fragmentDefinitionDirectives->push_front(std::cref(s_emptyFragmentDefinitionDirectives));
-	_fragmentSpreadDirectives->push_front({});
-	_inlineFragmentDirectives->push_front({});
-
 	_names.reserve(count);
 	_values.reserve(count);
 }
@@ -1126,8 +1128,12 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		return;
 	}
 
-	_fragmentDefinitionDirectives->push_front(itr->second.getDirectives());
-	_fragmentSpreadDirectives->push_front(directiveVisitor.getDirectives());
+	_fragmentDefinitionDirectives = std::make_shared<FragmentDefinitionDirectiveStack>(
+		FragmentDefinitionDirectiveStack { itr->second.getDirectives(),
+			_fragmentDefinitionDirectives });
+	_fragmentSpreadDirectives = std::make_shared<FragmentSpreadDirectiveStack>(
+		FragmentSpreadDirectiveStack { directiveVisitor.getDirectives(),
+			_fragmentSpreadDirectives });
 
 	const std::size_t count = itr->second.getSelection().children.size();
 
@@ -1142,8 +1148,8 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		visit(*selection);
 	}
 
-	_fragmentSpreadDirectives->pop_front();
-	_fragmentDefinitionDirectives->pop_front();
+	_fragmentSpreadDirectives = _fragmentSpreadDirectives->outer;
+	_fragmentDefinitionDirectives = _fragmentDefinitionDirectives->outer;
 }
 
 void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
@@ -1172,7 +1178,9 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
 			[this, &directiveVisitor](const peg::ast_node& child) {
-				_inlineFragmentDirectives->push_front(directiveVisitor.getDirectives());
+				_inlineFragmentDirectives = std::make_shared<FragmentSpreadDirectiveStack>(
+					FragmentSpreadDirectiveStack { directiveVisitor.getDirectives(),
+						_inlineFragmentDirectives });
 
 				const std::size_t count = child.children.size();
 
@@ -1187,7 +1195,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 					visit(*selection);
 				}
 
-				_inlineFragmentDirectives->pop_front();
+				_inlineFragmentDirectives = _inlineFragmentDirectives->outer;
 			});
 	}
 }
@@ -1438,9 +1446,9 @@ void OperationDefinitionVisitor::visit(
 		_resolverContext,
 		_params->state,
 		_params->directives,
-		std::make_shared<FragmentDefinitionDirectiveStack>(),
-		std::make_shared<FragmentSpreadDirectiveStack>(),
-		std::make_shared<FragmentSpreadDirectiveStack>(),
+		std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+		std::shared_ptr<FragmentSpreadDirectiveStack> {},
+		std::shared_ptr<FragmentSpreadDirectiveStack> {},
 		std::nullopt,
 		_launch,
 	};
@@ -1855,10 +1863,10 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 			ResolverContext::NotifySubscribe,
 			registration->data->state,
 			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			{},
+			std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::nullopt,
 			launch,
 		};
 
@@ -1917,10 +1925,10 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 			ResolverContext::NotifyUnsubscribe,
 			registration->data->state,
 			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			{},
+			std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::nullopt,
 			params.launch,
 		};
 
@@ -1980,9 +1988,9 @@ AwaitableDeliver Request::deliver(RequestDeliverParams params) const
 			ResolverContext::Subscription,
 			registration->data->state,
 			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
+			std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
 			std::nullopt,
 			params.launch,
 		};
