@@ -907,15 +907,15 @@ NestedType::NestedType(service::FieldParams&& params, int depth)
 	: depth(depth)
 {
 	_capturedParams.push({ { params.operationDirectives },
-		params.fragmentDefinitionDirectives->empty()
+		!params.fragmentDefinitionDirectives
 			? service::Directives {}
-			: service::Directives { params.fragmentDefinitionDirectives->front().get() },
-		params.fragmentSpreadDirectives->empty()
+			: service::Directives { params.fragmentDefinitionDirectives->directives.get() },
+		!params.fragmentSpreadDirectives
 			? service::Directives {}
-			: service::Directives { params.fragmentSpreadDirectives->front() },
-		params.inlineFragmentDirectives->empty()
+			: service::Directives { params.fragmentSpreadDirectives->directives },
+		!params.inlineFragmentDirectives
 			? service::Directives {}
-			: service::Directives { params.inlineFragmentDirectives->front() },
+			: service::Directives { params.inlineFragmentDirectives->directives },
 		std::move(params.fieldDirectives) });
 }
 

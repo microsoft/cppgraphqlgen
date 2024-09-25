@@ -249,8 +249,17 @@ public:
 using Directives = std::vector<std::pair<std::string_view, response::Value>>;
 
 // Traversing a fragment spread adds a new set of directives.
-using FragmentDefinitionDirectiveStack = std::list<std::reference_wrapper<const Directives>>;
-using FragmentSpreadDirectiveStack = std::list<Directives>;
+struct [[nodiscard("unnecessary construction")]] FragmentDefinitionDirectiveStack
+{
+	const std::reference_wrapper<const Directives> directives;
+	const std::shared_ptr<FragmentDefinitionDirectiveStack> outer;
+};
+
+struct [[nodiscard("unnecessary construction")]] FragmentSpreadDirectiveStack
+{
+	const Directives directives;
+	const std::shared_ptr<FragmentSpreadDirectiveStack> outer;
+};
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a
 // SelectionSet
