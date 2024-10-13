@@ -487,6 +487,156 @@ private:
 	std::variant<T, std::future<T>> _value;
 };
 
+// Type-erased visitor for resolvers.
+class [[nodiscard("unnecessary construction")]] ResolverVisitor final
+	: public std::enable_shared_from_this<ResolverVisitor>
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void add_value(std::shared_ptr<const response::Value>&& value) = 0;
+
+		virtual void reserve(std::size_t count) = 0;
+
+		virtual void start_object() = 0;
+		virtual void add_member(std::string&& key) = 0;
+		virtual void end_object() = 0;
+
+		virtual void start_array() = 0;
+		virtual void end_array() = 0;
+
+		virtual void add_null() = 0;
+		virtual void add_string(std::string&& value) = 0;
+		virtual void add_enum(std::string&& value) = 0;
+		virtual void add_id(response::IdType&& value) = 0;
+		virtual void add_bool(bool value) = 0;
+		virtual void add_int(int value) = 0;
+		virtual void add_float(double value) = 0;
+
+		virtual void add_error(schema_error&& error) = 0;
+	};
+
+	template <class T>
+	struct Model : Concept
+	{
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void add_value(std::shared_ptr<const response::Value>&& value) final
+		{
+			_pimpl->add_value(std::move(value));
+		}
+
+		void reserve(std::size_t count) final
+		{
+			_pimpl->reserve(count);
+		}
+
+		void start_object() final
+		{
+			_pimpl->start_object();
+		}
+
+		void add_member(std::string&& key) final
+		{
+			_pimpl->add_member(std::move(key));
+		}
+
+		void end_object() final
+		{
+			_pimpl->end_object();
+		}
+
+		void start_array() final
+		{
+			_pimpl->start_array();
+		}
+
+		void end_array() final
+		{
+			_pimpl->end_array();
+		}
+
+		void add_null() final
+		{
+			_pimpl->add_null();
+		}
+
+		void add_string(std::string&& value) final
+		{
+			_pimpl->add_string(std::move(value));
+		}
+
+		void add_enum(std::string&& value) final
+		{
+			_pimpl->add_enum(std::move(value));
+		}
+
+		void add_id(response::IdType&& value) final
+		{
+			_pimpl->add_id(std::move(value));
+		}
+
+		void add_bool(bool value) final
+		{
+			_pimpl->add_bool(value);
+		}
+
+		void add_int(int value) final
+		{
+			_pimpl->add_int(value);
+		}
+
+		void add_float(double value) final
+		{
+			_pimpl->add_float(value);
+		}
+
+		void add_error(schema_error&& error) final
+		{
+			_pimpl->add_error(std::move(error));
+		}
+
+	private:
+		std::shared_ptr<T> _pimpl;
+	};
+
+	const std::shared_ptr<Concept> _concept;
+
+public:
+	template <class T>
+	ResolverVisitor(std::shared_ptr<T> writer) noexcept
+		: _concept { std::static_pointer_cast<Concept>(
+			  std::make_shared<Model<T>>(std::move(writer))) }
+	{
+	}
+
+	GRAPHQLSERVICE_EXPORT void add_value(std::shared_ptr<const response::Value>&& value);
+
+	GRAPHQLSERVICE_EXPORT void reserve(std::size_t count);
+
+	GRAPHQLSERVICE_EXPORT void start_object();
+	GRAPHQLSERVICE_EXPORT void add_member(std::string&& key);
+	GRAPHQLSERVICE_EXPORT void end_object();
+
+	GRAPHQLSERVICE_EXPORT void start_array();
+	GRAPHQLSERVICE_EXPORT void end_array();
+
+	GRAPHQLSERVICE_EXPORT void add_null();
+	GRAPHQLSERVICE_EXPORT void add_string(std::string&& value);
+	GRAPHQLSERVICE_EXPORT void add_enum(std::string&& value);
+	GRAPHQLSERVICE_EXPORT void add_id(response::IdType&& value);
+	GRAPHQLSERVICE_EXPORT void add_bool(bool value);
+	GRAPHQLSERVICE_EXPORT void add_int(int value);
+	GRAPHQLSERVICE_EXPORT void add_float(double value);
+
+	GRAPHQLSERVICE_EXPORT void add_error(schema_error&& error);
+};
+
 // Fragments are referenced by name and have a single type condition (except for inline
 // fragments, where the type condition is common but optional). They contain a set of fields
 // (with optional aliases and sub-selections) and potentially references to other fragments.
@@ -535,11 +685,104 @@ struct [[nodiscard("unnecessary construction")]] ResolverParams : SelectionSetPa
 	const response::Value& variables;
 };
 
+// Pending token for ResolverVisitor.
+struct [[nodiscard("unnecessary construction")]] ResultToken
+{
+	using OpaqueValue = std::shared_ptr<const response::Value>;
+
+	struct Reserve
+	{
+		std::size_t capacity;
+	};
+
+	struct StartObject
+	{
+	};
+
+	struct AddMember
+	{
+		std::string key;
+	};
+
+	struct EndObject
+	{
+	};
+
+	struct StartArray
+	{
+	};
+
+	struct EndArray
+	{
+	};
+
+	struct NullValue
+	{
+	};
+
+	struct StringValue
+	{
+		std::string value;
+	};
+
+	struct EnumValue
+	{
+		std::string value;
+	};
+
+	struct IdValue
+	{
+		response::IdType value;
+	};
+
+	struct BoolValue
+	{
+		bool value;
+	};
+
+	struct IntValue
+	{
+		int value;
+	};
+
+	struct FloatValue
+	{
+		double value;
+	};
+
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(OpaqueValue&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(Reserve&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(StartObject&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(AddMember&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(EndObject&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(StartArray&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(EndArray&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(NullValue&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(StringValue&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(EnumValue&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(IdValue&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(BoolValue&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(IntValue&& value);
+	GRAPHQLSERVICE_EXPORT explicit ResultToken(FloatValue&& value);
+
+	GRAPHQLSERVICE_EXPORT void visit(const std::shared_ptr<ResolverVisitor>& visitor) &&;
+
+private:
+	using variant_type =
+		std::variant<OpaqueValue, Reserve, StartObject, AddMember, EndObject, StartArray, EndArray,
+			NullValue, StringValue, EnumValue, IdValue, BoolValue, IntValue, FloatValue>;
+
+	variant_type _value;
+};
+
 // Propagate data and errors together without bundling them into a response::Value struct until
 // we're ready to return from the top level Operation.
 struct [[nodiscard("unnecessary construction")]] ResolverResult
 {
-	response::Value data;
+	GRAPHQLSERVICE_EXPORT response::Value toValue() &&;
+	GRAPHQLSERVICE_EXPORT void visit(const std::shared_ptr<ResolverVisitor>& visitor) &&;
+
+	std::list<ResultToken> data {};
 	std::list<schema_error> errors {};
 };
 
@@ -1019,7 +1262,7 @@ struct ModifiedResult
 
 		if (!awaitedResult)
 		{
-			co_return ResolverResult {};
+			co_return ResolverResult { { ResultToken { ResultToken::NullValue {} } } };
 		}
 
 		auto modifiedResult =
@@ -1046,8 +1289,8 @@ struct ModifiedResult
 			if (value)
 			{
 				ModifiedResult::validateScalar<Modifier, Other...>(*value);
-				co_return ResolverResult { response::Value {
-					std::shared_ptr { std::move(value) } } };
+				co_return ResolverResult { { ResultToken {
+					ResultToken::OpaqueValue { std::shared_ptr { std::move(value) } } } } };
 			}
 		}
 
@@ -1060,7 +1303,7 @@ struct ModifiedResult
 
 		if (!awaitedResult)
 		{
-			co_return ResolverResult {};
+			co_return ResolverResult { { ResultToken { ResultToken::NullValue {} } } };
 		}
 
 		auto modifiedResult = co_await ModifiedResult::convert<Other...>(std::move(*awaitedResult),
@@ -1083,8 +1326,8 @@ struct ModifiedResult
 			if (value)
 			{
 				ModifiedResult::validateScalar<Modifier, Other...>(*value);
-				co_return ResolverResult { response::Value {
-					std::shared_ptr { std::move(value) } } };
+				co_return ResolverResult { { ResultToken {
+					ResultToken::OpaqueValue { std::shared_ptr { std::move(value) } } } } };
 			}
 		}
 
@@ -1128,9 +1371,10 @@ struct ModifiedResult
 			}
 		}
 
-		ResolverResult document { response::Value { response::Type::List } };
+		ResolverResult document;
 
-		document.data.reserve(children.size());
+		document.data.push_back(ResultToken { ResultToken::StartArray {} });
+		document.data.push_back(ResultToken { ResultToken::Reserve { children.size() } });
 		std::get<std::size_t>(params.errorPath->segment) = 0;
 
 		for (auto& child : children)
@@ -1141,11 +1385,11 @@ struct ModifiedResult
 
 				auto value = co_await std::move(child);
 
-				document.data.emplace_back(std::move(value.data));
+				document.data.splice(document.data.end(), std::move(value.data));
 
 				if (!value.errors.empty())
 				{
-					document.errors.splice(document.errors.end(), value.errors);
+					document.errors.splice(document.errors.end(), std::move(value.errors));
 				}
 			}
 			catch (schema_exception& scx)
@@ -1170,6 +1414,8 @@ struct ModifiedResult
 
 			++std::get<std::size_t>(params.errorPath->segment);
 		}
+
+		document.data.push_back(ResultToken { ResultToken::EndArray {} });
 
 		co_return document;
 	}
@@ -1213,7 +1459,7 @@ struct ModifiedResult
 	}
 
 	using ResolverCallback =
-		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
+		std::function<ResolverResult(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
 	[[nodiscard("unnecessary call")]] static AwaitableResolver resolve(
 		typename ResultTraits<Type>::future_type result, ResolverParams&& paramsArg,
@@ -1226,7 +1472,8 @@ struct ModifiedResult
 		if (value)
 		{
 			Result<Type>::validateScalar(*value);
-			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+			co_return ResolverResult { { ResultToken {
+				ResultToken::OpaqueValue { std::shared_ptr { std::move(value) } } } } };
 		}
 
 		auto pendingResolver = std::move(resolver);
@@ -1238,7 +1485,14 @@ struct ModifiedResult
 		try
 		{
 			co_await params.launch;
-			document.data = pendingResolver(co_await result, params);
+			auto value = pendingResolver(co_await result, params);
+
+			document.data.splice(document.data.end(), std::move(value.data));
+
+			if (!value.errors.empty())
+			{
+				document.errors.splice(document.errors.end(), std::move(value.errors));
+			}
 		}
 		catch (schema_exception& scx)
 		{

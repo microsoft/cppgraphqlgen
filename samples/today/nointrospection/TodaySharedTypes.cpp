@@ -50,11 +50,7 @@ service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableS
 	return ModifiedResult<today::TaskState>::resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)
 		{
-			response::Value resolvedResult(response::Type::EnumValue);
-
-			resolvedResult.set<std::string>(std::string { s_namesTaskState[static_cast<std::size_t>(value)] });
-
-			return resolvedResult;
+			return ResolverResult { { ResultToken { ResultToken::EnumValue { std::string { s_namesTaskState[static_cast<std::size_t>(value)] } } } } };
 		});
 }
 

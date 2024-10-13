@@ -11,6 +11,7 @@
 #include <array>
 #include <cstddef>
 #include <iostream>
+#include <stack>
 
 using namespace std::literals;
 
@@ -271,6 +272,81 @@ void await_async::await_suspend(std::coroutine_handle<> h) const
 void await_async::await_resume() const
 {
 	_pimpl->await_resume();
+}
+
+void ResolverVisitor::add_value(std::shared_ptr<const response::Value>&& value)
+{
+	_concept->add_value(std::move(value));
+}
+
+void ResolverVisitor::reserve(std::size_t count)
+{
+	_concept->reserve(count);
+}
+
+void ResolverVisitor::start_object()
+{
+	_concept->start_object();
+}
+
+void ResolverVisitor::add_member(std::string&& key)
+{
+	_concept->add_member(std::move(key));
+}
+
+void ResolverVisitor::end_object()
+{
+	_concept->end_object();
+}
+
+void ResolverVisitor::start_array()
+{
+	_concept->start_array();
+}
+
+void ResolverVisitor::end_array()
+{
+	_concept->end_array();
+}
+
+void ResolverVisitor::add_null()
+{
+	_concept->add_null();
+}
+
+void ResolverVisitor::add_string(std::string&& value)
+{
+	_concept->add_string(std::move(value));
+}
+
+void ResolverVisitor::add_enum(std::string&& value)
+{
+	_concept->add_enum(std::move(value));
+}
+
+void ResolverVisitor::add_id(response::IdType&& value)
+{
+	_concept->add_id(std::move(value));
+}
+
+void ResolverVisitor::add_bool(bool value)
+{
+	_concept->add_bool(value);
+}
+
+void ResolverVisitor::add_int(int value)
+{
+	_concept->add_int(value);
+}
+
+void ResolverVisitor::add_float(double value)
+{
+	_concept->add_float(value);
+}
+
+void ResolverVisitor::add_error(schema_error&& error)
+{
+	_concept->add_error(std::move(error));
 }
 
 FieldParams::FieldParams(SelectionSetParams&& selectionSetParams, Directives directives)
@@ -620,6 +696,323 @@ schema_location ResolverParams::getLocation() const
 	return { position.line, position.column };
 }
 
+ResultToken::ResultToken(OpaqueValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(Reserve&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(StartObject&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(AddMember&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(EndObject&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(StartArray&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(EndArray&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(NullValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(StringValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(EnumValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(IdValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(BoolValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(IntValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ResultToken::ResultToken(FloatValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+void ResultToken::visit(const std::shared_ptr<ResolverVisitor>& visitor) &&
+{
+	std::visit(
+		[&visitor](auto&& value) {
+			using value_type = std::decay_t<decltype(value)>;
+
+			if constexpr (std::is_same_v<value_type, OpaqueValue>)
+			{
+				visitor->add_value(std::move(value));
+			}
+			else if constexpr (std::is_same_v<value_type, Reserve>)
+			{
+				visitor->reserve(value.capacity);
+			}
+			else if constexpr (std::is_same_v<value_type, StartObject>)
+			{
+				visitor->start_object();
+			}
+			else if constexpr (std::is_same_v<value_type, AddMember>)
+			{
+				visitor->add_member(std::move(value.key));
+			}
+			else if constexpr (std::is_same_v<value_type, EndObject>)
+			{
+				visitor->end_object();
+			}
+			else if constexpr (std::is_same_v<value_type, StartArray>)
+			{
+				visitor->start_array();
+			}
+			else if constexpr (std::is_same_v<value_type, EndArray>)
+			{
+				visitor->end_array();
+			}
+			else if constexpr (std::is_same_v<value_type, NullValue>)
+			{
+				visitor->add_null();
+			}
+			else if constexpr (std::is_same_v<value_type, StringValue>)
+			{
+				visitor->add_string(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, EnumValue>)
+			{
+				visitor->add_enum(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, IdValue>)
+			{
+				visitor->add_id(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, BoolValue>)
+			{
+				visitor->add_bool(value.value);
+			}
+			else if constexpr (std::is_same_v<value_type, IntValue>)
+			{
+				visitor->add_int(value.value);
+			}
+			else if constexpr (std::is_same_v<value_type, FloatValue>)
+			{
+				visitor->add_float(value.value);
+			}
+		},
+		std::move(_value));
+}
+
+class ResolverResultVisitor
+{
+public:
+	explicit ResolverResultVisitor() noexcept;
+
+	void add_value(std::shared_ptr<const response::Value>&& value);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void add_error(schema_error&& error);
+
+	response::Value document();
+
+private:
+	void add_value(response::Value&& value);
+
+	response::Value _data {};
+	std::list<schema_error> _errors {};
+	std::stack<response::Value> _values {};
+	std::stack<std::string> _keys {};
+};
+
+ResolverResultVisitor::ResolverResultVisitor() noexcept
+{
+}
+
+void ResolverResultVisitor::add_value(std::shared_ptr<const response::Value>&& value)
+{
+	add_value(response::Value { std::move(value) });
+}
+
+void ResolverResultVisitor::reserve(std::size_t count)
+{
+	_values.top().reserve(count);
+}
+
+void ResolverResultVisitor::start_object()
+{
+	_values.push(response::Value { response::Type::Map });
+}
+
+void ResolverResultVisitor::add_member(std::string&& key)
+{
+	_keys.push(std::move(key));
+}
+
+void ResolverResultVisitor::end_object()
+{
+	auto value = std::move(_values.top());
+
+	_values.pop();
+	add_value(std::move(value));
+}
+
+void ResolverResultVisitor::start_array()
+{
+	_values.push(response::Value { response::Type::List });
+}
+
+void ResolverResultVisitor::end_array()
+{
+	auto value = std::move(_values.top());
+
+	_values.pop();
+	add_value(std::move(value));
+}
+
+void ResolverResultVisitor::add_null()
+{
+	add_value(response::Value {});
+}
+
+void ResolverResultVisitor::add_string(std::string&& value)
+{
+	add_value(response::Value { std::move(value) });
+}
+
+void ResolverResultVisitor::add_enum(std::string&& value)
+{
+	response::Value enumValue { response::Type::EnumValue };
+
+	enumValue.set<response::StringType>(std::move(value));
+	add_value(std::move(enumValue));
+}
+
+void ResolverResultVisitor::add_id(response::IdType&& value)
+{
+	add_value(response::Value { std::move(value) });
+}
+
+void ResolverResultVisitor::add_bool(bool value)
+{
+	add_value(response::Value { std::move(value) });
+}
+
+void ResolverResultVisitor::add_int(int value)
+{
+	add_value(response::Value { std::move(value) });
+}
+
+void ResolverResultVisitor::add_float(double value)
+{
+	add_value(response::Value { std::move(value) });
+}
+
+void ResolverResultVisitor::add_error(schema_error&& error)
+{
+	_errors.push_back(std::move(error));
+}
+
+response::Value ResolverResultVisitor::document()
+{
+	response::Value document { response::Type::Map };
+
+	document.emplace_back(std::string { strData }, std::move(_data));
+
+	if (!_errors.empty())
+	{
+		document.emplace_back(std::string { strErrors }, buildErrorValues(std::move(_errors)));
+	}
+
+	return document;
+}
+
+void ResolverResultVisitor::add_value(response::Value&& value)
+{
+	if (_values.empty())
+	{
+		_data = std::move(value);
+		return;
+	}
+
+	switch (_values.top().type())
+	{
+		case response::Type::Map:
+			_values.top().emplace_back(std::move(_keys.top()), std::move(value));
+			_keys.pop();
+			break;
+
+		case response::Type::List:
+			_values.top().emplace_back(std::move(value));
+			break;
+
+		default:
+			throw std::logic_error("Invalid call to Value::emplace_back");
+			break;
+	}
+}
+
+response::Value ResolverResult::toValue() &&
+{
+	auto visitor = std::make_shared<ResolverResultVisitor>();
+
+	(std::move(*this)).visit(std::make_shared<ResolverVisitor>(visitor));
+
+	return visitor->document();
+}
+
+void ResolverResult::visit(const std::shared_ptr<ResolverVisitor>& visitor) &&
+{
+	for (auto& token : data)
+	{
+		std::move(token).visit(visitor);
+	}
+
+	for (auto& error : errors)
+	{
+		visitor->add_error(std::move(error));
+	}
+}
+
 template <>
 int Argument<int>::convert(const response::Value& value)
 {
@@ -703,7 +1096,7 @@ AwaitableResolver Result<int>::convert(AwaitableScalar<int> result, ResolverPara
 	return ModifiedResult<int>::resolve(std::move(result),
 		std::move(params),
 		[](int&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { ResultToken { ResultToken::IntValue { value } } } };
 		});
 }
 
@@ -715,7 +1108,7 @@ AwaitableResolver Result<double>::convert(AwaitableScalar<double> result, Resolv
 	return ModifiedResult<double>::resolve(std::move(result),
 		std::move(params),
 		[](double&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { ResultToken { ResultToken::FloatValue { value } } } };
 		});
 }
 
@@ -728,7 +1121,8 @@ AwaitableResolver Result<std::string>::convert(
 	return ModifiedResult<std::string>::resolve(std::move(result),
 		std::move(params),
 		[](std::string&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { ResultToken {
+				ResultToken::StringValue { std::move(value) } } } };
 		});
 }
 
@@ -740,7 +1134,7 @@ AwaitableResolver Result<bool>::convert(AwaitableScalar<bool> result, ResolverPa
 	return ModifiedResult<bool>::resolve(std::move(result),
 		std::move(params),
 		[](bool&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { ResultToken { ResultToken::BoolValue { value } } } };
 		});
 }
 
@@ -753,7 +1147,8 @@ AwaitableResolver Result<response::Value>::convert(
 	return ModifiedResult<response::Value>::resolve(std::move(result),
 		std::move(params),
 		[](response::Value&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { ResultToken { ResultToken::OpaqueValue {
+				std::make_shared<response::Value>(std::move(value)) } } } };
 		});
 }
 
@@ -766,7 +1161,7 @@ AwaitableResolver Result<response::IdType>::convert(
 	return ModifiedResult<response::IdType>::resolve(std::move(result),
 		std::move(params),
 		[](response::IdType&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { ResultToken { ResultToken::IdValue { std::move(value) } } } };
 		});
 }
 
@@ -799,7 +1194,7 @@ AwaitableResolver Result<Object>::convert(
 
 	if (!awaitedResult)
 	{
-		co_return ResolverResult {};
+		co_return ResolverResult { { ResultToken { ResultToken::NullValue {} } } };
 	}
 
 	auto document = co_await awaitedResult->resolve(params,
@@ -1228,9 +1623,10 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 	auto children = visitor.getValues();
 	const auto launch = selectionSetParams.launch;
-	ResolverResult document { response::Value { response::Type::Map } };
+	ResolverResult document {};
 
-	document.data.reserve(children.size());
+	document.data.push_back(ResultToken { ResultToken::StartObject {} });
+	document.data.push_back(ResultToken { ResultToken::Reserve { children.size() } });
 
 	const auto parent = selectionSetParams.errorPath
 		? std::make_optional(std::cref(*selectionSetParams.errorPath))
@@ -1244,19 +1640,13 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 			auto value = co_await std::move(child.result);
 
-			if (!document.data.emplace_back(std::string { child.name }, std::move(value.data)))
-			{
-				auto message = std::format("Ambiguous field error name: {}", child.name);
-				field_path path { parent, path_segment { child.name } };
-
-				document.errors.push_back({ std::move(message),
-					child.location.value_or(schema_location {}),
-					buildErrorPath(std::make_optional(path)) });
-			}
+			document.data.push_back(
+				ResultToken { ResultToken::AddMember { std::string { child.name } } });
+			document.data.splice(document.data.end(), std::move(value.data));
 
 			if (!value.errors.empty())
 			{
-				document.errors.splice(document.errors.end(), value.errors);
+				document.errors.splice(document.errors.end(), std::move(value.errors));
 			}
 		}
 		catch (schema_exception& scx)
@@ -1268,7 +1658,9 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 				std::ranges::copy(errors, std::back_inserter(document.errors));
 			}
 
-			document.data.emplace_back(std::string { child.name }, {});
+			document.data.push_back(
+				ResultToken { ResultToken::AddMember { std::string { child.name } } });
+			document.data.push_back(ResultToken { ResultToken::NullValue {} });
 		}
 		catch (const std::exception& ex)
 		{
@@ -1279,9 +1671,13 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 			document.errors.push_back({ std::move(message),
 				child.location.value_or(schema_location {}),
 				buildErrorPath(std::make_optional(path)) });
-			document.data.emplace_back(std::string { child.name }, {});
+			document.data.push_back(
+				ResultToken { ResultToken::AddMember { std::string { child.name } } });
+			document.data.push_back(ResultToken { ResultToken::NullValue {} });
 		}
 	}
+
+	document.data.push_back(ResultToken { ResultToken::EndObject {} });
 
 	co_return std::move(document);
 }
@@ -1380,7 +1776,7 @@ AwaitableResolver OperationDefinitionVisitor::getValue()
 {
 	if (!_result)
 	{
-		co_return ResolverResult {};
+		co_return ResolverResult { { ResultToken { ResultToken::NullValue {} } } };
 	}
 
 	auto result = std::move(*_result);
@@ -1814,18 +2210,7 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 		co_await params.launch;
 		operationVisitor.visit(operationType, *operationDefinition);
 
-		auto result = co_await operationVisitor.getValue();
-		response::Value document { response::Type::Map };
-
-		document.emplace_back(std::string { strData }, std::move(result.data));
-
-		if (!result.errors.empty())
-		{
-			document.emplace_back(std::string { strErrors },
-				buildErrorValues(std::move(result.errors)));
-		}
-
-		co_return std::move(document);
+		co_return (co_await operationVisitor.getValue()).toValue();
 	}
 	catch (schema_exception& ex)
 	{
@@ -2006,13 +2391,7 @@ AwaitableDeliver Request::deliver(RequestDeliverParams params) const
 				registration->data->fragments,
 				registration->data->variables);
 
-			document.emplace_back(std::string { strData }, std::move(result.data));
-
-			if (!result.errors.empty())
-			{
-				document.emplace_back(std::string { strErrors },
-					buildErrorValues(std::move(result.errors)));
-			}
+			document = std::move(result).toValue();
 		}
 		catch (schema_exception& ex)
 		{

@@ -50,11 +50,7 @@ service::AwaitableResolver Result<introspection::TypeKind>::convert(service::Awa
 	return ModifiedResult<introspection::TypeKind>::resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind value, const ResolverParams&)
 		{
-			response::Value resolvedResult(response::Type::EnumValue);
-
-			resolvedResult.set<std::string>(std::string { s_namesTypeKind[static_cast<std::size_t>(value)] });
-
-			return resolvedResult;
+			return ResolverResult { { ResultToken { ResultToken::EnumValue { std::string { s_namesTypeKind[static_cast<std::size_t>(value)] } } } } };
 		});
 }
 
@@ -106,11 +102,7 @@ service::AwaitableResolver Result<introspection::DirectiveLocation>::convert(ser
 	return ModifiedResult<introspection::DirectiveLocation>::resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation value, const ResolverParams&)
 		{
-			response::Value resolvedResult(response::Type::EnumValue);
-
-			resolvedResult.set<std::string>(std::string { s_namesDirectiveLocation[static_cast<std::size_t>(value)] });
-
-			return resolvedResult;
+			return ResolverResult { { ResultToken { ResultToken::EnumValue { std::string { s_namesDirectiveLocation[static_cast<std::size_t>(value)] } } } } };
 		});
 }
 
