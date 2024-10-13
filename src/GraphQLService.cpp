@@ -349,6 +349,11 @@ void ResolverVisitor::add_error(schema_error&& error)
 	_concept->add_error(std::move(error));
 }
 
+void ResolverVisitor::complete()
+{
+	_concept->complete();
+}
+
 FieldParams::FieldParams(SelectionSetParams&& selectionSetParams, Directives directives)
 	: SelectionSetParams(std::move(selectionSetParams))
 	, fieldDirectives(std::move(directives))
@@ -852,6 +857,7 @@ public:
 	void add_int(int value);
 	void add_float(double value);
 	void add_error(schema_error&& error);
+	void complete();
 
 	response::Value document();
 
@@ -952,6 +958,10 @@ void ResolverResultVisitor::add_error(schema_error&& error)
 	_errors.push_back(std::move(error));
 }
 
+void ResolverResultVisitor::complete()
+{
+}
+
 response::Value ResolverResultVisitor::document()
 {
 	response::Value document { response::Type::Map };
@@ -991,15 +1001,6 @@ void ResolverResultVisitor::add_value(response::Value&& value)
 	}
 }
 
-response::Value ResolverResult::toValue() &&
-{
-	auto visitor = std::make_shared<ResolverResultVisitor>();
-
-	(std::move(*this)).visit(std::make_shared<ResolverVisitor>(visitor));
-
-	return visitor->document();
-}
-
 void ResolverResult::visit(const std::shared_ptr<ResolverVisitor>& visitor) &&
 {
 	for (auto& token : data)
@@ -1011,6 +1012,8 @@ void ResolverResult::visit(const std::shared_ptr<ResolverVisitor>& visitor) &&
 	{
 		visitor->add_error(std::move(error));
 	}
+
+	visitor->complete();
 }
 
 template <>
@@ -1857,7 +1860,8 @@ void OperationDefinitionVisitor::visit(
 
 SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
 	response::Value arguments, Directives fieldDirectives, peg::ast&& query,
-	std::string&& operationName, SubscriptionCallback&& callback, const peg::ast_node& selection)
+	std::string&& operationName, SubscriptionCallbackOrVisitor&& callback,
+	const peg::ast_node& selection)
 	: data(std::move(data))
 	, field(std::move(field))
 	, arguments(std::move(arguments))
@@ -2155,6 +2159,15 @@ std::pair<std::string_view, const peg::ast_node*> Request::findOperationDefiniti
 
 response::AwaitableValue Request::resolve(RequestResolveParams params) const
 {
+	auto visitor = std::make_shared<ResolverResultVisitor>();
+
+	co_await visit(std::move(params), std::make_shared<ResolverVisitor>(visitor));
+	co_return visitor->document();
+}
+
+AwaitableVisit Request::visit(
+	RequestResolveParams params, const std::shared_ptr<ResolverVisitor>& resolverVisitor) const
+{
 	try
 	{
 		FragmentDefinitionVisitor fragmentVisitor(params.variables);
@@ -2210,16 +2223,13 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 		co_await params.launch;
 		operationVisitor.visit(operationType, *operationDefinition);
 
-		co_return (co_await operationVisitor.getValue()).toValue();
+		(co_await operationVisitor.getValue()).visit(resolverVisitor);
 	}
 	catch (schema_exception& ex)
 	{
-		response::Value document(response::Type::Map);
+		ResolverResult document { {}, ex.getStructuredErrors() };
 
-		document.emplace_back(std::string { strData }, response::Value());
-		document.emplace_back(std::string { strErrors }, ex.getErrors());
-
-		co_return std::move(document);
+		std::move(document).visit(resolverVisitor);
 	}
 }
 
@@ -2380,26 +2390,42 @@ AwaitableDeliver Request::deliver(RequestDeliverParams params) const
 			params.launch,
 		};
 
-		response::Value document { response::Type::Map };
+		ResolverResult document {};
 
 		try
 		{
 			co_await params.launch;
 
-			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
+			document = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
 				registration->data->variables);
-
-			document = std::move(result).toValue();
 		}
 		catch (schema_exception& ex)
 		{
-			document.emplace_back(std::string { strData }, response::Value());
-			document.emplace_back(std::string { strErrors }, ex.getErrors());
+			document.errors.splice(document.errors.end(), ex.getStructuredErrors());
 		}
 
-		registration->callback(std::move(document));
+		std::visit(
+			[result = std::move(document)](const auto& callback) mutable {
+				using callback_type = std::decay_t<decltype(callback)>;
+
+				if constexpr (std::is_same_v<callback_type, SubscriptionCallback>)
+				{
+					auto visitor = std::make_shared<ResolverResultVisitor>();
+
+					(std::move(result)).visit(std::make_shared<ResolverVisitor>(visitor));
+
+					callback(visitor->document());
+				}
+				else if constexpr (std::is_same_v<callback_type, SubscriptionVisitor>)
+				{
+					auto visitor = callback();
+
+					(std::move(result)).visit(visitor);
+				}
+			},
+			registration->callback);
 	}
 
 	co_return;

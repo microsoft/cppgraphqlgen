@@ -516,6 +516,8 @@ private:
 		virtual void add_float(double value) = 0;
 
 		virtual void add_error(schema_error&& error) = 0;
+	
+		virtual void complete() = 0;
 	};
 
 	template <class T>
@@ -601,6 +603,11 @@ private:
 			_pimpl->add_error(std::move(error));
 		}
 
+		void complete() final
+		{
+			_pimpl->complete();
+		}
+
 	private:
 		std::shared_ptr<T> _pimpl;
 	};
@@ -635,6 +642,8 @@ public:
 	GRAPHQLSERVICE_EXPORT void add_float(double value);
 
 	GRAPHQLSERVICE_EXPORT void add_error(schema_error&& error);
+
+	GRAPHQLSERVICE_EXPORT void complete();
 };
 
 // Fragments are referenced by name and have a single type condition (except for inline
@@ -779,7 +788,6 @@ private:
 // we're ready to return from the top level Operation.
 struct [[nodiscard("unnecessary construction")]] ResolverResult
 {
-	GRAPHQLSERVICE_EXPORT response::Value toValue() &&;
 	GRAPHQLSERVICE_EXPORT void visit(const std::shared_ptr<ResolverVisitor>& visitor) &&;
 
 	std::list<ResultToken> data {};
@@ -1526,11 +1534,14 @@ using ObjectResult = ModifiedResult<Object>;
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(response::Value)>;
+using SubscriptionVisitor = std::function<std::shared_ptr<ResolverVisitor>()>;
+using SubscriptionCallbackOrVisitor = std::variant<SubscriptionCallback, SubscriptionVisitor>;
 
 // Subscriptions are stored in maps using these keys.
 using SubscriptionKey = std::size_t;
 using SubscriptionName = std::string;
 
+using AwaitableVisit = internal::Awaitable<void>;
 using AwaitableSubscribe = internal::Awaitable<SubscriptionKey>;
 using AwaitableUnsubscribe = internal::Awaitable<void>;
 using AwaitableDeliver = internal::Awaitable<void>;
@@ -1552,7 +1563,7 @@ struct [[nodiscard("unnecessary construction")]] RequestResolveParams
 struct [[nodiscard("unnecessary construction")]] RequestSubscribeParams
 {
 	// Callback which receives the event data.
-	SubscriptionCallback callback;
+	SubscriptionCallbackOrVisitor callback;
 
 	// Required query information.
 	peg::ast query;
@@ -1643,7 +1654,7 @@ struct [[nodiscard("unnecessary construction")]] SubscriptionData
 {
 	explicit SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
 		response::Value arguments, Directives fieldDirectives, peg::ast&& query,
-		std::string&& operationName, SubscriptionCallback&& callback,
+		std::string&& operationName, SubscriptionCallbackOrVisitor&& callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
@@ -1653,7 +1664,7 @@ struct [[nodiscard("unnecessary construction")]] SubscriptionData
 	Directives fieldDirectives;
 	peg::ast query;
 	std::string operationName;
-	SubscriptionCallback callback;
+	SubscriptionCallbackOrVisitor callback;
 	const peg::ast_node& selection;
 };
 
@@ -1688,6 +1699,8 @@ public:
 
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(
 		RequestResolveParams params) const;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT AwaitableVisit visit(
+		RequestResolveParams params, const std::shared_ptr<ResolverVisitor>& resolverVisitor) const;
 	[[nodiscard("leaked subscription")]] GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
 		RequestSubscribeParams params);
 	[[nodiscard("potentially leaked subscription")]] GRAPHQLSERVICE_EXPORT AwaitableUnsubscribe
