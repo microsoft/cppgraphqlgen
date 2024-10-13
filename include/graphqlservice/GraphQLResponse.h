@@ -6,13 +6,14 @@
 #ifndef GRAPHQLRESPONSE_H
 #define GRAPHQLRESPONSE_H
 
-#include "internal/DllExports.h"
 #include "internal/Awaitable.h"
+#include "internal/DllExports.h"
 
 #include <cstddef>
 #include <cstdint>
 #include <initializer_list>
 #include <iterator>
+#include <list>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -374,6 +375,292 @@ GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 #endif // GRAPHQL_DLLEXPORTS
 
 using AwaitableValue = internal::Awaitable<Value>;
+
+// Type-erased visitor for alternate representations of Value.
+class [[nodiscard("unnecessary construction")]] ValueVisitor final
+	: public std::enable_shared_from_this<ValueVisitor>
+{
+private:
+	struct Concept
+	{
+		virtual ~Concept() = default;
+
+		virtual void add_value(std::shared_ptr<const Value>&& value) = 0;
+
+		virtual void reserve(std::size_t count) = 0;
+
+		virtual void start_object() = 0;
+		virtual void add_member(std::string&& key) = 0;
+		virtual void end_object() = 0;
+
+		virtual void start_array() = 0;
+		virtual void end_array() = 0;
+
+		virtual void add_null() = 0;
+		virtual void add_string(std::string&& value) = 0;
+		virtual void add_enum(std::string&& value) = 0;
+		virtual void add_id(IdType&& value) = 0;
+		virtual void add_bool(bool value) = 0;
+		virtual void add_int(int value) = 0;
+		virtual void add_float(double value) = 0;
+
+		virtual void complete() = 0;
+	};
+
+	template <class T>
+	struct Model : Concept
+	{
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
+			: _pimpl { std::move(pimpl) }
+		{
+		}
+
+		void add_value(std::shared_ptr<const Value>&& value) final
+		{
+			_pimpl->add_value(std::move(value));
+		}
+
+		void reserve(std::size_t count) final
+		{
+			_pimpl->reserve(count);
+		}
+
+		void start_object() final
+		{
+			_pimpl->start_object();
+		}
+
+		void add_member(std::string&& key) final
+		{
+			_pimpl->add_member(std::move(key));
+		}
+
+		void end_object() final
+		{
+			_pimpl->end_object();
+		}
+
+		void start_array() final
+		{
+			_pimpl->start_array();
+		}
+
+		void end_array() final
+		{
+			_pimpl->end_array();
+		}
+
+		void add_null() final
+		{
+			_pimpl->add_null();
+		}
+
+		void add_string(std::string&& value) final
+		{
+			_pimpl->add_string(std::move(value));
+		}
+
+		void add_enum(std::string&& value) final
+		{
+			_pimpl->add_enum(std::move(value));
+		}
+
+		void add_id(IdType&& value) final
+		{
+			_pimpl->add_id(std::move(value));
+		}
+
+		void add_bool(bool value) final
+		{
+			_pimpl->add_bool(value);
+		}
+
+		void add_int(int value) final
+		{
+			_pimpl->add_int(value);
+		}
+
+		void add_float(double value) final
+		{
+			_pimpl->add_float(value);
+		}
+
+		void complete() final
+		{
+			_pimpl->complete();
+		}
+
+	private:
+		std::shared_ptr<T> _pimpl;
+	};
+
+	const std::shared_ptr<Concept> _concept;
+
+public:
+	template <class T>
+	ValueVisitor(std::shared_ptr<T> writer) noexcept
+		: _concept { std::static_pointer_cast<Concept>(
+			  std::make_shared<Model<T>>(std::move(writer))) }
+	{
+	}
+
+	GRAPHQLRESPONSE_EXPORT void add_value(std::shared_ptr<const Value>&& value);
+
+	GRAPHQLRESPONSE_EXPORT void reserve(std::size_t count);
+
+	GRAPHQLRESPONSE_EXPORT void start_object();
+	GRAPHQLRESPONSE_EXPORT void add_member(std::string&& key);
+	GRAPHQLRESPONSE_EXPORT void end_object();
+
+	GRAPHQLRESPONSE_EXPORT void start_array();
+	GRAPHQLRESPONSE_EXPORT void end_array();
+
+	GRAPHQLRESPONSE_EXPORT void add_null();
+	GRAPHQLRESPONSE_EXPORT void add_string(std::string&& value);
+	GRAPHQLRESPONSE_EXPORT void add_enum(std::string&& value);
+	GRAPHQLRESPONSE_EXPORT void add_id(IdType&& value);
+	GRAPHQLRESPONSE_EXPORT void add_bool(bool value);
+	GRAPHQLRESPONSE_EXPORT void add_int(int value);
+	GRAPHQLRESPONSE_EXPORT void add_float(double value);
+
+	GRAPHQLRESPONSE_EXPORT void complete();
+};
+
+// Pending token for ValueVisitor.
+struct [[nodiscard("unnecessary construction")]] ValueToken
+{
+	using OpaqueValue = std::shared_ptr<const Value>;
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(OpaqueValue&& value);
+
+	struct Reserve
+	{
+		std::size_t capacity;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(Reserve&& value);
+
+	struct StartObject
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(StartObject&& value);
+
+	struct AddMember
+	{
+		std::string key;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(AddMember&& value);
+
+	struct EndObject
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(EndObject&& value);
+
+	struct StartArray
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(StartArray&& value);
+
+	struct EndArray
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(EndArray&& value);
+
+	struct NullValue
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(NullValue&& value);
+
+	struct StringValue
+	{
+		std::string value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(StringValue&& value);
+
+	struct EnumValue
+	{
+		std::string value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(EnumValue&& value);
+
+	struct IdValue
+	{
+		IdType value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(IdValue&& value);
+
+	struct BoolValue
+	{
+		bool value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(BoolValue&& value);
+
+	struct IntValue
+	{
+		int value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(IntValue&& value);
+
+	struct FloatValue
+	{
+		double value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(FloatValue&& value);
+
+	GRAPHQLRESPONSE_EXPORT void visit(const std::shared_ptr<ValueVisitor>& visitor) &&;
+
+private:
+	using variant_type =
+		std::variant<OpaqueValue, Reserve, StartObject, AddMember, EndObject, StartArray, EndArray,
+			NullValue, StringValue, EnumValue, IdValue, BoolValue, IntValue, FloatValue>;
+
+	variant_type _value;
+};
+
+class [[nodiscard("unnecessary construction")]] ValueTokenStream final
+{
+public:
+	ValueTokenStream() noexcept = default;
+	~ValueTokenStream() = default;
+
+	ValueTokenStream(ValueTokenStream&&) noexcept = default;
+	ValueTokenStream& operator=(ValueTokenStream&&) noexcept = default;
+
+	ValueTokenStream(const ValueTokenStream&) = delete;
+	ValueTokenStream& operator=(const ValueTokenStream&) = delete;
+
+	template <class TArg>
+	ValueTokenStream(TArg&& arg)
+		: _tokens { ValueToken { std::forward<TArg>(arg) } }
+	{
+	}
+
+	template <class TArg>
+	void push_back(TArg&& arg)
+	{
+		_tokens.push_back(ValueToken { std::forward<TArg>(arg) });
+	}
+
+	GRAPHQLRESPONSE_EXPORT void append(ValueTokenStream&& other);
+
+	GRAPHQLRESPONSE_EXPORT void visit(const std::shared_ptr<ValueVisitor>& visitor) &&;
+	GRAPHQLRESPONSE_EXPORT Value value() &&;
+
+private:
+	std::list<ValueToken> _tokens;
+};
 
 class [[nodiscard("unnecessary construction")]] Writer final
 {

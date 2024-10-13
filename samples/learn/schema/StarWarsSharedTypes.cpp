@@ -50,7 +50,7 @@ service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableSca
 	return ModifiedResult<learn::Episode>::resolve(std::move(result), std::move(params),
 		[](learn::Episode value, const ResolverParams&)
 		{
-			return ResolverResult { { ResultToken { ResultToken::EnumValue { std::string { s_namesEpisode[static_cast<std::size_t>(value)] } } } } };
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesEpisode[static_cast<std::size_t>(value)] } } } };
 		});
 }
 

@@ -66,13 +66,10 @@ using service::FieldParams;
 using service::AwaitableScalar;
 using service::AwaitableObject;
 
-using service::ResolverVisitor;
-
 using service::Fragment;
 using service::FragmentMap;
 
 using service::ResolverParams;
-using service::ResultToken;
 using service::ResolverResult;
 using service::AwaitableResolver;
 using service::Resolver;
@@ -108,7 +105,6 @@ using service::SubscriptionCallbackOrVisitor;
 using service::SubscriptionKey;
 using service::SubscriptionName;
 
-using service::AwaitableVisit;
 using service::AwaitableSubscribe;
 using service::AwaitableUnsubscribe;
 using service::AwaitableDeliver;

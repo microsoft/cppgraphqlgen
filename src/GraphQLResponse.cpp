@@ -11,6 +11,7 @@
 #include <iterator>
 #include <map>
 #include <optional>
+#include <stack>
 #include <stdexcept>
 #include <string>
 #include <string_view>
@@ -100,9 +101,9 @@ bool IdType::operator==(const IdType& rhs) const noexcept
 
 	return (std::holds_alternative<ByteData>(_data)
 				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
-					   std::get<OpaqueString>(rhs._data))
+						 std::get<OpaqueString>(rhs._data))
 				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
-					   std::get<OpaqueString>(_data)))
+						 std::get<OpaqueString>(_data)))
 		== internal::Base64::Comparison::EqualTo;
 }
 
@@ -145,7 +146,7 @@ bool IdType::operator<(const IdType& rhs) const noexcept
 	return (std::holds_alternative<ByteData>(_data)
 			? (internal::Base64::compareBase64(std::get<ByteData>(_data),
 				   std::get<OpaqueString>(rhs._data))
-				< internal::Base64::Comparison::EqualTo)
+				  < internal::Base64::Comparison::EqualTo)
 			: (internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
 				  std::get<OpaqueString>(_data)))
 				> internal::Base64::Comparison::EqualTo);
@@ -1444,6 +1445,385 @@ const Value& Value::operator[](std::size_t index) const
 	}
 
 	return std::get<ListType>(typeData).at(index);
+}
+
+void ValueVisitor::add_value(std::shared_ptr<const Value>&& value)
+{
+	_concept->add_value(std::move(value));
+}
+
+void ValueVisitor::reserve(std::size_t count)
+{
+	_concept->reserve(count);
+}
+
+void ValueVisitor::start_object()
+{
+	_concept->start_object();
+}
+
+void ValueVisitor::add_member(std::string&& key)
+{
+	_concept->add_member(std::move(key));
+}
+
+void ValueVisitor::end_object()
+{
+	_concept->end_object();
+}
+
+void ValueVisitor::start_array()
+{
+	_concept->start_array();
+}
+
+void ValueVisitor::end_array()
+{
+	_concept->end_array();
+}
+
+void ValueVisitor::add_null()
+{
+	_concept->add_null();
+}
+
+void ValueVisitor::add_string(std::string&& value)
+{
+	_concept->add_string(std::move(value));
+}
+
+void ValueVisitor::add_enum(std::string&& value)
+{
+	_concept->add_enum(std::move(value));
+}
+
+void ValueVisitor::add_id(response::IdType&& value)
+{
+	_concept->add_id(std::move(value));
+}
+
+void ValueVisitor::add_bool(bool value)
+{
+	_concept->add_bool(value);
+}
+
+void ValueVisitor::add_int(int value)
+{
+	_concept->add_int(value);
+}
+
+void ValueVisitor::add_float(double value)
+{
+	_concept->add_float(value);
+}
+
+void ValueVisitor::complete()
+{
+	_concept->complete();
+}
+
+ValueToken::ValueToken(OpaqueValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(Reserve&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(StartObject&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(AddMember&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(EndObject&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(StartArray&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(EndArray&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(NullValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(StringValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(EnumValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(IdValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(BoolValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(IntValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(FloatValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+void ValueToken::visit(const std::shared_ptr<ValueVisitor>& visitor) &&
+{
+	std::visit(
+		[&visitor](auto&& value) {
+			using value_type = std::decay_t<decltype(value)>;
+
+			if constexpr (std::is_same_v<value_type, OpaqueValue>)
+			{
+				visitor->add_value(std::move(value));
+			}
+			else if constexpr (std::is_same_v<value_type, Reserve>)
+			{
+				visitor->reserve(value.capacity);
+			}
+			else if constexpr (std::is_same_v<value_type, StartObject>)
+			{
+				visitor->start_object();
+			}
+			else if constexpr (std::is_same_v<value_type, AddMember>)
+			{
+				visitor->add_member(std::move(value.key));
+			}
+			else if constexpr (std::is_same_v<value_type, EndObject>)
+			{
+				visitor->end_object();
+			}
+			else if constexpr (std::is_same_v<value_type, StartArray>)
+			{
+				visitor->start_array();
+			}
+			else if constexpr (std::is_same_v<value_type, EndArray>)
+			{
+				visitor->end_array();
+			}
+			else if constexpr (std::is_same_v<value_type, NullValue>)
+			{
+				visitor->add_null();
+			}
+			else if constexpr (std::is_same_v<value_type, StringValue>)
+			{
+				visitor->add_string(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, EnumValue>)
+			{
+				visitor->add_enum(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, IdValue>)
+			{
+				visitor->add_id(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, BoolValue>)
+			{
+				visitor->add_bool(value.value);
+			}
+			else if constexpr (std::is_same_v<value_type, IntValue>)
+			{
+				visitor->add_int(value.value);
+			}
+			else if constexpr (std::is_same_v<value_type, FloatValue>)
+			{
+				visitor->add_float(value.value);
+			}
+		},
+		std::move(_value));
+}
+
+class ValueTokenStreamVisitor
+{
+public:
+	void add_value(std::shared_ptr<const Value>&& value);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Value value();
+
+private:
+	void add_value(Value&& value);
+
+	Value _result {};
+	std::stack<Value> _values {};
+	std::stack<std::string> _keys {};
+};
+
+void ValueTokenStreamVisitor::add_value(std::shared_ptr<const Value>&& value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::reserve(std::size_t count)
+{
+	_values.top().reserve(count);
+}
+
+void ValueTokenStreamVisitor::start_object()
+{
+	_values.push(Value { response::Type::Map });
+}
+
+void ValueTokenStreamVisitor::add_member(std::string&& key)
+{
+	_keys.push(std::move(key));
+}
+
+void ValueTokenStreamVisitor::end_object()
+{
+	auto value = std::move(_values.top());
+
+	_values.pop();
+	add_value(std::move(value));
+}
+
+void ValueTokenStreamVisitor::start_array()
+{
+	_values.push(Value { response::Type::List });
+}
+
+void ValueTokenStreamVisitor::end_array()
+{
+	auto value = std::move(_values.top());
+
+	_values.pop();
+	add_value(std::move(value));
+}
+
+void ValueTokenStreamVisitor::add_null()
+{
+	add_value(Value {});
+}
+
+void ValueTokenStreamVisitor::add_string(std::string&& value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::add_enum(std::string&& value)
+{
+	Value enumValue { response::Type::EnumValue };
+
+	enumValue.set<response::StringType>(std::move(value));
+	add_value(std::move(enumValue));
+}
+
+void ValueTokenStreamVisitor::add_id(response::IdType&& value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::add_bool(bool value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::add_int(int value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::add_float(double value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::complete()
+{
+}
+
+Value ValueTokenStreamVisitor::value()
+{
+	auto value = std::move(_result);
+
+	return value;
+}
+
+void ValueTokenStreamVisitor::add_value(Value&& value)
+{
+	if (_values.empty())
+	{
+		_result = std::move(value);
+		return;
+	}
+
+	switch (_values.top().type())
+	{
+		case response::Type::Map:
+			_values.top().emplace_back(std::move(_keys.top()), std::move(value));
+			_keys.pop();
+			break;
+
+		case response::Type::List:
+			_values.top().emplace_back(std::move(value));
+			break;
+
+		default:
+			throw std::logic_error("Invalid call to Value::emplace_back");
+			break;
+	}
+}
+
+void ValueTokenStream::append(ValueTokenStream&& other)
+{
+	_tokens.splice(_tokens.end(), std::move(other._tokens));
+}
+
+void ValueTokenStream::visit(const std::shared_ptr<ValueVisitor>& visitor) &&
+{
+	for (auto& token : _tokens)
+	{
+		std::move(token).visit(visitor);
+	}
+
+	visitor->complete();
+}
+
+Value ValueTokenStream::value() &&
+{
+	auto visitor = std::make_shared<ValueTokenStreamVisitor>();
+
+	std::move(*this).visit(std::make_shared<ValueVisitor>(visitor));
+
+	return visitor->value();
 }
 
 void Writer::write(Value response) const

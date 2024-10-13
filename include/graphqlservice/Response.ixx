@@ -28,6 +28,10 @@ using response::ValueTypeTraits;
 using response::Value;
 using response::AwaitableValue;
 
+using response::ValueVisitor;
+using response::ValueToken;
+using response::ValueTokenStream;
+
 using response::Writer;
 // clang-format on
 

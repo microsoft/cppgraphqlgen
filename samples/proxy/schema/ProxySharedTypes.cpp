@@ -50,7 +50,7 @@ service::AwaitableResolver Result<proxy::OperationType>::convert(service::Awaita
 	return ModifiedResult<proxy::OperationType>::resolve(std::move(result), std::move(params),
 		[](proxy::OperationType value, const ResolverParams&)
 		{
-			return ResolverResult { { ResultToken { ResultToken::EnumValue { std::string { s_namesOperationType[static_cast<std::size_t>(value)] } } } } };
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesOperationType[static_cast<std::size_t>(value)] } } } };
 		});
 }
 

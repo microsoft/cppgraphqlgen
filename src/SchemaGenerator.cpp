@@ -1685,8 +1685,8 @@ service::AwaitableResolver Result<)cpp"
 		[]()cpp" << _loader.getSchemaNamespace()
 				   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
-			return ResolverResult { { ResultToken { ResultToken::EnumValue { std::string { s_names)cpp"
-				   << enumType.cppType << R"cpp([static_cast<std::size_t>(value)] } } } } };
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_names)cpp"
+				   << enumType.cppType << R"cpp([static_cast<std::size_t>(value)] } } } };
 		});
 }
 
