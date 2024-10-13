@@ -1485,14 +1485,7 @@ struct ModifiedResult
 		try
 		{
 			co_await params.launch;
-			auto value = pendingResolver(co_await result, params);
-
-			document.data.splice(document.data.end(), std::move(value.data));
-
-			if (!value.errors.empty())
-			{
-				document.errors.splice(document.errors.end(), std::move(value.errors));
-			}
+			document = pendingResolver(co_await result, params);
 		}
 		catch (schema_exception& scx)
 		{
