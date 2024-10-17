@@ -11,6 +11,7 @@
 #include <array>
 #include <cstddef>
 #include <iostream>
+#include <stack>
 
 using namespace std::literals;
 
@@ -620,6 +621,20 @@ schema_location ResolverParams::getLocation() const
 	return { position.line, position.column };
 }
 
+response::Value ResolverResult::document() &&
+{
+	response::Value document { response::Type::Map };
+
+	document.emplace_back(std::string { strData }, std::move(data).value());
+
+	if (!errors.empty())
+	{
+		document.emplace_back(std::string { strErrors }, buildErrorValues(std::move(errors)));
+	}
+
+	return document;
+}
+
 template <>
 int Argument<int>::convert(const response::Value& value)
 {
@@ -703,7 +718,7 @@ AwaitableResolver Result<int>::convert(AwaitableScalar<int> result, ResolverPara
 	return ModifiedResult<int>::resolve(std::move(result),
 		std::move(params),
 		[](int&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { response::ValueToken::IntValue { value } } };
 		});
 }
 
@@ -715,7 +730,7 @@ AwaitableResolver Result<double>::convert(AwaitableScalar<double> result, Resolv
 	return ModifiedResult<double>::resolve(std::move(result),
 		std::move(params),
 		[](double&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { response::ValueToken::FloatValue { value } } };
 		});
 }
 
@@ -728,7 +743,7 @@ AwaitableResolver Result<std::string>::convert(
 	return ModifiedResult<std::string>::resolve(std::move(result),
 		std::move(params),
 		[](std::string&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { response::ValueToken::StringValue { std::move(value) } } };
 		});
 }
 
@@ -740,7 +755,7 @@ AwaitableResolver Result<bool>::convert(AwaitableScalar<bool> result, ResolverPa
 	return ModifiedResult<bool>::resolve(std::move(result),
 		std::move(params),
 		[](bool&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { response::ValueToken::BoolValue { value } } };
 		});
 }
 
@@ -753,7 +768,8 @@ AwaitableResolver Result<response::Value>::convert(
 	return ModifiedResult<response::Value>::resolve(std::move(result),
 		std::move(params),
 		[](response::Value&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { response::ValueToken::OpaqueValue {
+				std::make_shared<response::Value>(std::move(value)) } } };
 		});
 }
 
@@ -766,7 +782,7 @@ AwaitableResolver Result<response::IdType>::convert(
 	return ModifiedResult<response::IdType>::resolve(std::move(result),
 		std::move(params),
 		[](response::IdType&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { response::ValueToken::IdValue { std::move(value) } } };
 		});
 }
 
@@ -799,7 +815,7 @@ AwaitableResolver Result<Object>::convert(
 
 	if (!awaitedResult)
 	{
-		co_return ResolverResult {};
+		co_return ResolverResult { { response::ValueToken::NullValue {} } };
 	}
 
 	auto document = co_await awaitedResult->resolve(params,
@@ -1228,9 +1244,10 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 	auto children = visitor.getValues();
 	const auto launch = selectionSetParams.launch;
-	ResolverResult document { response::Value { response::Type::Map } };
+	ResolverResult document {};
 
-	document.data.reserve(children.size());
+	document.data.push_back(response::ValueToken::StartObject {});
+	document.data.push_back(response::ValueToken::Reserve { children.size() });
 
 	const auto parent = selectionSetParams.errorPath
 		? std::make_optional(std::cref(*selectionSetParams.errorPath))
@@ -1244,19 +1261,12 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 			auto value = co_await std::move(child.result);
 
-			if (!document.data.emplace_back(std::string { child.name }, std::move(value.data)))
-			{
-				auto message = std::format("Ambiguous field error name: {}", child.name);
-				field_path path { parent, path_segment { child.name } };
-
-				document.errors.push_back({ std::move(message),
-					child.location.value_or(schema_location {}),
-					buildErrorPath(std::make_optional(path)) });
-			}
+			document.data.push_back(response::ValueToken::AddMember { std::string { child.name } });
+			document.data.append(std::move(value.data));
 
 			if (!value.errors.empty())
 			{
-				document.errors.splice(document.errors.end(), value.errors);
+				document.errors.splice(document.errors.end(), std::move(value.errors));
 			}
 		}
 		catch (schema_exception& scx)
@@ -1268,7 +1278,8 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 				std::ranges::copy(errors, std::back_inserter(document.errors));
 			}
 
-			document.data.emplace_back(std::string { child.name }, {});
+			document.data.push_back(response::ValueToken::AddMember { std::string { child.name } });
+			document.data.push_back(response::ValueToken::NullValue {});
 		}
 		catch (const std::exception& ex)
 		{
@@ -1279,9 +1290,12 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 			document.errors.push_back({ std::move(message),
 				child.location.value_or(schema_location {}),
 				buildErrorPath(std::make_optional(path)) });
-			document.data.emplace_back(std::string { child.name }, {});
+			document.data.push_back(response::ValueToken::AddMember { std::string { child.name } });
+			document.data.push_back(response::ValueToken::NullValue {});
 		}
 	}
+
+	document.data.push_back(response::ValueToken::EndObject {});
 
 	co_return std::move(document);
 }
@@ -1380,7 +1394,7 @@ AwaitableResolver OperationDefinitionVisitor::getValue()
 {
 	if (!_result)
 	{
-		co_return ResolverResult {};
+		co_return ResolverResult { { response::ValueToken::NullValue {} } };
 	}
 
 	auto result = std::move(*_result);
@@ -1461,7 +1475,8 @@ void OperationDefinitionVisitor::visit(
 
 SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
 	response::Value arguments, Directives fieldDirectives, peg::ast&& query,
-	std::string&& operationName, SubscriptionCallback&& callback, const peg::ast_node& selection)
+	std::string&& operationName, SubscriptionCallbackOrVisitor&& callback,
+	const peg::ast_node& selection)
 	: data(std::move(data))
 	, field(std::move(field))
 	, arguments(std::move(arguments))
@@ -1759,6 +1774,11 @@ std::pair<std::string_view, const peg::ast_node*> Request::findOperationDefiniti
 
 response::AwaitableValue Request::resolve(RequestResolveParams params) const
 {
+	co_return (co_await visit(std::move(params))).document();
+}
+
+AwaitableResolver Request::visit(RequestResolveParams params) const
+{
 	try
 	{
 		FragmentDefinitionVisitor fragmentVisitor(params.variables);
@@ -1814,27 +1834,11 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 		co_await params.launch;
 		operationVisitor.visit(operationType, *operationDefinition);
 
-		auto result = co_await operationVisitor.getValue();
-		response::Value document { response::Type::Map };
-
-		document.emplace_back(std::string { strData }, std::move(result.data));
-
-		if (!result.errors.empty())
-		{
-			document.emplace_back(std::string { strErrors },
-				buildErrorValues(std::move(result.errors)));
-		}
-
-		co_return std::move(document);
+		co_return co_await operationVisitor.getValue();
 	}
 	catch (schema_exception& ex)
 	{
-		response::Value document(response::Type::Map);
-
-		document.emplace_back(std::string { strData }, response::Value());
-		document.emplace_back(std::string { strErrors }, ex.getErrors());
-
-		co_return std::move(document);
+		co_return { {}, ex.getStructuredErrors() };
 	}
 }
 
@@ -1995,32 +1999,36 @@ AwaitableDeliver Request::deliver(RequestDeliverParams params) const
 			params.launch,
 		};
 
-		response::Value document { response::Type::Map };
+		ResolverResult document {};
 
 		try
 		{
 			co_await params.launch;
 
-			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
+			document = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
 				registration->data->variables);
-
-			document.emplace_back(std::string { strData }, std::move(result.data));
-
-			if (!result.errors.empty())
-			{
-				document.emplace_back(std::string { strErrors },
-					buildErrorValues(std::move(result.errors)));
-			}
 		}
 		catch (schema_exception& ex)
 		{
-			document.emplace_back(std::string { strData }, response::Value());
-			document.emplace_back(std::string { strErrors }, ex.getErrors());
+			document.errors.splice(document.errors.end(), ex.getStructuredErrors());
 		}
 
-		registration->callback(std::move(document));
+		std::visit(
+			[result = std::move(document)](const auto& callback) mutable {
+				using callback_type = std::decay_t<decltype(callback)>;
+
+				if constexpr (std::is_same_v<callback_type, SubscriptionCallback>)
+				{
+					callback(std::move(result).document());
+				}
+				else if constexpr (std::is_same_v<callback_type, SubscriptionVisitor>)
+				{
+					callback(std::move(result));
+				}
+			},
+			registration->callback);
 	}
 
 	co_return;

@@ -1685,12 +1685,8 @@ service::AwaitableResolver Result<)cpp"
 		[]()cpp" << _loader.getSchemaNamespace()
 				   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
-			response::Value resolvedResult(response::Type::EnumValue);
-
-			resolvedResult.set<std::string>(std::string { s_names)cpp"
-				   << enumType.cppType << R"cpp([static_cast<std::size_t>(value)] });
-
-			return resolvedResult;
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_names)cpp"
+				   << enumType.cppType << R"cpp([static_cast<std::size_t>(value)] } } } };
 		});
 }
 
@@ -2492,8 +2488,7 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
-					   << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
 )cpp";
 		}
 	}

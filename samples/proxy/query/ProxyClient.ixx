@@ -38,6 +38,7 @@ using relayQuery::Variables;
 using relayQuery::serializeVariables;
 
 using relayQuery::Response;
+using relayQuery::ResponseVisitor;
 using relayQuery::parseResponse;
 
 using relayQuery::Traits;

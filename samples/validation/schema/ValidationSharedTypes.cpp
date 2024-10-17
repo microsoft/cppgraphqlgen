@@ -50,11 +50,7 @@ service::AwaitableResolver Result<validation::DogCommand>::convert(service::Awai
 	return ModifiedResult<validation::DogCommand>::resolve(std::move(result), std::move(params),
 		[](validation::DogCommand value, const ResolverParams&)
 		{
-			response::Value resolvedResult(response::Type::EnumValue);
-
-			resolvedResult.set<std::string>(std::string { s_namesDogCommand[static_cast<std::size_t>(value)] });
-
-			return resolvedResult;
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesDogCommand[static_cast<std::size_t>(value)] } } } };
 		});
 }
 
@@ -106,11 +102,7 @@ service::AwaitableResolver Result<validation::CatCommand>::convert(service::Awai
 	return ModifiedResult<validation::CatCommand>::resolve(std::move(result), std::move(params),
 		[](validation::CatCommand value, const ResolverParams&)
 		{
-			response::Value resolvedResult(response::Type::EnumValue);
-
-			resolvedResult.set<std::string>(std::string { s_namesCatCommand[static_cast<std::size_t>(value)] });
-
-			return resolvedResult;
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesCatCommand[static_cast<std::size_t>(value)] } } } };
 		});
 }
 

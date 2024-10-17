@@ -107,6 +107,316 @@ const std::string& GetOperationName() noexcept
 	return s_name;
 }
 
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_nextAppointment,
+		Member_nextAppointment_nextAppointmentId,
+		Member_nextAppointment_when,
+		Member_nextAppointment_subject,
+		Member_nextAppointment_isNow,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_nextAppointment:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.nextAppointment = ModifiedResponse<Response::nextAppointment_Appointment>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_nextAppointment_nextAppointmentId:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->nextAppointmentId = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_nextAppointment_when:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_nextAppointment_subject:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_nextAppointment_isNow:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->isNow = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_nextAppointment:
+			_pimpl->response.nextAppointment = std::make_optional<Response::nextAppointment_Appointment>({});
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "nextAppointment"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			}
+			break;
+
+		case impl::VisitorState::Member_nextAppointment:
+			if (key == "nextAppointmentId"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_nextAppointment_nextAppointmentId;
+			}
+			else if (key == "when"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_nextAppointment_when;
+			}
+			else if (key == "subject"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_nextAppointment_subject;
+			}
+			else if (key == "isNow"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_nextAppointment_isNow;
+			}
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_nextAppointment:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_nextAppointment:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.nextAppointment = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_nextAppointment_when:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->when = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_nextAppointment_subject:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->subject = std::nullopt;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_nextAppointment_subject:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->subject = std::move(value);
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_nextAppointment_nextAppointmentId:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->nextAppointmentId = std::move(value);
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_nextAppointment_isNow:
+			_pimpl->state = impl::VisitorState::Member_nextAppointment;
+			_pimpl->response.nextAppointment->isNow = value;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
+}
+
 Response parseResponse(response::Value&& response)
 {
 	using namespace graphql::client;

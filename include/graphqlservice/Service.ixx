@@ -100,6 +100,8 @@ using modified_result::ScalarResult;
 using modified_result::ObjectResult;
 
 using service::SubscriptionCallback;
+using service::SubscriptionVisitor;
+using service::SubscriptionCallbackOrVisitor;
 using service::SubscriptionKey;
 using service::SubscriptionName;
 

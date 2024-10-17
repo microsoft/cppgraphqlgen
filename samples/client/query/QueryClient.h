@@ -194,6 +194,37 @@ struct [[nodiscard("unnecessary construction")]] Response
 	std::optional<std::string> default_ {};
 };
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -203,6 +234,7 @@ struct Traits
 	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Query::Response;
+	using ResponseVisitor = Query::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };

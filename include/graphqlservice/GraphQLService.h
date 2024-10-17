@@ -539,7 +539,9 @@ struct [[nodiscard("unnecessary construction")]] ResolverParams : SelectionSetPa
 // we're ready to return from the top level Operation.
 struct [[nodiscard("unnecessary construction")]] ResolverResult
 {
-	response::Value data;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::Value document() &&;
+
+	response::ValueTokenStream data {};
 	std::list<schema_error> errors {};
 };
 
@@ -1019,7 +1021,7 @@ struct ModifiedResult
 
 		if (!awaitedResult)
 		{
-			co_return ResolverResult {};
+			co_return ResolverResult { { response::ValueToken::NullValue {} } };
 		}
 
 		auto modifiedResult =
@@ -1046,8 +1048,8 @@ struct ModifiedResult
 			if (value)
 			{
 				ModifiedResult::validateScalar<Modifier, Other...>(*value);
-				co_return ResolverResult { response::Value {
-					std::shared_ptr { std::move(value) } } };
+				co_return ResolverResult { { response::ValueToken::OpaqueValue {
+					std::shared_ptr { std::move(value) } } } };
 			}
 		}
 
@@ -1060,7 +1062,7 @@ struct ModifiedResult
 
 		if (!awaitedResult)
 		{
-			co_return ResolverResult {};
+			co_return ResolverResult { { response::ValueToken::NullValue {} } };
 		}
 
 		auto modifiedResult = co_await ModifiedResult::convert<Other...>(std::move(*awaitedResult),
@@ -1083,8 +1085,8 @@ struct ModifiedResult
 			if (value)
 			{
 				ModifiedResult::validateScalar<Modifier, Other...>(*value);
-				co_return ResolverResult { response::Value {
-					std::shared_ptr { std::move(value) } } };
+				co_return ResolverResult { { response::ValueToken::OpaqueValue {
+					std::shared_ptr { std::move(value) } } } };
 			}
 		}
 
@@ -1128,9 +1130,10 @@ struct ModifiedResult
 			}
 		}
 
-		ResolverResult document { response::Value { response::Type::List } };
+		ResolverResult document;
 
-		document.data.reserve(children.size());
+		document.data.push_back(response::ValueToken::StartArray {});
+		document.data.push_back(response::ValueToken::Reserve { children.size() });
 		std::get<std::size_t>(params.errorPath->segment) = 0;
 
 		for (auto& child : children)
@@ -1141,11 +1144,11 @@ struct ModifiedResult
 
 				auto value = co_await std::move(child);
 
-				document.data.emplace_back(std::move(value.data));
+				document.data.append(std::move(value.data));
 
 				if (!value.errors.empty())
 				{
-					document.errors.splice(document.errors.end(), value.errors);
+					document.errors.splice(document.errors.end(), std::move(value.errors));
 				}
 			}
 			catch (schema_exception& scx)
@@ -1170,6 +1173,8 @@ struct ModifiedResult
 
 			++std::get<std::size_t>(params.errorPath->segment);
 		}
+
+		document.data.push_back(response::ValueToken::EndArray {});
 
 		co_return document;
 	}
@@ -1213,7 +1218,7 @@ struct ModifiedResult
 	}
 
 	using ResolverCallback =
-		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
+		std::function<ResolverResult(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
 	[[nodiscard("unnecessary call")]] static AwaitableResolver resolve(
 		typename ResultTraits<Type>::future_type result, ResolverParams&& paramsArg,
@@ -1226,7 +1231,8 @@ struct ModifiedResult
 		if (value)
 		{
 			Result<Type>::validateScalar(*value);
-			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+			co_return ResolverResult { { response::ValueToken::OpaqueValue {
+				std::shared_ptr { std::move(value) } } } };
 		}
 
 		auto pendingResolver = std::move(resolver);
@@ -1238,7 +1244,7 @@ struct ModifiedResult
 		try
 		{
 			co_await params.launch;
-			document.data = pendingResolver(co_await result, params);
+			document = pendingResolver(co_await result, params);
 		}
 		catch (schema_exception& scx)
 		{
@@ -1279,6 +1285,8 @@ using ObjectResult = ModifiedResult<Object>;
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(response::Value)>;
+using SubscriptionVisitor = std::function<void(ResolverResult)>;
+using SubscriptionCallbackOrVisitor = std::variant<SubscriptionCallback, SubscriptionVisitor>;
 
 // Subscriptions are stored in maps using these keys.
 using SubscriptionKey = std::size_t;
@@ -1305,7 +1313,7 @@ struct [[nodiscard("unnecessary construction")]] RequestResolveParams
 struct [[nodiscard("unnecessary construction")]] RequestSubscribeParams
 {
 	// Callback which receives the event data.
-	SubscriptionCallback callback;
+	SubscriptionCallbackOrVisitor callback;
 
 	// Required query information.
 	peg::ast query;
@@ -1396,7 +1404,7 @@ struct [[nodiscard("unnecessary construction")]] SubscriptionData
 {
 	explicit SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
 		response::Value arguments, Directives fieldDirectives, peg::ast&& query,
-		std::string&& operationName, SubscriptionCallback&& callback,
+		std::string&& operationName, SubscriptionCallbackOrVisitor&& callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
@@ -1406,7 +1414,7 @@ struct [[nodiscard("unnecessary construction")]] SubscriptionData
 	Directives fieldDirectives;
 	peg::ast query;
 	std::string operationName;
-	SubscriptionCallback callback;
+	SubscriptionCallbackOrVisitor callback;
 	const peg::ast_node& selection;
 };
 
@@ -1440,6 +1448,8 @@ public:
 	findOperationDefinition(peg::ast& query, std::string_view operationName) const;
 
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(
+		RequestResolveParams params) const;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT AwaitableResolver visit(
 		RequestResolveParams params) const;
 	[[nodiscard("leaked subscription")]] GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
 		RequestSubscribeParams params);

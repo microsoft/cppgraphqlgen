@@ -23,6 +23,7 @@ using graphql::subscribe::client::GetRequestObject;
 using TestSubscription::GetOperationName;
 
 using TestSubscription::Response;
+using TestSubscription::ResponseVisitor;
 using TestSubscription::parseResponse;
 
 using TestSubscription::Traits;

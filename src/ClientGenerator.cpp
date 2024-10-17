@@ -478,6 +478,37 @@ using graphql::)cpp"
 
 		headerFile << R"cpp(};
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -500,6 +531,8 @@ struct Traits
 		headerFile << R"cpp(
 	using Response = )cpp"
 				   << _requestLoader.getOperationNamespace(operation) << R"cpp(::Response;
+	using ResponseVisitor = )cpp"
+				   << _requestLoader.getOperationNamespace(operation) << R"cpp(::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
@@ -822,6 +855,8 @@ using )cpp" << operationNamespace
 
 		moduleFile << R"cpp(using )cpp" << operationNamespace << R"cpp(::Response;
 using )cpp" << operationNamespace
+				   << R"cpp(::ResponseVisitor;
+using )cpp" << operationNamespace
 				   << R"cpp(::parseResponse;
 
 using )cpp" << operationNamespace
@@ -1134,8 +1169,7 @@ using namespace )cpp" << _schemaLoader.getSchemaNamespace()
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
-						   << cppType << R"cpp(>::serialize()cpp" << cppType
-						   << R"cpp(&& inputValue)
+						   << cppType << R"cpp(>::serialize()cpp" << cppType << R"cpp(&& inputValue)
 {
 	response::Value result { response::Type::Map };
 
@@ -1186,19 +1220,9 @@ using namespace )cpp" << _schemaLoader.getSchemaNamespace()
 
 			const auto& enumValues = enumType->enumValues();
 
-			sourceFile << R"cpp(template <>
-)cpp" << cppType << R"cpp( Response<)cpp"
-					   << cppType << R"cpp(>::parse(response::Value&& value)
-{
-	if (!value.maybe_enum())
-	{
-		throw std::logic_error { R"ex(not a valid )cpp"
-					   << enumType->name() << R"cpp( value)ex" };
-	}
-
-	static const std::array<std::pair<std::string_view, )cpp"
-					   << cppType << R"cpp(>, )cpp" << enumValues.size()
-					   << R"cpp(> s_values = {)cpp";
+			sourceFile << R"cpp(static const std::array<std::pair<std::string_view, )cpp" << cppType
+					   << R"cpp(>, )cpp" << enumValues.size() << R"cpp(> s_values)cpp" << cppType
+					   << R"cpp( = {)cpp";
 
 			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
 				enumValues.size());
@@ -1224,17 +1248,28 @@ using namespace )cpp" << _schemaLoader.getSchemaNamespace()
 
 				firstValue = false;
 				sourceFile << R"cpp(
-		std::make_pair(R"gql()cpp"
+	std::make_pair(R"gql()cpp"
 						   << enumValue.first << R"cpp()gql"sv, )cpp" << cppType << R"cpp(::)cpp"
 						   << enumValue.second << R"cpp())cpp";
 				pendingSeparator.add();
 			}
 
 			pendingSeparator.reset();
-			sourceFile << R"cpp(	};
+			sourceFile << R"cpp(};
+			
+template <>
+)cpp" << cppType << R"cpp( Response<)cpp"
+					   << cppType << R"cpp(>::parse(response::Value&& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw std::logic_error { R"ex(not a valid )cpp"
+					   << enumType->name() << R"cpp( value)ex" };
+	}
 
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_values,
+		s_values)cpp" << cppType
+					   << R"cpp(,
 		std::string_view { value.get<std::string>() });
 
 	if (!result)
@@ -1316,6 +1351,324 @@ response::Value serializeVariables(Variables&& variables)
 		}
 
 		sourceFile << R"cpp(
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorStates(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddValue(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorReserve(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorStartObject(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		outputResponseFieldVisitorAddMember(sourceFile, responseType.fields);
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorEndObject(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorStartArray(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorEndArray(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddNull(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddString(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddEnum(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddId(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddBool(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddInt(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddFloat(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
+}
+
 Response parseResponse(response::Value&& response)
 {
 	using namespace graphql::)cpp"
@@ -1579,6 +1932,1460 @@ std::string Generator::getTypeModifierList(const TypeModifierStack& modifiers) n
 	oss << '>';
 
 	return oss.str();
+}
+
+void Generator::outputResponseFieldVisitorStates(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view parent /* = {} */) const noexcept
+{
+	auto state =
+		std::format("{}_{}", parent.empty() ? R"cpp(Member)cpp"sv : parent, responseField.cppName);
+
+	sourceFile << R"cpp(		)cpp" << state << R"cpp(,
+)cpp";
+
+	std::size_t arrayDimensions = 0;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+			case service::TypeModifier::Nullable:
+				break;
+
+			case service::TypeModifier::List:
+				state = std::format("{}_{}", state, arrayDimensions++);
+				sourceFile << R"cpp(		)cpp" << state << R"cpp(,
+)cpp";
+				break;
+		}
+	}
+
+	if (arrayDimensions > 0)
+	{
+		sourceFile << R"cpp(		)cpp" << state << R"cpp(_,
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorStates(sourceFile, field, state);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddValue(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */, std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+			   << state << R"cpp(:)cpp";
+
+	if (arrayDimensions == 0)
+	{
+		sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+				   << (parentState.empty() ? "Start"sv : parentState);
+
+		if (arrayElement)
+		{
+			sourceFile << R"cpp(_)cpp";
+		}
+
+		sourceFile << R"cpp(;)cpp";
+	}
+
+	sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+			   << accessor;
+
+	if (arrayDimensions > 0)
+	{
+		sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+				? R"cpp(->)cpp"
+				: R"cpp(.)cpp")
+				   << R"cpp(push_back()cpp";
+	}
+	else
+	{
+		sourceFile << R"cpp( = )cpp";
+	}
+
+	sourceFile << R"cpp(ModifiedResponse<)cpp" << cppType << R"cpp(>::parse)cpp";
+
+	if (arrayDimensions > 0)
+	{
+		TypeModifierStack skippedModifiers;
+
+		skippedModifiers.reserve(responseField.modifiers.size() - arrayDimensions);
+		std::ranges::copy(std::views::all(responseField.modifiers) | std::views::reverse
+				| std::views::take_while([](auto modifier) noexcept {
+					  return modifier != service::TypeModifier::List;
+				  })
+				| std::views::reverse,
+			std::back_inserter(skippedModifiers));
+		sourceFile << getTypeModifierList(skippedModifiers);
+	}
+	else
+	{
+		sourceFile << getTypeModifierList(responseField.modifiers);
+	}
+
+	sourceFile << R"cpp((response::Value { *value }))cpp";
+
+	if (arrayDimensions > 0)
+	{
+		sourceFile << R"cpp())cpp";
+	}
+
+	sourceFile << R"cpp(;
+			break;
+)cpp";
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddValue(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor,
+						cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorReserve(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	std::size_t arrayDimensions = 0;
+	bool dereference = true;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				accessor.append(R"cpp(->)cpp");
+				dereference = false;
+				break;
+
+			case service::TypeModifier::List:
+				if (dereference)
+				{
+					accessor.append(R"cpp(.)cpp");
+				}
+				state = std::format("{}_{}", state, arrayDimensions++);
+
+				sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+						   << state << R"cpp(:
+			_pimpl->response.)cpp"
+						   << accessor << R"cpp(reserve(count);
+			break;
+)cpp";
+
+				accessor.append(R"cpp(back())cpp");
+				dereference = true;
+				break;
+		}
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorReserve(sourceFile, field, state, accessor, cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorStartObject(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (isNullable && arrayDimensions == 0)
+	{
+		switch (responseField.type->kind())
+		{
+			case introspection::TypeKind::OBJECT:
+			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
+				break;
+
+			default:
+				isNullable = false;
+				break;
+		}
+	}
+
+	if (isNullable || arrayDimensions > 0)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << state << R"cpp(_;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		if (isNullable)
+		{
+			sourceFile << R"cpp(std::make_optional<)cpp" << cppType << R"cpp(>({}))cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp({})cpp";
+		}
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorStartObject(sourceFile,
+						field,
+						state,
+						accessor,
+						cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddMember(std::ostream& sourceFile,
+	const ResponseFieldList& children, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
+{
+	sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+			   << (parentState.empty() ? R"cpp(Start)cpp"sv : parentState);
+
+	if (arrayElement)
+	{
+		sourceFile << R"cpp(_)cpp";
+	}
+
+	sourceFile << R"cpp(:
+			)cpp";
+
+	std::unordered_set<std::string_view> fieldNames;
+	bool firstField = true;
+
+	for (const auto& field : children)
+	{
+		if (!fieldNames.emplace(field.name).second)
+		{
+			continue;
+		}
+
+		auto state = std::format("{}_{}",
+			parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+			field.cppName);
+
+		if (!firstField)
+		{
+			sourceFile << R"cpp(else )cpp";
+		}
+
+		firstField = false;
+
+		sourceFile << R"cpp(if (key == ")cpp" << field.name << R"cpp("sv)
+			{
+				_pimpl->state = impl::VisitorState::)cpp"
+				   << state << R"cpp(;
+			}
+			)cpp";
+	}
+
+	sourceFile << R"cpp(break;
+)cpp";
+
+	fieldNames.clear();
+
+	for (const auto& field : children)
+	{
+		switch (field.type->kind())
+		{
+			case introspection::TypeKind::OBJECT:
+			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
+				break;
+
+			default:
+				continue;
+		}
+
+		if (!fieldNames.emplace(field.name).second)
+		{
+			continue;
+		}
+
+		auto state = std::format("{}_{}",
+			parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+			field.cppName);
+		std::size_t arrayDimensions = 0;
+
+		for (auto modifier : field.modifiers)
+		{
+			switch (modifier)
+			{
+				case service::TypeModifier::None:
+				case service::TypeModifier::Nullable:
+					break;
+
+				case service::TypeModifier::List:
+					state = std::format("{}_{}", state, arrayDimensions++);
+					break;
+			}
+		}
+
+		outputResponseFieldVisitorAddMember(sourceFile, field.children, arrayDimensions > 0, state);
+	}
+}
+
+void Generator::outputResponseFieldVisitorEndObject(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
+{
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+			break;
+
+		default:
+			return;
+	}
+
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+
+	std::size_t arrayDimensions = 0;
+	std::string arrayState;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+			case service::TypeModifier::Nullable:
+				break;
+
+			case service::TypeModifier::List:
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	for (const auto& field : responseField.children)
+	{
+		if (fieldNames.emplace(field.name).second)
+		{
+			outputResponseFieldVisitorEndObject(sourceFile, field, arrayDimensions > 0, state);
+		}
+	}
+
+	if (arrayDimensions > 0)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(_:
+			_pimpl->state = impl::VisitorState::)cpp"
+				   << state;
+	}
+	else
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:
+			_pimpl->state = impl::VisitorState::)cpp"
+				   << (parentState.empty() ? "Start"sv : parentState);
+
+		if (arrayElement)
+		{
+			sourceFile << R"cpp(_)cpp";
+		}
+	}
+
+	sourceFile << R"cpp(;
+			break;
+)cpp";
+}
+
+void Generator::outputResponseFieldVisitorStartArray(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	bool dereference = true;
+	std::size_t arrayDimensions = 0;
+	std::size_t skipModifiers = 0;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				dereference = false;
+				break;
+
+			case service::TypeModifier::List:
+				sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+						   << state << R"cpp(:)cpp";
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+
+				sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+						   << state << R"cpp(;)cpp";
+
+				if (!dereference)
+				{
+					sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+							   << accessor;
+
+					if (arrayDimensions > 1)
+					{
+						sourceFile << R"cpp(push_back()cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp( = )cpp";
+					}
+
+					TypeModifierStack skippedModifiers;
+
+					skippedModifiers.reserve(responseField.modifiers.size() - skipModifiers);
+					std::ranges::copy(
+						std::views::all(responseField.modifiers) | std::views::drop(skipModifiers),
+						std::back_inserter(skippedModifiers));
+
+					sourceFile << R"cpp(std::make_optional<)cpp"
+							   << RequestLoader::getOutputCppType(cppType, skippedModifiers)
+							   << R"cpp(>({}))cpp";
+
+					if (arrayDimensions > 1)
+					{
+						sourceFile << R"cpp();)cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(;)cpp";
+					}
+				}
+
+				sourceFile << R"cpp(
+			break;
+)cpp";
+
+				if (dereference)
+				{
+					accessor.append(R"cpp(.)cpp");
+				}
+				else
+				{
+					accessor.append(R"cpp(->)cpp");
+				}
+
+				accessor.append(R"cpp(back())cpp");
+				dereference = true;
+				break;
+		}
+
+		++skipModifiers;
+	}
+
+	if (dereference)
+	{
+		accessor.append(R"cpp(.)cpp");
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorStartArray(sourceFile,
+						field,
+						state,
+						accessor,
+						cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorEndArray(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+
+	std::size_t arrayDimensions = 0;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+			case service::TypeModifier::Nullable:
+				break;
+
+			case service::TypeModifier::List:
+			{
+				auto child = std::format("{}_{}", state, arrayDimensions++);
+				std::string_view parent { state };
+
+				if (arrayDimensions == 1)
+				{
+					parent = parentState.empty() ? "Start"sv : parentState;
+				}
+
+				sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+						   << child << R"cpp(:
+			_pimpl->state = impl::VisitorState::)cpp"
+						   << parent;
+
+				if (arrayElement)
+				{
+					sourceFile << R"cpp(_)cpp";
+				}
+
+				sourceFile << R"cpp(;
+			break;
+)cpp";
+
+				state = std::move(child);
+				break;
+			}
+		}
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	for (const auto& field : responseField.children)
+	{
+		if (fieldNames.emplace(field.name).second)
+		{
+			outputResponseFieldVisitorEndArray(sourceFile, field, arrayDimensions > 0, state);
+		}
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddNull(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (isNullable)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions == 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		sourceFile << R"cpp(std::nullopt)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddNull(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddMovedValue(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view movedCppType,
+	bool arrayElement /* = false */, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (getResponseFieldCppType(responseField) == movedCppType)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions == 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		sourceFile << R"cpp(std::move(value))cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddMovedValue(sourceFile,
+						field,
+						movedCppType,
+						arrayDimensions > 0,
+						state,
+						accessor);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddString(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddMovedValue(sourceFile, responseField, R"cpp(std::string)cpp"sv);
+}
+
+void Generator::outputResponseFieldVisitorAddEnum(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */, std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (responseField.type->kind() == introspection::TypeKind::ENUM)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions == 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			if (const auto enumValue = internal::sorted_map_lookup<internal::shorter_or_less>(s_values)cpp"
+				   << cppType << R"cpp(, std::string_view { value }))
+			{
+				_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		sourceFile << R"cpp(*enumValue)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			}
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddEnum(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor,
+						cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddId(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddMovedValue(sourceFile,
+		responseField,
+		R"cpp(response::IdType)cpp"sv);
+}
+
+void Generator::outputResponseFieldVisitorAddCopiedValue(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view copiedCppType,
+	bool arrayElement /* = false */, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (getResponseFieldCppType(responseField) == copiedCppType)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions == 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		sourceFile << R"cpp(value)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddCopiedValue(sourceFile,
+						field,
+						copiedCppType,
+						arrayDimensions > 0,
+						state,
+						accessor);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddBool(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddCopiedValue(sourceFile, responseField, R"cpp(bool)cpp"sv);
+}
+
+void Generator::outputResponseFieldVisitorAddInt(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddCopiedValue(sourceFile, responseField, R"cpp(int)cpp"sv);
+}
+
+void Generator::outputResponseFieldVisitorAddFloat(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddCopiedValue(sourceFile, responseField, R"cpp(double)cpp"sv);
 }
 
 } // namespace graphql::generator::client
