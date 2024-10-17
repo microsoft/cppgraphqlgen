@@ -361,6 +361,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			_pimpl->response.appointments.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -372,6 +375,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 	{
 		case impl::VisitorState::Member_appointments_edges_0:
 			_pimpl->response.appointments.edges->reserve(count);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -390,6 +396,9 @@ void ResponseVisitor::start_object()
 
 		case impl::VisitorState::Member_appointments_edges_0_node:
 			_pimpl->response.appointments.edges->back()->node = std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>({});
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -445,6 +454,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -466,6 +478,9 @@ void ResponseVisitor::end_object()
 			_pimpl->state = impl::VisitorState::Start;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -480,6 +495,9 @@ void ResponseVisitor::start_array()
 			_pimpl->response.appointments.edges = std::make_optional<std::vector<std::optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>>>({});
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -491,6 +509,9 @@ void ResponseVisitor::end_array()
 	{
 		case impl::VisitorState::Member_appointments_edges_0:
 			_pimpl->state = impl::VisitorState::Member_appointments;
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -521,6 +542,9 @@ void ResponseVisitor::add_null()
 			_pimpl->response.appointments.edges->back()->node->when = std::nullopt;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -540,6 +564,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			_pimpl->response.appointments.edges->back()->node->_typename = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -551,6 +578,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -563,6 +593,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 		case impl::VisitorState::Member_appointments_edges_0_node_id:
 			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
 			_pimpl->response.appointments.edges->back()->node->id = std::move(value);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -579,6 +612,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 			_pimpl->response.appointments.edges->back()->node->isNow = value;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -588,6 +624,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -597,6 +636,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -835,6 +877,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			_pimpl->response.tasks.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -846,6 +891,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 	{
 		case impl::VisitorState::Member_tasks_edges_0:
 			_pimpl->response.tasks.edges->reserve(count);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -864,6 +912,9 @@ void ResponseVisitor::start_object()
 
 		case impl::VisitorState::Member_tasks_edges_0_node:
 			_pimpl->response.tasks.edges->back()->node = std::make_optional<Response::tasks_TaskConnection::edges_TaskEdge::node_Task>({});
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -915,6 +966,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -936,6 +990,9 @@ void ResponseVisitor::end_object()
 			_pimpl->state = impl::VisitorState::Start;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -950,6 +1007,9 @@ void ResponseVisitor::start_array()
 			_pimpl->response.tasks.edges = std::make_optional<std::vector<std::optional<Response::tasks_TaskConnection::edges_TaskEdge>>>({});
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -961,6 +1021,9 @@ void ResponseVisitor::end_array()
 	{
 		case impl::VisitorState::Member_tasks_edges_0:
 			_pimpl->state = impl::VisitorState::Member_tasks;
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -986,6 +1049,9 @@ void ResponseVisitor::add_null()
 			_pimpl->response.tasks.edges->back()->node->title = std::nullopt;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1005,6 +1071,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			_pimpl->response.tasks.edges->back()->node->_typename = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1016,6 +1085,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1028,6 +1100,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 		case impl::VisitorState::Member_tasks_edges_0_node_id:
 			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
 			_pimpl->response.tasks.edges->back()->node->id = std::move(value);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1044,6 +1119,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 			_pimpl->response.tasks.edges->back()->node->isComplete = value;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1053,6 +1131,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1062,6 +1143,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1300,6 +1384,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			_pimpl->response.unreadCounts.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1311,6 +1398,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 	{
 		case impl::VisitorState::Member_unreadCounts_edges_0:
 			_pimpl->response.unreadCounts.edges->reserve(count);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1329,6 +1419,9 @@ void ResponseVisitor::start_object()
 
 		case impl::VisitorState::Member_unreadCounts_edges_0_node:
 			_pimpl->response.unreadCounts.edges->back()->node = std::make_optional<Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>({});
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1380,6 +1473,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1401,6 +1497,9 @@ void ResponseVisitor::end_object()
 			_pimpl->state = impl::VisitorState::Start;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1415,6 +1514,9 @@ void ResponseVisitor::start_array()
 			_pimpl->response.unreadCounts.edges = std::make_optional<std::vector<std::optional<Response::unreadCounts_FolderConnection::edges_FolderEdge>>>({});
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1426,6 +1528,9 @@ void ResponseVisitor::end_array()
 	{
 		case impl::VisitorState::Member_unreadCounts_edges_0:
 			_pimpl->state = impl::VisitorState::Member_unreadCounts;
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1451,6 +1556,9 @@ void ResponseVisitor::add_null()
 			_pimpl->response.unreadCounts.edges->back()->node->name = std::nullopt;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1470,6 +1578,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			_pimpl->response.unreadCounts.edges->back()->node->_typename = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1481,6 +1592,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1495,6 +1609,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 			_pimpl->response.unreadCounts.edges->back()->node->id = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1504,6 +1621,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1518,6 +1638,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 			_pimpl->response.unreadCounts.edges->back()->node->unreadCount = value;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1527,6 +1650,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1782,6 +1908,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			_pimpl->response.default_ = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1793,6 +1922,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 	{
 		case impl::VisitorState::Member_anyType_0:
 			_pimpl->response.anyType.reserve(count);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1807,6 +1939,9 @@ void ResponseVisitor::start_object()
 		case impl::VisitorState::Member_anyType_0:
 			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.push_back(std::make_optional<Response::anyType_UnionType>({}));
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1864,6 +1999,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1875,6 +2013,9 @@ void ResponseVisitor::end_object()
 	{
 		case impl::VisitorState::Member_anyType_0_:
 			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1890,6 +2031,9 @@ void ResponseVisitor::start_array()
 			_pimpl->state = impl::VisitorState::Member_anyType_0;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1901,6 +2045,9 @@ void ResponseVisitor::end_array()
 	{
 		case impl::VisitorState::Member_anyType_0:
 			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1936,6 +2083,9 @@ void ResponseVisitor::add_null()
 			_pimpl->response.default_ = std::nullopt;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1965,6 +2115,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			_pimpl->response.default_ = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1984,6 +2137,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1996,6 +2152,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 		case impl::VisitorState::Member_anyType_0_id:
 			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->id = std::move(value);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -2017,6 +2176,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 			_pimpl->response.anyType.back()->isNow = value;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2026,6 +2188,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2035,6 +2200,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2297,6 +2465,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			_pimpl->response.completedTask.clientMutationId = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2306,6 +2477,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2317,6 +2491,9 @@ void ResponseVisitor::start_object()
 	{
 		case impl::VisitorState::Member_completedTask_completedTask:
 			_pimpl->response.completedTask.completedTask = std::make_optional<Response::completedTask_CompleteTaskPayload::completedTask_Task>({});
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -2361,6 +2538,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2378,6 +2558,9 @@ void ResponseVisitor::end_object()
 			_pimpl->state = impl::VisitorState::Start;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2387,6 +2570,9 @@ void ResponseVisitor::start_array()
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2396,6 +2582,9 @@ void ResponseVisitor::end_array()
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2420,6 +2609,9 @@ void ResponseVisitor::add_null()
 			_pimpl->response.completedTask.clientMutationId = std::nullopt;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2439,6 +2631,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			_pimpl->response.completedTask.clientMutationId = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2450,6 +2645,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2462,6 +2660,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 		case impl::VisitorState::Member_completedTask_completedTask_completedTaskId:
 			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
 			_pimpl->response.completedTask.completedTask->completedTaskId = std::move(value);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -2478,6 +2679,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 			_pimpl->response.completedTask.completedTask->isComplete = value;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2487,6 +2691,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -2496,6 +2703,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}

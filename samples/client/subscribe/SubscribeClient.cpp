@@ -164,6 +164,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			_pimpl->response.nextAppointment->isNow = ModifiedResponse<bool>::parse(response::Value { *value });
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -173,6 +176,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -184,6 +190,9 @@ void ResponseVisitor::start_object()
 	{
 		case impl::VisitorState::Member_nextAppointment:
 			_pimpl->response.nextAppointment = std::make_optional<Response::nextAppointment_Appointment>({});
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -221,6 +230,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -234,6 +246,9 @@ void ResponseVisitor::end_object()
 			_pimpl->state = impl::VisitorState::Start;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -243,6 +258,9 @@ void ResponseVisitor::start_array()
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -252,6 +270,9 @@ void ResponseVisitor::end_array()
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -276,6 +297,9 @@ void ResponseVisitor::add_null()
 			_pimpl->response.nextAppointment->subject = std::nullopt;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -290,6 +314,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			_pimpl->response.nextAppointment->subject = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -301,6 +328,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -313,6 +343,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 		case impl::VisitorState::Member_nextAppointment_nextAppointmentId:
 			_pimpl->state = impl::VisitorState::Member_nextAppointment;
 			_pimpl->response.nextAppointment->nextAppointmentId = std::move(value);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -329,6 +362,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 			_pimpl->response.nextAppointment->isNow = value;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -338,6 +374,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -347,6 +386,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}

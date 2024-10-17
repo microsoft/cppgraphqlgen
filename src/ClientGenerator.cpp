@@ -1392,6 +1392,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1408,6 +1411,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1424,6 +1430,9 @@ void ResponseVisitor::start_object()
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1437,6 +1446,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 		outputResponseFieldVisitorAddMember(sourceFile, responseType.fields);
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1453,6 +1465,9 @@ void ResponseVisitor::end_object()
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1469,6 +1484,9 @@ void ResponseVisitor::start_array()
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1485,6 +1503,9 @@ void ResponseVisitor::end_array()
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1501,6 +1522,9 @@ void ResponseVisitor::add_null()
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1517,6 +1541,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1535,6 +1562,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1551,6 +1581,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1567,6 +1600,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1583,6 +1619,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1599,6 +1638,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 		}
 
 		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}

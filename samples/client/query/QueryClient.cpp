@@ -671,6 +671,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			_pimpl->response.default_ = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -694,6 +697,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 
 		case impl::VisitorState::Member_anyType_0:
 			_pimpl->response.anyType.reserve(count);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -735,6 +741,9 @@ void ResponseVisitor::start_object()
 		case impl::VisitorState::Member_anyType_0:
 			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.push_back(std::make_optional<Response::anyType_UnionType>({}));
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -907,6 +916,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -956,6 +968,9 @@ void ResponseVisitor::end_object()
 			_pimpl->state = impl::VisitorState::Member_anyType_0;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -984,6 +999,9 @@ void ResponseVisitor::start_array()
 			_pimpl->state = impl::VisitorState::Member_anyType_0;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1007,6 +1025,9 @@ void ResponseVisitor::end_array()
 
 		case impl::VisitorState::Member_anyType_0:
 			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1089,6 +1110,9 @@ void ResponseVisitor::add_null()
 			_pimpl->response.default_ = std::nullopt;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1148,6 +1172,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			_pimpl->response.default_ = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1165,6 +1192,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 			{
 				_pimpl->response.testTaskState = *enumValue;
 			}
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -1196,6 +1226,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 			_pimpl->response.anyType.back()->id = std::move(value);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1225,6 +1258,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 			_pimpl->response.anyType.back()->isNow = value;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1239,6 +1275,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 			_pimpl->response.unreadCounts.edges->back()->node->unreadCount = value;
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -1248,6 +1287,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}

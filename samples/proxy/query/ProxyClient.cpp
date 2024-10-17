@@ -208,6 +208,9 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			_pimpl->response.relay.errors->push_back(ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value }));
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -219,6 +222,9 @@ void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
 	{
 		case impl::VisitorState::Member_relay_errors_0:
 			_pimpl->response.relay.errors->reserve(count);
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -233,6 +239,9 @@ void ResponseVisitor::start_object()
 		case impl::VisitorState::Member_relay_errors_0:
 			_pimpl->state = impl::VisitorState::Member_relay_errors_0_;
 			_pimpl->response.relay.errors->push_back(std::make_optional<std::string>({}));
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -262,6 +271,9 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -273,6 +285,9 @@ void ResponseVisitor::end_object()
 	{
 		case impl::VisitorState::Member_relay:
 			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -289,6 +304,9 @@ void ResponseVisitor::start_array()
 			_pimpl->response.relay.errors = std::make_optional<std::vector<std::optional<std::string>>>({});
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -300,6 +318,9 @@ void ResponseVisitor::end_array()
 	{
 		case impl::VisitorState::Member_relay_errors_0:
 			_pimpl->state = impl::VisitorState::Member_relay;
+			break;
+
+		case impl::VisitorState::Complete:
 			break;
 
 		default:
@@ -320,6 +341,9 @@ void ResponseVisitor::add_null()
 			_pimpl->response.relay.errors->push_back(std::nullopt);
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -338,6 +362,9 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			_pimpl->response.relay.errors->push_back(std::move(value));
 			break;
 
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -349,6 +376,9 @@ void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
 
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -358,6 +388,9 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -367,6 +400,9 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -376,6 +412,9 @@ void ResponseVisitor::add_int([[maybe_unused]] int value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
@@ -385,6 +424,9 @@ void ResponseVisitor::add_float([[maybe_unused]] double value)
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Complete:
+			break;
+
 		default:
 			break;
 	}
