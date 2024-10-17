@@ -195,6 +195,7 @@ struct ResponseVisitor::impl
 		Member_appointments_pageInfo_hasNextPage,
 		Member_appointments_edges,
 		Member_appointments_edges_0,
+		Member_appointments_edges_0_,
 		Member_appointments_edges_0_node,
 		Member_appointments_edges_0_node_id,
 		Member_appointments_edges_0_node_when,
@@ -242,7 +243,7 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			break;
 
 		case impl::VisitorState::Member_appointments_edges_0_node:
-			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
 			_pimpl->response.appointments.edges->back()->node = ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
@@ -289,6 +290,7 @@ void ResponseVisitor::start_object()
 	switch (_pimpl->state)
 	{
 		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
 			_pimpl->response.appointments.edges->push_back(std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>({}));
 			break;
 
@@ -330,7 +332,7 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
-		case impl::VisitorState::Member_appointments_edges_0:
+		case impl::VisitorState::Member_appointments_edges_0_:
 			if (key == "node"sv)
 			{
 				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
@@ -370,7 +372,15 @@ void ResponseVisitor::end_object()
 			break;
 
 		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_:
 			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			break;
+
+		case impl::VisitorState::Member_appointments:
+			_pimpl->state = impl::VisitorState::Start;
 			break;
 
 		default:
@@ -414,7 +424,7 @@ void ResponseVisitor::add_null()
 			break;
 
 		case impl::VisitorState::Member_appointments_edges_0_node:
-			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
 			_pimpl->response.appointments.edges->back()->node = std::nullopt;
 			break;
 

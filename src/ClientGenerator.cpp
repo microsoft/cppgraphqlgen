@@ -1919,6 +1919,12 @@ void Generator::outputResponseFieldVisitorStates(std::ostream& sourceFile,
 		}
 	}
 
+	if (arrayDimensions > 0)
+	{
+		sourceFile << R"cpp(		)cpp" << state << R"cpp(_,
+)cpp";
+	}
+
 	std::unordered_set<std::string_view> fieldNames;
 
 	switch (responseField.type->kind())
@@ -1944,8 +1950,8 @@ void Generator::outputResponseFieldVisitorStates(std::ostream& sourceFile,
 }
 
 void Generator::outputResponseFieldVisitorAddValue(std::ostream& sourceFile,
-	const ResponseField& responseField, std::string_view parentState /* = {} */,
-	std::string_view parentAccessor /* = {} */,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */, std::string_view parentAccessor /* = {} */,
 	std::string_view parentCppType /* = {} */) const noexcept
 {
 	auto state = std::format("{}_{}",
@@ -1990,7 +1996,14 @@ void Generator::outputResponseFieldVisitorAddValue(std::ostream& sourceFile,
 	{
 		sourceFile << R"cpp(
 			_pimpl->state = impl::VisitorState::)cpp"
-				   << (parentState.empty() ? "Start"sv : parentState) << R"cpp(;)cpp";
+				   << (parentState.empty() ? "Start"sv : parentState);
+
+		if (arrayElement)
+		{
+			sourceFile << R"cpp(_)cpp";
+		}
+
+		sourceFile << R"cpp(;)cpp";
 	}
 
 	sourceFile << R"cpp(
@@ -2083,7 +2096,12 @@ void Generator::outputResponseFieldVisitorAddValue(std::ostream& sourceFile,
 			{
 				if (fieldNames.emplace(field.name).second)
 				{
-					outputResponseFieldVisitorAddValue(sourceFile, field, state, accessor, cppType);
+					outputResponseFieldVisitorAddValue(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor,
+						cppType);
 				}
 			}
 
@@ -2256,7 +2274,16 @@ void Generator::outputResponseFieldVisitorStartObject(std::ostream& sourceFile,
 	{
 		sourceFile << R"cpp(
 		case impl::VisitorState::)cpp"
-				   << state << R"cpp(:
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << state << R"cpp(_;)cpp";
+		}
+
+		sourceFile << R"cpp(
 			_pimpl->response.)cpp"
 				   << accessor;
 
@@ -2351,11 +2378,19 @@ void Generator::outputResponseFieldVisitorStartObject(std::ostream& sourceFile,
 }
 
 void Generator::outputResponseFieldVisitorAddMember(std::ostream& sourceFile,
-	const ResponseFieldList& children, std::string_view parentState /* = {} */) const noexcept
+	const ResponseFieldList& children, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
 {
 	sourceFile << R"cpp(
 		case impl::VisitorState::)cpp"
-			   << (parentState.empty() ? R"cpp(Start)cpp"sv : parentState) << R"cpp(:
+			   << (parentState.empty() ? R"cpp(Start)cpp"sv : parentState);
+
+	if (arrayElement)
+	{
+		sourceFile << R"cpp(_)cpp";
+	}
+
+	sourceFile << R"cpp(:
 			)cpp";
 
 	std::unordered_set<std::string_view> fieldNames;
@@ -2429,12 +2464,13 @@ void Generator::outputResponseFieldVisitorAddMember(std::ostream& sourceFile,
 			}
 		}
 
-		outputResponseFieldVisitorAddMember(sourceFile, field.children, state);
+		outputResponseFieldVisitorAddMember(sourceFile, field.children, arrayDimensions > 0, state);
 	}
 }
 
 void Generator::outputResponseFieldVisitorEndObject(std::ostream& sourceFile,
-	const ResponseField& responseField, std::string_view parentState /* = {} */) const noexcept
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
 {
 	switch (responseField.type->kind())
 	{
@@ -2452,6 +2488,7 @@ void Generator::outputResponseFieldVisitorEndObject(std::ostream& sourceFile,
 		responseField.cppName);
 
 	std::size_t arrayDimensions = 0;
+	std::string arrayState;
 
 	for (auto modifier : responseField.modifiers)
 	{
@@ -2473,20 +2510,35 @@ void Generator::outputResponseFieldVisitorEndObject(std::ostream& sourceFile,
 	{
 		if (fieldNames.emplace(field.name).second)
 		{
-			outputResponseFieldVisitorEndObject(sourceFile, field, state);
+			outputResponseFieldVisitorEndObject(sourceFile, field, arrayDimensions > 0, state);
 		}
 	}
 
-	if (!parentState.empty() && (arrayDimensions == 0))
+	if (arrayDimensions > 0)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(_:
+			_pimpl->state = impl::VisitorState::)cpp"
+				   << state;
+	}
+	else
 	{
 		sourceFile << R"cpp(
 		case impl::VisitorState::)cpp"
 				   << state << R"cpp(:
 			_pimpl->state = impl::VisitorState::)cpp"
-				   << parentState << R"cpp(;
+				   << (parentState.empty() ? "Start"sv : parentState);
+
+		if (arrayElement)
+		{
+			sourceFile << R"cpp(_)cpp";
+		}
+	}
+
+	sourceFile << R"cpp(;
 			break;
 )cpp";
-	}
 }
 
 void Generator::outputResponseFieldVisitorStartArray(std::ostream& sourceFile,
@@ -2618,7 +2670,8 @@ void Generator::outputResponseFieldVisitorStartArray(std::ostream& sourceFile,
 }
 
 void Generator::outputResponseFieldVisitorEndArray(std::ostream& sourceFile,
-	const ResponseField& responseField, std::string_view parentState /* = {} */) const noexcept
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
 {
 	auto state = std::format("{}_{}",
 		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
@@ -2648,7 +2701,14 @@ void Generator::outputResponseFieldVisitorEndArray(std::ostream& sourceFile,
 		case impl::VisitorState::)cpp"
 						   << child << R"cpp(:
 			_pimpl->state = impl::VisitorState::)cpp"
-						   << parent << R"cpp(;
+						   << parent;
+
+				if (arrayElement)
+				{
+					sourceFile << R"cpp(_)cpp";
+				}
+
+				sourceFile << R"cpp(;
 			break;
 )cpp";
 
@@ -2664,13 +2724,14 @@ void Generator::outputResponseFieldVisitorEndArray(std::ostream& sourceFile,
 	{
 		if (fieldNames.emplace(field.name).second)
 		{
-			outputResponseFieldVisitorEndArray(sourceFile, field, state);
+			outputResponseFieldVisitorEndArray(sourceFile, field, arrayDimensions > 0, state);
 		}
 	}
 }
 
 void Generator::outputResponseFieldVisitorAddNull(std::ostream& sourceFile,
-	const ResponseField& responseField, std::string_view parentState /* = {} */,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */,
 	std::string_view parentAccessor /* = {} */) const noexcept
 {
 	auto state = std::format("{}_{}",
@@ -2715,7 +2776,14 @@ void Generator::outputResponseFieldVisitorAddNull(std::ostream& sourceFile,
 		{
 			sourceFile << R"cpp(
 			_pimpl->state = impl::VisitorState::)cpp"
-					   << (parentState.empty() ? "Start"sv : parentState) << R"cpp(;)cpp";
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
 		}
 
 		sourceFile << R"cpp(
@@ -2789,7 +2857,11 @@ void Generator::outputResponseFieldVisitorAddNull(std::ostream& sourceFile,
 			{
 				if (fieldNames.emplace(field.name).second)
 				{
-					outputResponseFieldVisitorAddNull(sourceFile, field, state, accessor);
+					outputResponseFieldVisitorAddNull(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor);
 				}
 			}
 
@@ -2803,7 +2875,7 @@ void Generator::outputResponseFieldVisitorAddNull(std::ostream& sourceFile,
 
 void Generator::outputResponseFieldVisitorAddMovedValue(std::ostream& sourceFile,
 	const ResponseField& responseField, std::string_view movedCppType,
-	std::string_view parentState /* = {} */,
+	bool arrayElement /* = false */, std::string_view parentState /* = {} */,
 	std::string_view parentAccessor /* = {} */) const noexcept
 {
 	auto state = std::format("{}_{}",
@@ -2848,7 +2920,14 @@ void Generator::outputResponseFieldVisitorAddMovedValue(std::ostream& sourceFile
 		{
 			sourceFile << R"cpp(
 			_pimpl->state = impl::VisitorState::)cpp"
-					   << (parentState.empty() ? "Start"sv : parentState) << R"cpp(;)cpp";
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
 		}
 
 		sourceFile << R"cpp(
@@ -2925,6 +3004,7 @@ void Generator::outputResponseFieldVisitorAddMovedValue(std::ostream& sourceFile
 					outputResponseFieldVisitorAddMovedValue(sourceFile,
 						field,
 						movedCppType,
+						arrayDimensions > 0,
 						state,
 						accessor);
 				}
@@ -2945,8 +3025,8 @@ void Generator::outputResponseFieldVisitorAddString(
 }
 
 void Generator::outputResponseFieldVisitorAddEnum(std::ostream& sourceFile,
-	const ResponseField& responseField, std::string_view parentState /* = {} */,
-	std::string_view parentAccessor /* = {} */,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */, std::string_view parentAccessor /* = {} */,
 	std::string_view parentCppType /* = {} */) const noexcept
 {
 	auto state = std::format("{}_{}",
@@ -2993,7 +3073,14 @@ void Generator::outputResponseFieldVisitorAddEnum(std::ostream& sourceFile,
 		{
 			sourceFile << R"cpp(
 			_pimpl->state = impl::VisitorState::)cpp"
-					   << (parentState.empty() ? "Start"sv : parentState) << R"cpp(;)cpp";
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
 		}
 
 		sourceFile << R"cpp(
@@ -3071,7 +3158,12 @@ void Generator::outputResponseFieldVisitorAddEnum(std::ostream& sourceFile,
 			{
 				if (fieldNames.emplace(field.name).second)
 				{
-					outputResponseFieldVisitorAddEnum(sourceFile, field, state, accessor, cppType);
+					outputResponseFieldVisitorAddEnum(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor,
+						cppType);
 				}
 			}
 
@@ -3093,7 +3185,7 @@ void Generator::outputResponseFieldVisitorAddId(
 
 void Generator::outputResponseFieldVisitorAddCopiedValue(std::ostream& sourceFile,
 	const ResponseField& responseField, std::string_view copiedCppType,
-	std::string_view parentState /* = {} */,
+	bool arrayElement /* = false */, std::string_view parentState /* = {} */,
 	std::string_view parentAccessor /* = {} */) const noexcept
 {
 	auto state = std::format("{}_{}",
@@ -3138,7 +3230,14 @@ void Generator::outputResponseFieldVisitorAddCopiedValue(std::ostream& sourceFil
 		{
 			sourceFile << R"cpp(
 			_pimpl->state = impl::VisitorState::)cpp"
-					   << (parentState.empty() ? "Start"sv : parentState) << R"cpp(;)cpp";
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
 		}
 
 		sourceFile << R"cpp(
@@ -3215,6 +3314,7 @@ void Generator::outputResponseFieldVisitorAddCopiedValue(std::ostream& sourceFil
 					outputResponseFieldVisitorAddCopiedValue(sourceFile,
 						field,
 						copiedCppType,
+						arrayDimensions > 0,
 						state,
 						accessor);
 				}

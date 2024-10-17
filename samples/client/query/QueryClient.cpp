@@ -456,6 +456,7 @@ struct ResponseVisitor::impl
 		Member_appointments,
 		Member_appointments_edges,
 		Member_appointments_edges_0,
+		Member_appointments_edges_0_,
 		Member_appointments_edges_0_node,
 		Member_appointments_edges_0_node_id,
 		Member_appointments_edges_0_node_subject,
@@ -465,6 +466,7 @@ struct ResponseVisitor::impl
 		Member_tasks,
 		Member_tasks_edges,
 		Member_tasks_edges_0,
+		Member_tasks_edges_0_,
 		Member_tasks_edges_0_node,
 		Member_tasks_edges_0_node_id,
 		Member_tasks_edges_0_node_title,
@@ -473,6 +475,7 @@ struct ResponseVisitor::impl
 		Member_unreadCounts,
 		Member_unreadCounts_edges,
 		Member_unreadCounts_edges_0,
+		Member_unreadCounts_edges_0_,
 		Member_unreadCounts_edges_0_node,
 		Member_unreadCounts_edges_0_node_id,
 		Member_unreadCounts_edges_0_node_name,
@@ -481,6 +484,7 @@ struct ResponseVisitor::impl
 		Member_testTaskState,
 		Member_anyType,
 		Member_anyType_0,
+		Member_anyType_0_,
 		Member_anyType_0__typename,
 		Member_anyType_0_id,
 		Member_anyType_0_title,
@@ -521,7 +525,7 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			break;
 
 		case impl::VisitorState::Member_appointments_edges_0_node:
-			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
 			_pimpl->response.appointments.edges->back()->node = ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
@@ -560,7 +564,7 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			break;
 
 		case impl::VisitorState::Member_tasks_edges_0_node:
-			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_;
 			_pimpl->response.tasks.edges->back()->node = ModifiedResponse<Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
@@ -594,7 +598,7 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			break;
 
 		case impl::VisitorState::Member_unreadCounts_edges_0_node:
-			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_;
 			_pimpl->response.unreadCounts.edges->back()->node = ModifiedResponse<Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
@@ -628,37 +632,37 @@ void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response:
 			break;
 
 		case impl::VisitorState::Member_anyType_0__typename:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
 			break;
 
 		case impl::VisitorState::Member_anyType_0_id:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
 			break;
 
 		case impl::VisitorState::Member_anyType_0_title:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
 		case impl::VisitorState::Member_anyType_0_isComplete:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->isComplete = ModifiedResponse<bool>::parse(response::Value { *value });
 			break;
 
 		case impl::VisitorState::Member_anyType_0_subject:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
 		case impl::VisitorState::Member_anyType_0_when:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(response::Value { *value });
 			break;
 
 		case impl::VisitorState::Member_anyType_0_isNow:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->isNow = ModifiedResponse<bool>::parse(response::Value { *value });
 			break;
 
@@ -702,6 +706,7 @@ void ResponseVisitor::start_object()
 	switch (_pimpl->state)
 	{
 		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
 			_pimpl->response.appointments.edges->push_back(std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>({}));
 			break;
 
@@ -710,6 +715,7 @@ void ResponseVisitor::start_object()
 			break;
 
 		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_;
 			_pimpl->response.tasks.edges->push_back(std::make_optional<Response::tasks_TaskConnection::edges_TaskEdge>({}));
 			break;
 
@@ -718,6 +724,7 @@ void ResponseVisitor::start_object()
 			break;
 
 		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_;
 			_pimpl->response.unreadCounts.edges->push_back(std::make_optional<Response::unreadCounts_FolderConnection::edges_FolderEdge>({}));
 			break;
 
@@ -726,6 +733,7 @@ void ResponseVisitor::start_object()
 			break;
 
 		case impl::VisitorState::Member_anyType_0:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.push_back(std::make_optional<Response::anyType_UnionType>({}));
 			break;
 
@@ -772,7 +780,7 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
-		case impl::VisitorState::Member_appointments_edges_0:
+		case impl::VisitorState::Member_appointments_edges_0_:
 			if (key == "node"sv)
 			{
 				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
@@ -809,7 +817,7 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
-		case impl::VisitorState::Member_tasks_edges_0:
+		case impl::VisitorState::Member_tasks_edges_0_:
 			if (key == "node"sv)
 			{
 				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
@@ -842,7 +850,7 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
-		case impl::VisitorState::Member_unreadCounts_edges_0:
+		case impl::VisitorState::Member_unreadCounts_edges_0_:
 			if (key == "node"sv)
 			{
 				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
@@ -868,7 +876,7 @@ void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
 			}
 			break;
 
-		case impl::VisitorState::Member_anyType_0:
+		case impl::VisitorState::Member_anyType_0_:
 			if (key == "__typename"sv)
 			{
 				_pimpl->state = impl::VisitorState::Member_anyType_0__typename;
@@ -909,15 +917,43 @@ void ResponseVisitor::end_object()
 	switch (_pimpl->state)
 	{
 		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_:
 			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
 			break;
 
+		case impl::VisitorState::Member_appointments:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
 		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_;
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_:
 			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
 			break;
 
+		case impl::VisitorState::Member_tasks:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
 		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_:
 			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
 			break;
 
 		default:
@@ -987,7 +1023,7 @@ void ResponseVisitor::add_null()
 			break;
 
 		case impl::VisitorState::Member_appointments_edges_0_node:
-			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
 			_pimpl->response.appointments.edges->back()->node = std::nullopt;
 			break;
 
@@ -1006,7 +1042,7 @@ void ResponseVisitor::add_null()
 			break;
 
 		case impl::VisitorState::Member_tasks_edges_0_node:
-			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_;
 			_pimpl->response.tasks.edges->back()->node = std::nullopt;
 			break;
 
@@ -1020,7 +1056,7 @@ void ResponseVisitor::add_null()
 			break;
 
 		case impl::VisitorState::Member_unreadCounts_edges_0_node:
-			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_;
 			_pimpl->response.unreadCounts.edges->back()->node = std::nullopt;
 			break;
 
@@ -1034,17 +1070,17 @@ void ResponseVisitor::add_null()
 			break;
 
 		case impl::VisitorState::Member_anyType_0_title:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->title = std::nullopt;
 			break;
 
 		case impl::VisitorState::Member_anyType_0_subject:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->subject = std::nullopt;
 			break;
 
 		case impl::VisitorState::Member_anyType_0_when:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->when = std::nullopt;
 			break;
 
@@ -1093,17 +1129,17 @@ void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
 			break;
 
 		case impl::VisitorState::Member_anyType_0__typename:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->_typename = std::move(value);
 			break;
 
 		case impl::VisitorState::Member_anyType_0_title:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->title = std::move(value);
 			break;
 
 		case impl::VisitorState::Member_anyType_0_subject:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->subject = std::move(value);
 			break;
 
@@ -1156,7 +1192,7 @@ void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
 			break;
 
 		case impl::VisitorState::Member_anyType_0_id:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->id = std::move(value);
 			break;
 
@@ -1180,12 +1216,12 @@ void ResponseVisitor::add_bool([[maybe_unused]] bool value)
 			break;
 
 		case impl::VisitorState::Member_anyType_0_isComplete:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->isComplete = value;
 			break;
 
 		case impl::VisitorState::Member_anyType_0_isNow:
-			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
 			_pimpl->response.anyType.back()->isNow = value;
 			break;
 

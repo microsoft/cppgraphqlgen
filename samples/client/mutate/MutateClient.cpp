@@ -401,6 +401,10 @@ void ResponseVisitor::end_object()
 			_pimpl->state = impl::VisitorState::Member_completedTask;
 			break;
 
+		case impl::VisitorState::Member_completedTask:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
 		default:
 			break;
 	}

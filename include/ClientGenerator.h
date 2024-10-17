@@ -67,8 +67,9 @@ private:
 	void outputResponseFieldVisitorStates(std::ostream& sourceFile,
 		const ResponseField& responseField, std::string_view parent = {}) const noexcept;
 	void outputResponseFieldVisitorAddValue(std::ostream& sourceFile,
-		const ResponseField& responseField, std::string_view parentState = {},
-		std::string_view parentAccessor = {}, std::string_view parentCppType = {}) const noexcept;
+		const ResponseField& responseField, bool arrayElement = false,
+		std::string_view parentState = {}, std::string_view parentAccessor = {},
+		std::string_view parentCppType = {}) const noexcept;
 	void outputResponseFieldVisitorReserve(std::ostream& sourceFile,
 		const ResponseField& responseField, std::string_view parentState = {},
 		std::string_view parentAccessor = {}, std::string_view parentCppType = {}) const noexcept;
@@ -76,30 +77,36 @@ private:
 		const ResponseField& responseField, std::string_view parentState = {},
 		std::string_view parentAccessor = {}, std::string_view parentCppType = {}) const noexcept;
 	void outputResponseFieldVisitorAddMember(std::ostream& sourceFile,
-		const ResponseFieldList& children, std::string_view parentState = {}) const noexcept;
+		const ResponseFieldList& children, bool arrayElement = false,
+		std::string_view parentState = {}) const noexcept;
 	void outputResponseFieldVisitorEndObject(std::ostream& sourceFile,
-		const ResponseField& responseField, std::string_view parentState = {}) const noexcept;
+		const ResponseField& responseField, bool arrayElement = false,
+		std::string_view parentState = {}) const noexcept;
 	void outputResponseFieldVisitorStartArray(std::ostream& sourceFile,
 		const ResponseField& responseField, std::string_view parentState = {},
 		std::string_view parentAccessor = {}, std::string_view parentCppType = {}) const noexcept;
-	void outputResponseFieldVisitorEndArray(std::ostream& sourceFile,
-		const ResponseField& responseField, std::string_view parentState = {}) const noexcept;
-	void outputResponseFieldVisitorAddNull(std::ostream& sourceFile,
-		const ResponseField& responseField, std::string_view parentState = {},
-		std::string_view parentAccessor = {}) const noexcept;
+	void outputResponseFieldVisitorEndArray(std::ostream& sourceFilearrayElement,
+		const ResponseField& responseField, bool arrayElement = false,
+		std::string_view parentState = {}) const noexcept;
+	void outputResponseFieldVisitorAddNull(std::ostream& sourceFilearrayElement,
+		const ResponseField& responseField, bool arrayElement = false,
+		std::string_view parentState = {}, std::string_view parentAccessor = {}) const noexcept;
 	void outputResponseFieldVisitorAddMovedValue(std::ostream& sourceFile,
 		const ResponseField& responseField, std::string_view movedCppType,
-		std::string_view parentState = {}, std::string_view parentAccessor = {}) const noexcept;
+		bool arrayElement = false, std::string_view parentState = {},
+		std::string_view parentAccessor = {}) const noexcept;
 	void outputResponseFieldVisitorAddString(
 		std::ostream& sourceFile, const ResponseField& responseField) const noexcept;
 	void outputResponseFieldVisitorAddEnum(std::ostream& sourceFile,
-		const ResponseField& responseField, std::string_view parentState = {},
-		std::string_view parentAccessor = {}, std::string_view parentCppType = {}) const noexcept;
+		const ResponseField& responseField, bool arrayElement = false,
+		std::string_view parentState = {}, std::string_view parentAccessor = {},
+		std::string_view parentCppType = {}) const noexcept;
 	void outputResponseFieldVisitorAddId(
 		std::ostream& sourceFile, const ResponseField& responseField) const noexcept;
 	void outputResponseFieldVisitorAddCopiedValue(std::ostream& sourceFile,
 		const ResponseField& responseField, std::string_view copiedCppType,
-		std::string_view parentState = {}, std::string_view parentAccessor = {}) const noexcept;
+		bool arrayElement = false, std::string_view parentState = {},
+		std::string_view parentAccessor = {}) const noexcept;
 	void outputResponseFieldVisitorAddBool(
 		std::ostream& sourceFile, const ResponseField& responseField) const noexcept;
 	void outputResponseFieldVisitorAddInt(

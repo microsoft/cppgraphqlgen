@@ -171,6 +171,7 @@ struct ResponseVisitor::impl
 		Member_relay_data,
 		Member_relay_errors,
 		Member_relay_errors_0,
+		Member_relay_errors_0_,
 		Complete,
 	};
 
@@ -230,6 +231,7 @@ void ResponseVisitor::start_object()
 	switch (_pimpl->state)
 	{
 		case impl::VisitorState::Member_relay_errors_0:
+			_pimpl->state = impl::VisitorState::Member_relay_errors_0_;
 			_pimpl->response.relay.errors->push_back(std::make_optional<std::string>({}));
 			break;
 
@@ -269,6 +271,10 @@ void ResponseVisitor::end_object()
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Member_relay:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
 		default:
 			break;
 	}

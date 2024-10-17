@@ -466,6 +466,10 @@ void ResponseVisitor::end_object()
 			_pimpl->state = impl::VisitorState::Member_control;
 			break;
 
+		case impl::VisitorState::Member_control:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
 		default:
 			break;
 	}

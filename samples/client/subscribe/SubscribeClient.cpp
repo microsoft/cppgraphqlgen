@@ -230,6 +230,10 @@ void ResponseVisitor::end_object()
 {
 	switch (_pimpl->state)
 	{
+		case impl::VisitorState::Member_nextAppointment:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
 		default:
 			break;
 	}
