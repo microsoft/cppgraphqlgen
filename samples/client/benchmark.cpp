@@ -86,7 +86,6 @@ int main(int argc, char** argv)
 	const auto mockService = today::mock_service();
 	const auto& service = mockService->service;
 	std::vector<std::chrono::steady_clock::duration> durationResolve(iterations);
-	std::vector<std::chrono::steady_clock::duration> durationParseServiceResponse(iterations);
 	std::vector<std::chrono::steady_clock::duration> durationParseResponse(iterations);
 	const auto startTime = std::chrono::steady_clock::now();
 
@@ -96,19 +95,21 @@ int main(int argc, char** argv)
 
 		auto query = GetRequestObject();
 		const auto& name = GetOperationName();
+		auto visitor = std::make_shared<ResponseVisitor>();
+		auto responseVisitor = std::make_shared<response::ValueVisitor>(visitor);
 
 		for (std::size_t i = 0; i < iterations; ++i)
 		{
 			const auto startResolve = std::chrono::steady_clock::now();
-			auto response = service->resolve({ query, name }).get();
-			const auto startParseServiceResponse = std::chrono::steady_clock::now();
-			auto serviceResponse = client::parseServiceResponse(std::move(response));
+			auto response = service->visit({ query, name }).get();
 			const auto startParseResponse = std::chrono::steady_clock::now();
-			const auto parsed = parseResponse(std::move(serviceResponse.data));
+
+			std::move(response.data).visit(responseVisitor);
+
+			const auto parsed = visitor->response();
 			const auto endParseResponse = std::chrono::steady_clock::now();
 
-			durationResolve[i] = startParseServiceResponse - startResolve;
-			durationParseServiceResponse[i] = startParseResponse - startParseServiceResponse;
+			durationResolve[i] = startParseResponse - startResolve;
 			durationParseResponse[i] = endParseResponse - startParseResponse;
 		}
 	}
@@ -124,7 +125,6 @@ int main(int argc, char** argv)
 	outputOverview(iterations, totalDuration);
 
 	outputSegment("Resolve"sv, durationResolve);
-	outputSegment("ParseServiceResponse"sv, durationParseServiceResponse);
 	outputSegment("ParseResponse"sv, durationParseResponse);
 
 	return 0;

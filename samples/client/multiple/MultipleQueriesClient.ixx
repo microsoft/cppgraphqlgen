@@ -31,6 +31,7 @@ using graphql::multiple::client::GetRequestObject;
 using Appointments::GetOperationName;
 
 using Appointments::Response;
+using Appointments::ResponseVisitor;
 using Appointments::parseResponse;
 
 using Appointments::Traits;
@@ -44,6 +45,7 @@ using graphql::multiple::client::GetRequestObject;
 using Tasks::GetOperationName;
 
 using Tasks::Response;
+using Tasks::ResponseVisitor;
 using Tasks::parseResponse;
 
 using Tasks::Traits;
@@ -57,6 +59,7 @@ using graphql::multiple::client::GetRequestObject;
 using UnreadCounts::GetOperationName;
 
 using UnreadCounts::Response;
+using UnreadCounts::ResponseVisitor;
 using UnreadCounts::parseResponse;
 
 using UnreadCounts::Traits;
@@ -72,6 +75,7 @@ using Miscellaneous::GetOperationName;
 using graphql::multiple::TaskState;
 
 using Miscellaneous::Response;
+using Miscellaneous::ResponseVisitor;
 using Miscellaneous::parseResponse;
 
 using Miscellaneous::Traits;
@@ -92,6 +96,7 @@ using CompleteTaskMutation::Variables;
 using CompleteTaskMutation::serializeVariables;
 
 using CompleteTaskMutation::Response;
+using CompleteTaskMutation::ResponseVisitor;
 using CompleteTaskMutation::parseResponse;
 
 using CompleteTaskMutation::Traits;

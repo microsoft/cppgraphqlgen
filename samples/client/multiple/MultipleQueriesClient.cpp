@@ -285,6 +285,336 @@ const std::string& GetOperationName() noexcept
 	return s_name;
 }
 
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_appointments,
+		Member_appointments_edges,
+		Member_appointments_edges_0,
+		Member_appointments_edges_0_node,
+		Member_appointments_edges_0_node_id,
+		Member_appointments_edges_0_node_subject,
+		Member_appointments_edges_0_node_when,
+		Member_appointments_edges_0_node_isNow,
+		Member_appointments_edges_0_node__typename,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.appointments = ModifiedResponse<Response::appointments_AppointmentConnection>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->push_back(ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->response.appointments.edges->back()->node = ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_when:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_isNow:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->isNow = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->reserve(count);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->push_back(std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>({}));
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->response.appointments.edges->back()->node = std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "appointments"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments:
+			if (key == "edges"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0:
+			if (key == "node"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_id;
+			}
+			else if (key == "subject"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_subject;
+			}
+			else if (key == "when"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_when;
+			}
+			else if (key == "isNow"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_isNow;
+			}
+			else if (key == "__typename"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node__typename;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->response.appointments.edges = std::make_optional<std::vector<std::optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>>>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->state = impl::VisitorState::Member_appointments;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->response.appointments.edges->back()->node = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_when:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->when = std::nullopt;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->_typename = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->id = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node_isNow:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->isNow = value;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
+}
+
 Response parseResponse(response::Value&& response)
 {
 	using namespace graphql::client;
@@ -423,6 +753,321 @@ const std::string& GetOperationName() noexcept
 	static const auto s_name = R"gql(Tasks)gql"s;
 
 	return s_name;
+}
+
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_tasks,
+		Member_tasks_edges,
+		Member_tasks_edges_0,
+		Member_tasks_edges_0_node,
+		Member_tasks_edges_0_node_id,
+		Member_tasks_edges_0_node_title,
+		Member_tasks_edges_0_node_isComplete,
+		Member_tasks_edges_0_node__typename,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.tasks = ModifiedResponse<Response::tasks_TaskConnection>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->response.tasks.edges->push_back(ModifiedResponse<Response::tasks_TaskConnection::edges_TaskEdge>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
+			_pimpl->response.tasks.edges->back()->node = ModifiedResponse<Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_title:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_isComplete:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->isComplete = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->response.tasks.edges->reserve(count);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->response.tasks.edges->push_back(std::make_optional<Response::tasks_TaskConnection::edges_TaskEdge>({}));
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->response.tasks.edges->back()->node = std::make_optional<Response::tasks_TaskConnection::edges_TaskEdge::node_Task>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "tasks"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks;
+			}
+			break;
+
+		case impl::VisitorState::Member_tasks:
+			if (key == "edges"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges;
+			}
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0:
+			if (key == "node"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			}
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node_id;
+			}
+			else if (key == "title"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node_title;
+			}
+			else if (key == "isComplete"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node_isComplete;
+			}
+			else if (key == "__typename"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node__typename;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
+			_pimpl->response.tasks.edges = std::make_optional<std::vector<std::optional<Response::tasks_TaskConnection::edges_TaskEdge>>>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->state = impl::VisitorState::Member_tasks;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->response.tasks.edges->push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
+			_pimpl->response.tasks.edges->back()->node = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_title:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->title = std::nullopt;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges_0_node_title:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->title = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->_typename = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->id = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_tasks_edges_0_node_isComplete:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->isComplete = value;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
 }
 
 Response parseResponse(response::Value&& response)
@@ -565,6 +1210,321 @@ const std::string& GetOperationName() noexcept
 	return s_name;
 }
 
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_unreadCounts,
+		Member_unreadCounts_edges,
+		Member_unreadCounts_edges_0,
+		Member_unreadCounts_edges_0_node,
+		Member_unreadCounts_edges_0_node_id,
+		Member_unreadCounts_edges_0_node_name,
+		Member_unreadCounts_edges_0_node_unreadCount,
+		Member_unreadCounts_edges_0_node__typename,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.unreadCounts = ModifiedResponse<Response::unreadCounts_FolderConnection>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->response.unreadCounts.edges->push_back(ModifiedResponse<Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			_pimpl->response.unreadCounts.edges->back()->node = ModifiedResponse<Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_name:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->name = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_unreadCount:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->unreadCount = ModifiedResponse<int>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->response.unreadCounts.edges->reserve(count);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->response.unreadCounts.edges->push_back(std::make_optional<Response::unreadCounts_FolderConnection::edges_FolderEdge>({}));
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->response.unreadCounts.edges->back()->node = std::make_optional<Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "unreadCounts"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts;
+			}
+			break;
+
+		case impl::VisitorState::Member_unreadCounts:
+			if (key == "edges"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges;
+			}
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			if (key == "node"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			}
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node_id;
+			}
+			else if (key == "name"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node_name;
+			}
+			else if (key == "unreadCount"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node_unreadCount;
+			}
+			else if (key == "__typename"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node__typename;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			_pimpl->response.unreadCounts.edges = std::make_optional<std::vector<std::optional<Response::unreadCounts_FolderConnection::edges_FolderEdge>>>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->response.unreadCounts.edges->push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			_pimpl->response.unreadCounts.edges->back()->node = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_name:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->name = std::nullopt;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_name:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->name = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->_typename = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->id = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_unreadCount:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->unreadCount = value;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
+}
+
 Response parseResponse(response::Value&& response)
 {
 	using namespace graphql::client;
@@ -614,6 +1574,13 @@ namespace client {
 
 using namespace multiple;
 
+static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
+	std::make_pair(R"gql(New)gql"sv, TaskState::New),
+	std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
+	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
+	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
+};
+			
 template <>
 TaskState Response<TaskState>::parse(response::Value&& value)
 {
@@ -622,15 +1589,8 @@ TaskState Response<TaskState>::parse(response::Value&& value)
 		throw std::logic_error { R"ex(not a valid TaskState value)ex" };
 	}
 
-	static const std::array<std::pair<std::string_view, TaskState>, 4> s_values = {
-		std::make_pair(R"gql(New)gql"sv, TaskState::New),
-		std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
-		std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
-		std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
-	};
-
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_values,
+		s_valuesTaskState,
 		std::string_view { value.get<std::string>() });
 
 	if (!result)
@@ -702,6 +1662,369 @@ const std::string& GetOperationName() noexcept
 	static const auto s_name = R"gql(Miscellaneous)gql"s;
 
 	return s_name;
+}
+
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_testTaskState,
+		Member_anyType,
+		Member_anyType_0,
+		Member_anyType_0__typename,
+		Member_anyType_0_id,
+		Member_anyType_0_title,
+		Member_anyType_0_isComplete,
+		Member_anyType_0_subject,
+		Member_anyType_0_when,
+		Member_anyType_0_isNow,
+		Member_default_,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_testTaskState:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.testTaskState = ModifiedResponse<TaskState>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->response.anyType.push_back(ModifiedResponse<Response::anyType_UnionType>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_anyType_0__typename:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_id:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_title:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_isComplete:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->isComplete = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_subject:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_when:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_isNow:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->isNow = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_default_:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.default_ = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->response.anyType.reserve(count);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->response.anyType.push_back(std::make_optional<Response::anyType_UnionType>({}));
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "testTaskState"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_testTaskState;
+			}
+			else if (key == "anyType"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType;
+			}
+			else if (key == "default"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_default_;
+			}
+			break;
+
+		case impl::VisitorState::Member_anyType_0:
+			if (key == "__typename"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0__typename;
+			}
+			else if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_id;
+			}
+			else if (key == "title"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_title;
+			}
+			else if (key == "isComplete"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_isComplete;
+			}
+			else if (key == "subject"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_subject;
+			}
+			else if (key == "when"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_when;
+			}
+			else if (key == "isNow"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_isNow;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_anyType:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->response.anyType.push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_title:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->title = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_subject:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->subject = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_when:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->when = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_default_:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.default_ = std::nullopt;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_anyType_0__typename:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->_typename = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_title:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->title = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_subject:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->subject = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_default_:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.default_ = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_testTaskState:
+			_pimpl->state = impl::VisitorState::Start;
+			if (const auto enumValue = internal::sorted_map_lookup<internal::shorter_or_less>(s_valuesTaskState, std::string_view { value }))
+			{
+				_pimpl->response.testTaskState = *enumValue;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_anyType_0_id:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->id = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_anyType_0_isComplete:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->isComplete = value;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_isNow:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			_pimpl->response.anyType.back()->isNow = value;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
 }
 
 Response parseResponse(response::Value&& response)
@@ -873,6 +2196,292 @@ response::Value serializeVariables(Variables&& variables)
 	result.emplace_back(R"js(skipClientMutationId)js"s, ModifiedVariable<bool>::serialize(std::move(variables.skipClientMutationId)));
 
 	return result;
+}
+
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_completedTask,
+		Member_completedTask_completedTask,
+		Member_completedTask_completedTask_completedTaskId,
+		Member_completedTask_completedTask_title,
+		Member_completedTask_completedTask_isComplete,
+		Member_completedTask_clientMutationId,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.completedTask = ModifiedResponse<Response::completedTask_CompleteTaskPayload>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.completedTask = ModifiedResponse<Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask_completedTaskId:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->completedTaskId = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask_title:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask_isComplete:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->isComplete = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_clientMutationId:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.clientMutationId = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask:
+			_pimpl->response.completedTask.completedTask = std::make_optional<Response::completedTask_CompleteTaskPayload::completedTask_Task>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "completedTask"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask;
+			}
+			break;
+
+		case impl::VisitorState::Member_completedTask:
+			if (key == "completedTask"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			}
+			else if (key == "clientMutationId"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_clientMutationId;
+			}
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask:
+			if (key == "completedTaskId"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_completedTask_completedTaskId;
+			}
+			else if (key == "title"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_completedTask_title;
+			}
+			else if (key == "isComplete"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_completedTask_isComplete;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.completedTask = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask_title:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->title = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_completedTask_clientMutationId:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.clientMutationId = std::nullopt;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask_title:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->title = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_completedTask_clientMutationId:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.clientMutationId = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask_completedTaskId:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->completedTaskId = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask_isComplete:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->isComplete = value;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
 }
 
 Response parseResponse(response::Value&& response)

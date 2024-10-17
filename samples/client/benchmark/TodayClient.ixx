@@ -23,6 +23,7 @@ using graphql::today::client::GetRequestObject;
 using Query::GetOperationName;
 
 using Query::Response;
+using Query::ResponseVisitor;
 using Query::parseResponse;
 
 using Query::Traits;

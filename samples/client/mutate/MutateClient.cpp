@@ -152,6 +152,13 @@ response::Value Variable<CompleteTaskInput>::serialize(CompleteTaskInput&& input
 	return result;
 }
 
+static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
+	std::make_pair(R"gql(New)gql"sv, TaskState::New),
+	std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
+	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
+	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
+};
+			
 template <>
 TaskState Response<TaskState>::parse(response::Value&& value)
 {
@@ -160,15 +167,8 @@ TaskState Response<TaskState>::parse(response::Value&& value)
 		throw std::logic_error { R"ex(not a valid TaskState value)ex" };
 	}
 
-	static const std::array<std::pair<std::string_view, TaskState>, 4> s_values = {
-		std::make_pair(R"gql(New)gql"sv, TaskState::New),
-		std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
-		std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
-		std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
-	};
-
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_values,
+		s_valuesTaskState,
 		std::string_view { value.get<std::string>() });
 
 	if (!result)
@@ -259,6 +259,292 @@ response::Value serializeVariables(Variables&& variables)
 	result.emplace_back(R"js(skipClientMutationId)js"s, ModifiedVariable<bool>::serialize(std::move(variables.skipClientMutationId)));
 
 	return result;
+}
+
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_completedTask,
+		Member_completedTask_completedTask,
+		Member_completedTask_completedTask_completedTaskId,
+		Member_completedTask_completedTask_title,
+		Member_completedTask_completedTask_isComplete,
+		Member_completedTask_clientMutationId,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.completedTask = ModifiedResponse<Response::completedTask_CompleteTaskPayload>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.completedTask = ModifiedResponse<Response::completedTask_CompleteTaskPayload::completedTask_Task>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask_completedTaskId:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->completedTaskId = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask_title:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask_isComplete:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->isComplete = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_completedTask_clientMutationId:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.clientMutationId = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask:
+			_pimpl->response.completedTask.completedTask = std::make_optional<Response::completedTask_CompleteTaskPayload::completedTask_Task>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "completedTask"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask;
+			}
+			break;
+
+		case impl::VisitorState::Member_completedTask:
+			if (key == "completedTask"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			}
+			else if (key == "clientMutationId"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_clientMutationId;
+			}
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask:
+			if (key == "completedTaskId"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_completedTask_completedTaskId;
+			}
+			else if (key == "title"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_completedTask_title;
+			}
+			else if (key == "isComplete"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_completedTask_completedTask_isComplete;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.completedTask = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_completedTask_completedTask_title:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->title = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_completedTask_clientMutationId:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.clientMutationId = std::nullopt;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask_title:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->title = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_completedTask_clientMutationId:
+			_pimpl->state = impl::VisitorState::Member_completedTask;
+			_pimpl->response.completedTask.clientMutationId = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask_completedTaskId:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->completedTaskId = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_completedTask_completedTask_isComplete:
+			_pimpl->state = impl::VisitorState::Member_completedTask_completedTask;
+			_pimpl->response.completedTask.completedTask->isComplete = value;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
 }
 
 Response parseResponse(response::Value&& response)

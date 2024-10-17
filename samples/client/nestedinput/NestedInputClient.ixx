@@ -40,6 +40,7 @@ using testQuery::Variables;
 using testQuery::serializeVariables;
 
 using testQuery::Response;
+using testQuery::ResponseVisitor;
 using testQuery::parseResponse;
 
 using testQuery::Traits;

@@ -185,6 +185,353 @@ const std::string& GetOperationName() noexcept
 	return s_name;
 }
 
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_appointments,
+		Member_appointments_pageInfo,
+		Member_appointments_pageInfo_hasNextPage,
+		Member_appointments_edges,
+		Member_appointments_edges_0,
+		Member_appointments_edges_0_node,
+		Member_appointments_edges_0_node_id,
+		Member_appointments_edges_0_node_when,
+		Member_appointments_edges_0_node_subject,
+		Member_appointments_edges_0_node_isNow,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.appointments = ModifiedResponse<Response::appointments_AppointmentConnection>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_pageInfo:
+			_pimpl->state = impl::VisitorState::Member_appointments;
+			_pimpl->response.appointments.pageInfo = ModifiedResponse<Response::appointments_AppointmentConnection::pageInfo_PageInfo>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_pageInfo_hasNextPage:
+			_pimpl->state = impl::VisitorState::Member_appointments_pageInfo;
+			_pimpl->response.appointments.pageInfo.hasNextPage = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->push_back(ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->response.appointments.edges->back()->node = ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_when:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_isNow:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->isNow = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->reserve(count);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->push_back(std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>({}));
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->response.appointments.edges->back()->node = std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "appointments"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments:
+			if (key == "pageInfo"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_pageInfo;
+			}
+			else if (key == "edges"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments_pageInfo:
+			if (key == "hasNextPage"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_pageInfo_hasNextPage;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0:
+			if (key == "node"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_id;
+			}
+			else if (key == "when"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_when;
+			}
+			else if (key == "subject"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_subject;
+			}
+			else if (key == "isNow"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_isNow;
+			}
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_pageInfo:
+			_pimpl->state = impl::VisitorState::Member_appointments;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->response.appointments.edges = std::make_optional<std::vector<std::optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>>>({});
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->state = impl::VisitorState::Member_appointments;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->response.appointments.edges->back()->node = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_when:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->when = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = std::nullopt;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->id = std::move(value);
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_pageInfo_hasNextPage:
+			_pimpl->state = impl::VisitorState::Member_appointments_pageInfo;
+			_pimpl->response.appointments.pageInfo.hasNextPage = value;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_isNow:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->isNow = value;
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
+}
+
 Response parseResponse(response::Value&& response)
 {
 	using namespace graphql::client;

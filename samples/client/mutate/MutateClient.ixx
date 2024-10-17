@@ -38,6 +38,7 @@ using CompleteTaskMutation::Variables;
 using CompleteTaskMutation::serializeVariables;
 
 using CompleteTaskMutation::Response;
+using CompleteTaskMutation::ResponseVisitor;
 using CompleteTaskMutation::parseResponse;
 
 using CompleteTaskMutation::Traits;

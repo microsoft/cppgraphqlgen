@@ -31,6 +31,7 @@ using Query::GetOperationName;
 using graphql::query::TaskState;
 
 using Query::Response;
+using Query::ResponseVisitor;
 using Query::parseResponse;
 
 using Query::Traits;
