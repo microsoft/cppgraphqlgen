@@ -39,7 +39,7 @@ struct TodayMockService
 	std::size_t getUnreadCountsCount {};
 };
 
-std::unique_ptr<TodayMockService> mock_service() noexcept;
+std::shared_ptr<TodayMockService> mock_service() noexcept;
 
 struct RequestState : service::RequestState
 {
@@ -118,6 +118,8 @@ private:
 	std::vector<std::shared_ptr<Task>> _tasks;
 	std::vector<std::shared_ptr<Folder>> _unreadCounts;
 };
+
+std::shared_ptr<Query> mock_query(const std::shared_ptr<TodayMockService>& service) noexcept;
 
 class PageInfo
 {
@@ -301,6 +303,8 @@ private:
 	static std::optional<double> _setFloat;
 };
 
+std::shared_ptr<Mutation> mock_mutation() noexcept;
+
 class Subscription
 {
 public:
@@ -331,6 +335,8 @@ private:
 	static std::size_t _subscriptionCount;
 	static std::size_t _notifyUnsubscribeCount;
 };
+
+std::shared_ptr<NextAppointmentChange> mock_subscription() noexcept;
 
 class NodeChange
 {

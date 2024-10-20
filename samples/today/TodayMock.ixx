@@ -22,6 +22,7 @@ using today::mock_service;
 using today::RequestState;
 
 using today::Query;
+using today::mock_query;
 
 using today::PageInfo;
 using today::Appointment;
@@ -34,8 +35,10 @@ using today::FolderEdge;
 using today::FolderConnection;
 using today::CompleteTaskPayload;
 using today::Mutation;
+using today::mock_mutation;
 using today::Subscription;
 using today::NextAppointmentChange;
+using today::mock_subscription;
 using today::NodeChange;
 using today::CapturedParams;
 using today::NestedType;

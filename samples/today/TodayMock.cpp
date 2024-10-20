@@ -62,47 +62,66 @@ const response::IdType& getFakeFolderId() noexcept
 	return s_fakeId;
 }
 
-std::unique_ptr<TodayMockService> mock_service() noexcept
+std::shared_ptr<Query> mock_query(const std::shared_ptr<TodayMockService>& service) noexcept
 {
-	auto result = std::make_unique<TodayMockService>();
-
-	auto query = std::make_shared<Query>(
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Appointment>> {
-			++mockService->getAppointmentsCount;
+	return std::make_shared<Query>(
+		[weakService = std::weak_ptr { service }]() -> std::vector<std::shared_ptr<Appointment>> {
+			if (auto mockService = weakService.lock())
+			{
+				++mockService->getAppointmentsCount;
+			}
 			return { std::make_shared<Appointment>(response::IdType(getFakeAppointmentId()),
 				"tomorrow",
 				"Lunch?",
 				false) };
 		},
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Task>> {
-			++mockService->getTasksCount;
+		[weakService = std::weak_ptr { service }]() -> std::vector<std::shared_ptr<Task>> {
+			if (auto mockService = weakService.lock())
+			{
+				++mockService->getTasksCount;
+			}
 			return {
 				std::make_shared<Task>(response::IdType(getFakeTaskId()), "Don't forget", true)
 			};
 		},
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Folder>> {
-			++mockService->getUnreadCountsCount;
+		[weakService = std::weak_ptr { service }]() -> std::vector<std::shared_ptr<Folder>> {
+			if (auto mockService = weakService.lock())
+			{
+				++mockService->getUnreadCountsCount;
+			}
 			return {
 				std::make_shared<Folder>(response::IdType(getFakeFolderId()), "\"Fake\" Inbox", 3)
 			};
 		});
-	auto mutation = std::make_shared<Mutation>(
+}
+
+std::shared_ptr<Mutation> mock_mutation() noexcept
+{
+	return std::make_shared<Mutation>(
 		[](CompleteTaskInput&& input) -> std::shared_ptr<CompleteTaskPayload> {
 			return std::make_shared<CompleteTaskPayload>(
 				std::make_shared<Task>(std::move(input.id), "Mutated Task!", *(input.isComplete)),
 				std::move(input.clientMutationId));
 		});
-	auto subscription = std::make_shared<NextAppointmentChange>(
+}
+
+std::shared_ptr<NextAppointmentChange> mock_subscription() noexcept
+{
+	return std::make_shared<NextAppointmentChange>(
 		[](const std::shared_ptr<service::RequestState>&) -> std::shared_ptr<Appointment> {
 			return { std::make_shared<Appointment>(response::IdType(getFakeAppointmentId()),
 				"tomorrow",
 				"Lunch?",
 				true) };
 		});
+}
 
-	result->service = std::make_shared<Operations>(std::move(query),
-		std::move(mutation),
-		std::move(subscription));
+std::shared_ptr<TodayMockService> mock_service() noexcept
+{
+	auto result = std::make_shared<TodayMockService>();
+
+	result->service =
+		std::make_shared<Operations>(mock_query(result), mock_mutation(), mock_subscription());
 
 	return result;
 }
