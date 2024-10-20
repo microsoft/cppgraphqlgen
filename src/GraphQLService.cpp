@@ -1222,6 +1222,37 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers) noexcept
 {
 }
 
+std::shared_ptr<Object> Object::StitchObject(const std::shared_ptr<const Object>& added) const
+{
+	auto typeNames = _typeNames;
+
+	for (const auto& name : added->_typeNames)
+	{
+		typeNames.emplace(name);
+	}
+
+	auto resolvers = _resolvers;
+	bool hasStitchedResolvers = false;
+
+	for (const auto& [name, resolver] : added->_resolvers)
+	{
+		hasStitchedResolvers = resolvers.emplace(name, resolver).second || hasStitchedResolvers;
+	}
+
+	std::vector<std::shared_ptr<const Object>> stitched { shared_from_this() };
+
+	if (hasStitchedResolvers)
+	{
+		stitched.push_back(added);
+	}
+
+	auto object = std::make_shared<Object>(std::move(typeNames), std::move(resolvers));
+
+	object->_stitched = std::move(stitched);
+
+	return object;
+}
+
 AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 	const peg::ast_node& selection, const FragmentMap& fragments,
 	const response::Value& variables) const

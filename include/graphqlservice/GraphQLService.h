@@ -824,6 +824,9 @@ public:
 	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers) noexcept;
 	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
 
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<Object> StitchObject(
+		const std::shared_ptr<const Object>& added) const;
+
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT AwaitableResolver resolve(
 		const SelectionSetParams& selectionSetParams, const peg::ast_node& selection,
 		const FragmentMap& fragments, const response::Value& variables) const;
@@ -846,6 +849,7 @@ protected:
 private:
 	TypeNames _typeNames;
 	ResolverMap _resolvers;
+	std::vector<std::shared_ptr<const Object>> _stitched;
 };
 
 // Test if this Type inherits from Object.
@@ -1466,6 +1470,7 @@ private:
 	collectRegistrations(std::string_view field, RequestDeliverFilter&& filter) const noexcept;
 
 	const TypeMap _operations;
+	const std::shared_ptr<schema::Schema> _schema;
 	mutable std::mutex _validationMutex {};
 	const std::unique_ptr<ValidateExecutableVisitor> _validation;
 	mutable std::mutex _subscriptionMutex {};
