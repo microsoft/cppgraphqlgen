@@ -155,7 +155,7 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 
 			if (itrOriginal != _typeMap.end())
 			{
-				break;
+				continue;
 			}
 
 			switch (addedType->kind())
@@ -247,7 +247,7 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 
 			if (itrAdded != added->_typeMap.end())
 			{
-				const auto& addedType = _types[itrAdded->second].second;
+				const auto& addedType = added->_types[itrAdded->second].second;
 				const auto& enumValues = addedType->enumValues();
 
 				for (const auto& value : enumValues)
@@ -293,7 +293,7 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 
 			if (itrAdded != added->_typeMap.end())
 			{
-				const auto& addedType = _types[itrAdded->second].second;
+				const auto& addedType = added->_types[itrAdded->second].second;
 				const auto& inputObjectValues = addedType->inputFields();
 
 				for (const auto& value : inputObjectValues)
@@ -349,7 +349,7 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 
 			if (itrAdded != added->_typeMap.end())
 			{
-				const auto& addedType = _types[itrAdded->second].second;
+				const auto& addedType = added->_types[itrAdded->second].second;
 				const auto& interfaceFields = addedType->fields();
 
 				for (const auto& interfaceField : interfaceFields)
@@ -404,7 +404,7 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 
 			if (itrAdded != added->_typeMap.end())
 			{
-				const auto& addedType = _types[itrAdded->second].second;
+				const auto& addedType = added->_types[itrAdded->second].second;
 				const auto& possibleTypes = addedType->possibleTypes();
 
 				for (const auto& possibleType : possibleTypes)
@@ -469,7 +469,7 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 
 			if (itrAdded != added->_typeMap.end())
 			{
-				const auto& addedType = _types[itrAdded->second].second;
+				const auto& addedType = added->_types[itrAdded->second].second;
 				const auto& objectInterfaces = addedType->interfaces();
 
 				for (const auto& interfaceType : objectInterfaces)
@@ -605,11 +605,12 @@ std::shared_ptr<const BaseType> Schema::StitchFieldType(std::shared_ptr<const Ba
 	switch (fieldType->kind())
 	{
 		case introspection::TypeKind::LIST:
-			return WrapType(introspection::TypeKind::LIST, StitchFieldType(std::move(fieldType)));
+			return WrapType(introspection::TypeKind::LIST,
+				StitchFieldType(fieldType->ofType().lock()));
 
 		case introspection::TypeKind::NON_NULL:
 			return WrapType(introspection::TypeKind::NON_NULL,
-				StitchFieldType(std::move(fieldType)));
+				StitchFieldType(fieldType->ofType().lock()));
 
 		default:
 			return LookupType(fieldType->name());
