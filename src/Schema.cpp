@@ -319,30 +319,30 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 			const auto itrOriginal = _typeMap.find(name);
 			const auto itrAdded = added->_typeMap.find(name);
 			internal::string_view_set names;
-			std::vector<std::shared_ptr<const Field>> stitchedValues;
+			std::vector<std::shared_ptr<const Field>> stitchedFields;
 
 			if (itrOriginal != _typeMap.end())
 			{
 				const auto& originalType = _types[itrOriginal->second].second;
 				const auto& interfaceFields = originalType->fields();
 
-				for (const auto& field : interfaceFields)
+				for (const auto& interfaceField : interfaceFields)
 				{
 					std::vector<std::shared_ptr<const InputValue>> stitchedArgs;
 
-					for (const auto& value : field->args())
+					for (const auto& arg : interfaceField->args())
 					{
-						stitchedArgs.push_back(InputValue::Make(value->name(),
-							value->description(),
-							schema->StitchFieldType(value->type().lock()),
-							value->defaultValue()));
+						stitchedArgs.push_back(InputValue::Make(arg->name(),
+							arg->description(),
+							schema->StitchFieldType(arg->type().lock()),
+							arg->defaultValue()));
 					}
 
-					names.emplace(field->name());
-					stitchedValues.push_back(Field::Make(field->name(),
-						field->description(),
-						field->deprecationReason(),
-						schema->StitchFieldType(field->type().lock()),
+					names.emplace(interfaceField->name());
+					stitchedFields.push_back(Field::Make(interfaceField->name(),
+						interfaceField->description(),
+						interfaceField->deprecationReason(),
+						schema->StitchFieldType(interfaceField->type().lock()),
 						std::move(stitchedArgs)));
 				}
 			}
@@ -352,32 +352,32 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 				const auto& addedType = _types[itrAdded->second].second;
 				const auto& interfaceFields = addedType->fields();
 
-				for (const auto& field : interfaceFields)
+				for (const auto& interfaceField : interfaceFields)
 				{
-					if (!names.emplace(field->name()).second)
+					if (!names.emplace(interfaceField->name()).second)
 					{
 						continue;
 					}
 
 					std::vector<std::shared_ptr<const InputValue>> stitchedArgs;
 
-					for (const auto& value : field->args())
+					for (const auto& arg : interfaceField->args())
 					{
-						stitchedArgs.push_back(InputValue::Make(value->name(),
-							value->description(),
-							schema->StitchFieldType(value->type().lock()),
-							value->defaultValue()));
+						stitchedArgs.push_back(InputValue::Make(arg->name(),
+							arg->description(),
+							schema->StitchFieldType(arg->type().lock()),
+							arg->defaultValue()));
 					}
 
-					stitchedValues.push_back(Field::Make(field->name(),
-						field->description(),
-						field->deprecationReason(),
-						schema->StitchFieldType(field->type().lock()),
+					stitchedFields.push_back(Field::Make(interfaceField->name(),
+						interfaceField->description(),
+						interfaceField->deprecationReason(),
+						schema->StitchFieldType(interfaceField->type().lock()),
 						std::move(stitchedArgs)));
 				}
 			}
 
-			stitchedType->AddFields(std::move(stitchedValues));
+			stitchedType->AddFields(std::move(stitchedFields));
 		}
 
 		for (const auto& entry : unionTypes)
@@ -391,32 +391,32 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 			if (itrOriginal != _typeMap.end())
 			{
 				const auto& originalType = _types[itrOriginal->second].second;
-				const auto& unionValues = originalType->possibleTypes();
+				const auto& possibleTypes = originalType->possibleTypes();
 
-				for (const auto& value : unionValues)
+				for (const auto& possibleType : possibleTypes)
 				{
-					const auto possibleType = value.lock();
+					const auto possible = possibleType.lock();
 
-					names.emplace(possibleType->name());
-					stitchedValues.push_back(schema->LookupType(possibleType->name()));
+					names.emplace(possible->name());
+					stitchedValues.push_back(schema->LookupType(possible->name()));
 				}
 			}
 
 			if (itrAdded != added->_typeMap.end())
 			{
 				const auto& addedType = _types[itrAdded->second].second;
-				const auto& unionValues = addedType->possibleTypes();
+				const auto& possibleTypes = addedType->possibleTypes();
 
-				for (const auto& value : unionValues)
+				for (const auto& possibleType : possibleTypes)
 				{
-					const auto possibleType = value.lock();
+					const auto possible = possibleType.lock();
 
-					if (!names.emplace(possibleType->name()).second)
+					if (!names.emplace(possible->name()).second)
 					{
 						continue;
 					}
 
-					stitchedValues.push_back(schema->LookupType(possibleType->name()));
+					stitchedValues.push_back(schema->LookupType(possible->name()));
 				}
 			}
 
@@ -436,33 +436,33 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 			if (itrOriginal != _typeMap.end())
 			{
 				const auto& originalType = _types[itrOriginal->second].second;
-				const auto& interfaceValues = originalType->interfaces();
+				const auto& objectInterfaces = originalType->interfaces();
 
-				for (const auto& value : interfaceValues)
+				for (const auto& interfaceType : objectInterfaces)
 				{
-					interfaceNames.emplace(value->name());
-					stitchedInterfaces.push_back(interfaceTypes[value->name()]);
+					interfaceNames.emplace(interfaceType->name());
+					stitchedInterfaces.push_back(interfaceTypes[interfaceType->name()]);
 				}
 
 				const auto& objectFields = originalType->fields();
 
-				for (const auto& field : objectFields)
+				for (const auto& objectField : objectFields)
 				{
 					std::vector<std::shared_ptr<const InputValue>> stitchedArgs;
 
-					for (const auto& value : field->args())
+					for (const auto& arg : objectField->args())
 					{
-						stitchedArgs.push_back(InputValue::Make(value->name(),
-							value->description(),
-							schema->StitchFieldType(value->type().lock()),
-							value->defaultValue()));
+						stitchedArgs.push_back(InputValue::Make(arg->name(),
+							arg->description(),
+							schema->StitchFieldType(arg->type().lock()),
+							arg->defaultValue()));
 					}
 
-					fieldNames.emplace(field->name());
-					stitchedValues.push_back(Field::Make(field->name(),
-						field->description(),
-						field->deprecationReason(),
-						schema->StitchFieldType(field->type().lock()),
+					fieldNames.emplace(objectField->name());
+					stitchedValues.push_back(Field::Make(objectField->name(),
+						objectField->description(),
+						objectField->deprecationReason(),
+						schema->StitchFieldType(objectField->type().lock()),
 						std::move(stitchedArgs)));
 				}
 			}
@@ -470,41 +470,41 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 			if (itrAdded != added->_typeMap.end())
 			{
 				const auto& addedType = _types[itrAdded->second].second;
-				const auto& interfaceValues = addedType->interfaces();
+				const auto& objectInterfaces = addedType->interfaces();
 
-				for (const auto& value : interfaceValues)
+				for (const auto& interfaceType : objectInterfaces)
 				{
-					if (!interfaceNames.emplace(value->name()).second)
+					if (!interfaceNames.emplace(interfaceType->name()).second)
 					{
 						continue;
 					}
 
-					stitchedInterfaces.push_back(interfaceTypes[value->name()]);
+					stitchedInterfaces.push_back(interfaceTypes[interfaceType->name()]);
 				}
 
 				const auto& objectFields = addedType->fields();
 
-				for (const auto& field : objectFields)
+				for (const auto& objectField : objectFields)
 				{
-					if (!fieldNames.emplace(field->name()).second)
+					if (!fieldNames.emplace(objectField->name()).second)
 					{
 						continue;
 					}
 
 					std::vector<std::shared_ptr<const InputValue>> stitchedArgs;
 
-					for (const auto& value : field->args())
+					for (const auto& arg : objectField->args())
 					{
-						stitchedArgs.push_back(InputValue::Make(value->name(),
-							value->description(),
-							schema->StitchFieldType(value->type().lock()),
-							value->defaultValue()));
+						stitchedArgs.push_back(InputValue::Make(arg->name(),
+							arg->description(),
+							schema->StitchFieldType(arg->type().lock()),
+							arg->defaultValue()));
 					}
 
-					stitchedValues.push_back(Field::Make(field->name(),
-						field->description(),
-						field->deprecationReason(),
-						schema->StitchFieldType(field->type().lock()),
+					stitchedValues.push_back(Field::Make(objectField->name(),
+						objectField->description(),
+						objectField->deprecationReason(),
+						schema->StitchFieldType(objectField->type().lock()),
 						std::move(stitchedArgs)));
 				}
 			}
@@ -525,12 +525,12 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 
 			std::vector<std::shared_ptr<const InputValue>> stitchedArgs;
 
-			for (const auto& value : originalDirective->args())
+			for (const auto& arg : originalDirective->args())
 			{
-				stitchedArgs.push_back(InputValue::Make(value->name(),
-					value->description(),
-					schema->StitchFieldType(value->type().lock()),
-					value->defaultValue()));
+				stitchedArgs.push_back(InputValue::Make(arg->name(),
+					arg->description(),
+					schema->StitchFieldType(arg->type().lock()),
+					arg->defaultValue()));
 			}
 
 			stitchedDirectives.push_back(Directive::Make(originalDirective->name(),
@@ -549,12 +549,12 @@ std::shared_ptr<Schema> Schema::StitchSchema(const std::shared_ptr<const Schema>
 
 			std::vector<std::shared_ptr<const InputValue>> stitchedArgs;
 
-			for (const auto& value : addedDirective->args())
+			for (const auto& arg : addedDirective->args())
 			{
-				stitchedArgs.push_back(InputValue::Make(value->name(),
-					value->description(),
-					schema->StitchFieldType(value->type().lock()),
-					value->defaultValue()));
+				stitchedArgs.push_back(InputValue::Make(arg->name(),
+					arg->description(),
+					schema->StitchFieldType(arg->type().lock()),
+					arg->defaultValue()));
 			}
 
 			stitchedDirectives.push_back(Directive::Make(addedDirective->name(),

@@ -45,7 +45,7 @@ public:
 	GRAPHQLSERVICE_EXPORT explicit Schema(
 		bool noIntrospection = false, std::string_view description = "");
 
-	GRAPHQLSERVICE_EXPORT std::shared_ptr<Schema> StitchSchema(
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<Schema> StitchSchema(
 		const std::shared_ptr<const Schema>& added) const;
 
 	GRAPHQLSERVICE_EXPORT void AddQueryType(std::shared_ptr<ObjectType> query);
