@@ -1735,6 +1735,7 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inl
 
 Request::Request(TypeMap operationTypes, std::shared_ptr<schema::Schema> schema)
 	: _operations(std::move(operationTypes))
+	, _schema(schema)
 	, _validation(std::make_unique<ValidateExecutableVisitor>(std::move(schema)))
 {
 }
@@ -1744,6 +1745,82 @@ Request::~Request()
 	// The default implementation is fine, but it can't be declared as = default because it
 	// needs to know how to destroy the _validation member and it can't do that with just a
 	// forward declaration of the class.
+}
+
+std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Request>& added) const
+{
+	TypeMap operations;
+	auto itrOriginalQuery = _operations.find(strQuery);
+	auto itrAddedQuery = added->_operations.find(strQuery);
+
+	if (itrOriginalQuery != _operations.end() && itrOriginalQuery->second)
+	{
+		if (itrAddedQuery != added->_operations.end() && itrAddedQuery->second)
+		{
+			operations.emplace(strQuery,
+				itrOriginalQuery->second->StitchObject(itrAddedQuery->second));
+		}
+		else
+		{
+			operations.emplace(strQuery, itrOriginalQuery->second);
+		}
+	}
+	else if (itrAddedQuery != added->_operations.end() && itrAddedQuery->second)
+	{
+		operations.emplace(strQuery, itrAddedQuery->second);
+	}
+
+	auto itrOriginalMutation = _operations.find(strMutation);
+	auto itrAddedMutation = added->_operations.find(strMutation);
+
+	if (itrOriginalMutation != _operations.end() && itrOriginalMutation->second)
+	{
+		if (itrAddedMutation != added->_operations.end() && itrAddedMutation->second)
+		{
+			operations.emplace(strMutation,
+				itrOriginalMutation->second->StitchObject(itrAddedMutation->second));
+		}
+		else
+		{
+			operations.emplace(strMutation, itrOriginalMutation->second);
+		}
+	}
+	else if (itrAddedMutation != added->_operations.end() && itrAddedMutation->second)
+	{
+		operations.emplace(strMutation, itrAddedMutation->second);
+	}
+
+	auto itrOriginalSubscription = _operations.find(strSubscription);
+	auto itrAddedSubscription = added->_operations.find(strSubscription);
+
+	if (itrOriginalSubscription != _operations.end() && itrOriginalSubscription->second)
+	{
+		if (itrAddedSubscription != added->_operations.end() && itrAddedSubscription->second)
+		{
+			operations.emplace(strSubscription,
+				itrOriginalSubscription->second->StitchObject(itrAddedSubscription->second));
+		}
+		else
+		{
+			operations.emplace(strSubscription, itrOriginalSubscription->second);
+		}
+	}
+	else if (itrAddedSubscription != added->_operations.end() && itrAddedSubscription->second)
+	{
+		operations.emplace(strSubscription, itrAddedSubscription->second);
+	}
+
+	class StitchedRequest : public Request
+	{
+	public:
+		StitchedRequest(TypeMap operations, std::shared_ptr<schema::Schema> schema)
+			: Request { std::move(operations), std::move(schema) }
+		{
+		}
+	};
+
+	return std::make_shared<StitchedRequest>(std::move(operations),
+		_schema->StitchSchema(added->_schema));
 }
 
 std::list<schema_error> Request::validate(peg::ast& query) const

@@ -13,7 +13,7 @@
 
 namespace graphql::stitched {
 
-std::shared_ptr<service::Request> GetService();
+std::shared_ptr<const service::Request> GetService();
 
 } // namespace graphql::stitched
 

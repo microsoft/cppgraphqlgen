@@ -1444,6 +1444,9 @@ protected:
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<const Request> stitch(
+		const std::shared_ptr<const Request>& added) const;
+
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::list<schema_error> validate(
 		peg::ast& query) const;
 

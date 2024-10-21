@@ -115,24 +115,9 @@ std::shared_ptr<learn::object::Query> MakeQuery() noexcept
 		std::make_shared<learn::Query>(std::move(heroes), std::move(humans), std::move(droids)));
 }
 
-std::shared_ptr<service::Object> GetQueryObject() noexcept
-{
-	return MakeQuery();
-}
-
 std::shared_ptr<learn::object::Mutation> MakeMutation() noexcept
 {
 	return std::make_shared<learn::object::Mutation>(std::make_shared<learn::Mutation>());
-}
-
-std::shared_ptr<service::Object> GetMutationObject() noexcept
-{
-	return MakeMutation();
-}
-
-std::shared_ptr<service::Object> GetSubscriptionObject() noexcept
-{
-	return {};
 }
 
 std::shared_ptr<service::Request> GetService() noexcept

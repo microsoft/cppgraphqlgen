@@ -119,8 +119,6 @@ private:
 	std::vector<std::shared_ptr<Folder>> _unreadCounts;
 };
 
-std::shared_ptr<Query> mock_query(const std::shared_ptr<TodayMockService>& service) noexcept;
-
 class PageInfo
 {
 public:
@@ -303,8 +301,6 @@ private:
 	static std::optional<double> _setFloat;
 };
 
-std::shared_ptr<Mutation> mock_mutation() noexcept;
-
 class Subscription
 {
 public:
@@ -335,8 +331,6 @@ private:
 	static std::size_t _subscriptionCount;
 	static std::size_t _notifyUnsubscribeCount;
 };
-
-std::shared_ptr<NextAppointmentChange> mock_subscription() noexcept;
 
 class NodeChange
 {
