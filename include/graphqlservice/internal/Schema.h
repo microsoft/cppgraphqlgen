@@ -45,6 +45,9 @@ public:
 	GRAPHQLSERVICE_EXPORT explicit Schema(
 		bool noIntrospection = false, std::string_view description = "");
 
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<Schema> StitchSchema(
+		const std::shared_ptr<const Schema>& added) const;
+
 	GRAPHQLSERVICE_EXPORT void AddQueryType(std::shared_ptr<ObjectType> query);
 	GRAPHQLSERVICE_EXPORT void AddMutationType(std::shared_ptr<ObjectType> mutation);
 	GRAPHQLSERVICE_EXPORT void AddSubscriptionType(std::shared_ptr<ObjectType> subscription);
@@ -74,6 +77,9 @@ public:
 	directives() const noexcept;
 
 private:
+	[[nodiscard("unnecessary call")]] std::shared_ptr<const BaseType> StitchFieldType(
+		std::shared_ptr<const BaseType> fieldType);
+
 	const bool _noIntrospection = false;
 	const std::string_view _description;
 

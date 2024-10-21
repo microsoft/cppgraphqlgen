@@ -30,7 +30,7 @@ public:
 	}
 
 protected:
-	std::unique_ptr<graphql::today::TodayMockService> _mockService;
+	std::shared_ptr<graphql::today::TodayMockService> _mockService;
 };
 
 TEST_F(CoroutineCase, QueryEverythingSync)

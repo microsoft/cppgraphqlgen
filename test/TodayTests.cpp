@@ -31,7 +31,7 @@ public:
 	}
 
 protected:
-	std::unique_ptr<today::TodayMockService> _mockService;
+	std::shared_ptr<today::TodayMockService> _mockService;
 };
 
 TEST_F(TodayServiceCase, QueryEverything)

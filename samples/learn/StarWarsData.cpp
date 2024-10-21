@@ -14,7 +14,7 @@ using namespace std::literals;
 
 namespace graphql::star_wars {
 
-std::shared_ptr<service::Request> GetService() noexcept
+std::shared_ptr<learn::object::Query> MakeQuery() noexcept
 {
 	auto luke = std::make_shared<learn::Human>("1000"s,
 		std::make_optional("Luke Skywalker"s),
@@ -111,14 +111,20 @@ std::shared_ptr<service::Request> GetService() noexcept
 		{ artoo->getId(), artoo },
 	};
 
-	auto query =
-		std::make_shared<learn::Query>(std::move(heroes), std::move(humans), std::move(droids));
-	auto mutation = std::make_shared<learn::Mutation>();
-	auto service = std::make_shared<learn::Operations>(std::move(query),
-		std::move(mutation),
-		std::shared_ptr<learn::Subscription> {});
+	return std::make_shared<learn::object::Query>(
+		std::make_shared<learn::Query>(std::move(heroes), std::move(humans), std::move(droids)));
+}
 
-	return service;
+std::shared_ptr<learn::object::Mutation> MakeMutation() noexcept
+{
+	return std::make_shared<learn::object::Mutation>(std::make_shared<learn::Mutation>());
+}
+
+std::shared_ptr<service::Request> GetService() noexcept
+{
+	return std::make_shared<learn::Operations>(MakeQuery(),
+		MakeMutation(),
+		std::shared_ptr<learn::object::Subscription> {});
 }
 
 } // namespace graphql::star_wars

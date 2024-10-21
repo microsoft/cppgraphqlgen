@@ -39,7 +39,7 @@ struct TodayMockService
 	std::size_t getUnreadCountsCount {};
 };
 
-std::unique_ptr<TodayMockService> mock_service() noexcept;
+std::shared_ptr<TodayMockService> mock_service() noexcept;
 
 struct RequestState : service::RequestState
 {
