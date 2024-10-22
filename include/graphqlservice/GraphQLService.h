@@ -830,7 +830,8 @@ public:
 	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
 
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<Object> StitchObject(
-		const std::shared_ptr<const Object>& added) const;
+		const std::shared_ptr<const Object>& added,
+		const std::shared_ptr<schema::Schema>& schema = {}) const;
 
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT AwaitableResolver resolve(
 		const SelectionSetParams& selectionSetParams, const peg::ast_node& selection,
