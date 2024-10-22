@@ -1270,16 +1270,14 @@ std::shared_ptr<Object> Object::StitchObject(const std::shared_ptr<const Object>
 		hasStitchedResolvers = resolvers.emplace(name, resolver).second || hasStitchedResolvers;
 	}
 
-	std::vector<std::shared_ptr<const Object>> stitched { shared_from_this() };
+	auto object = std::make_shared<Object>(std::move(typeNames), std::move(resolvers));
+
+	object->_stitched[0] = shared_from_this();
 
 	if (hasStitchedResolvers)
 	{
-		stitched.push_back(added);
+		object->_stitched[1] = added;
 	}
-
-	auto object = std::make_shared<Object>(std::move(typeNames), std::move(resolvers));
-
-	object->_stitched = std::move(stitched);
 
 	return object;
 }
