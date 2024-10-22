@@ -500,7 +500,7 @@ public:
 	template <class T>
 	ValueVisitor(std::shared_ptr<T> writer) noexcept
 		: _concept { std::static_pointer_cast<Concept>(
-			  std::make_shared<Model<T>>(std::move(writer))) }
+			std::make_shared<Model<T>>(std::move(writer))) }
 	{
 	}
 
@@ -635,6 +635,8 @@ public:
 	ValueTokenStream() noexcept = default;
 	~ValueTokenStream() = default;
 
+	GRAPHQLRESPONSE_EXPORT explicit ValueTokenStream(Value&& value);
+
 	ValueTokenStream(ValueTokenStream&&) noexcept = default;
 	ValueTokenStream& operator=(ValueTokenStream&&) noexcept = default;
 
@@ -660,102 +662,6 @@ public:
 
 private:
 	std::list<ValueToken> _tokens;
-};
-
-class [[nodiscard("unnecessary construction")]] Writer final
-{
-private:
-	struct Concept
-	{
-		virtual ~Concept() = default;
-
-		virtual void start_object() const = 0;
-		virtual void add_member(const std::string& key) const = 0;
-		virtual void end_object() const = 0;
-
-		virtual void start_array() const = 0;
-		virtual void end_arrary() const = 0;
-
-		virtual void write_null() const = 0;
-		virtual void write_string(const std::string& value) const = 0;
-		virtual void write_bool(bool value) const = 0;
-		virtual void write_int(int value) const = 0;
-		virtual void write_float(double value) const = 0;
-	};
-
-	template <class T>
-	struct Model : Concept
-	{
-		explicit Model(std::unique_ptr<T> pimpl) noexcept
-			: _pimpl { std::move(pimpl) }
-		{
-		}
-
-		void start_object() const final
-		{
-			_pimpl->start_object();
-		}
-
-		void add_member(const std::string& key) const final
-		{
-			_pimpl->add_member(key);
-		}
-
-		void end_object() const final
-		{
-			_pimpl->end_object();
-		}
-
-		void start_array() const final
-		{
-			_pimpl->start_array();
-		}
-
-		void end_arrary() const final
-		{
-			_pimpl->end_arrary();
-		}
-
-		void write_null() const final
-		{
-			_pimpl->write_null();
-		}
-
-		void write_string(const std::string& value) const final
-		{
-			_pimpl->write_string(value);
-		}
-
-		void write_bool(bool value) const final
-		{
-			_pimpl->write_bool(value);
-		}
-
-		void write_int(int value) const final
-		{
-			_pimpl->write_int(value);
-		}
-
-		void write_float(double value) const final
-		{
-			_pimpl->write_float(value);
-		}
-
-	private:
-		std::unique_ptr<T> _pimpl;
-	};
-
-	const std::shared_ptr<const Concept> _concept;
-
-public:
-	template <class T>
-	Writer(std::unique_ptr<T> writer) noexcept
-		: _concept { std::static_pointer_cast<const Concept>(
-			  std::make_shared<Model<T>>(std::move(writer))) }
-	{
-	}
-
-	GRAPHQLRESPONSE_EXPORT void write(Value value) const;
 };
 
 } // namespace graphql::response

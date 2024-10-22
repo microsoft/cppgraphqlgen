@@ -16,11 +16,22 @@
 
 namespace graphql::response {
 
-class StreamWriter
+class StreamWriter : public std::enable_shared_from_this<StreamWriter>
 {
 public:
 	StreamWriter(rapidjson::StringBuffer& buffer)
 		: _writer { buffer }
+	{
+	}
+
+	void add_value(std::shared_ptr<const Value>&& value)
+	{
+		auto writer = std::make_shared<ValueVisitor>(shared_from_this());
+
+		ValueTokenStream(Value { *value }).visit(writer);
+	}
+
+	void reserve(std::size_t /* count */)
 	{
 	}
 
@@ -29,7 +40,7 @@ public:
 		_writer.StartObject();
 	}
 
-	void add_member(const std::string& key)
+	void add_member(std::string&& key)
 	{
 		_writer.Key(key.c_str());
 	}
@@ -44,34 +55,48 @@ public:
 		_writer.StartArray();
 	}
 
-	void end_arrary()
+	void end_array()
 	{
 		_writer.EndArray();
 	}
 
-	void write_null()
+	void add_null()
 	{
 		_writer.Null();
 	}
 
-	void write_string(const std::string& value)
+	void add_string(std::string&& value)
 	{
 		_writer.String(value.c_str());
 	}
 
-	void write_bool(bool value)
+	void add_enum(std::string&& value)
+	{
+		add_string(std::move(value));
+	}
+
+	void add_id(IdType&& value)
+	{
+		add_string(value.release<std::string>());
+	}
+
+	void add_bool(bool value)
 	{
 		_writer.Bool(value);
 	}
 
-	void write_int(int value)
+	void add_int(int value)
 	{
 		_writer.Int(value);
 	}
 
-	void write_float(double value)
+	void add_float(double value)
 	{
 		_writer.Double(value);
+	}
+
+	void complete()
+	{
 	}
 
 private:
@@ -81,9 +106,10 @@ private:
 std::string toJSON(Value&& response)
 {
 	rapidjson::StringBuffer buffer;
-	Writer writer { std::make_unique<StreamWriter>(buffer) };
+	auto writer = std::make_shared<ValueVisitor>(std::make_shared<StreamWriter>(buffer));
 
-	writer.write(std::move(response));
+	ValueTokenStream(std::move(response)).visit(writer);
+
 	return buffer.GetString();
 }
 

@@ -101,9 +101,9 @@ bool IdType::operator==(const IdType& rhs) const noexcept
 
 	return (std::holds_alternative<ByteData>(_data)
 				   ? internal::Base64::compareBase64(std::get<ByteData>(_data),
-						 std::get<OpaqueString>(rhs._data))
+					   std::get<OpaqueString>(rhs._data))
 				   : internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
-						 std::get<OpaqueString>(_data)))
+					   std::get<OpaqueString>(_data)))
 		== internal::Base64::Comparison::EqualTo;
 }
 
@@ -146,7 +146,7 @@ bool IdType::operator<(const IdType& rhs) const noexcept
 	return (std::holds_alternative<ByteData>(_data)
 			? (internal::Base64::compareBase64(std::get<ByteData>(_data),
 				   std::get<OpaqueString>(rhs._data))
-				  < internal::Base64::Comparison::EqualTo)
+				< internal::Base64::Comparison::EqualTo)
 			: (internal::Base64::compareBase64(std::get<ByteData>(rhs._data),
 				  std::get<OpaqueString>(_data)))
 				> internal::Base64::Comparison::EqualTo);
@@ -1802,6 +1802,105 @@ void ValueTokenStreamVisitor::add_value(Value&& value)
 	}
 }
 
+ValueTokenStream::ValueTokenStream(Value&& value)
+{
+	switch (value.type())
+	{
+		case Type::Map:
+		{
+			auto members = value.release<MapType>();
+
+			push_back(ValueToken::StartObject {});
+			push_back(ValueToken::Reserve { members.size() });
+
+			for (auto& entry : members)
+			{
+				push_back(ValueToken::AddMember { std::move(entry.first) });
+				append(ValueTokenStream { std::move(entry.second) });
+			}
+
+			push_back(ValueToken::EndObject {});
+			break;
+		}
+
+		case Type::List:
+		{
+			auto elements = value.release<ListType>();
+
+			push_back(ValueToken::StartArray {});
+			push_back(ValueToken::Reserve { elements.size() });
+
+			for (auto& entry : elements)
+			{
+				append(ValueTokenStream { std::move(entry) });
+			}
+
+			push_back(ValueToken::EndArray {});
+			break;
+		}
+
+		case Type::String:
+		{
+			auto stringValue = value.release<StringType>();
+
+			push_back(ValueToken::StringValue { std::move(stringValue) });
+			break;
+		}
+
+		case Type::Null:
+		{
+			push_back(ValueToken::NullValue {});
+			break;
+		}
+
+		case Type::Boolean:
+		{
+			push_back(ValueToken::BoolValue { value.get<BooleanType>() });
+			break;
+		}
+
+		case Type::Int:
+		{
+			push_back(ValueToken::IntValue { value.get<IntType>() });
+			break;
+		}
+
+		case Type::Float:
+		{
+			push_back(ValueToken::FloatValue { value.get<FloatType>() });
+			break;
+		}
+
+		case Type::EnumValue:
+		{
+			auto enumValue = value.release<StringType>();
+
+			push_back(ValueToken::EnumValue { std::move(enumValue) });
+			break;
+		}
+
+		case Type::ID:
+		{
+			auto idValue = value.release<IdType>();
+
+			push_back(ValueToken::IdValue { std::move(idValue) });
+			break;
+		}
+
+		case Type::Scalar:
+		{
+			append(ValueTokenStream { value.release<ScalarType>() });
+			break;
+		}
+
+		default:
+		{
+			push_back(ValueToken::NullValue {});
+			break;
+		}
+	}
+}
+
 void ValueTokenStream::append(ValueTokenStream&& other)
 {
 	_tokens.splice(_tokens.end(), std::move(other._tokens));
@@ -1824,89 +1923,6 @@ Value ValueTokenStream::value() &&
 	std::move(*this).visit(std::make_shared<ValueVisitor>(visitor));
 
 	return visitor->value();
-}
-
-void Writer::write(Value response) const
-{
-	switch (response.type())
-	{
-		case Type::Map:
-		{
-			auto members = response.release<MapType>();
-
-			_concept->start_object();
-
-			for (auto& entry : members)
-			{
-				_concept->add_member(entry.first);
-				write(std::move(entry.second));
-			}
-
-			_concept->end_object();
-			break;
-		}
-
-		case Type::List:
-		{
-			auto elements = response.release<ListType>();
-
-			_concept->start_array();
-
-			for (auto& entry : elements)
-			{
-				write(std::move(entry));
-			}
-
-			_concept->end_arrary();
-			break;
-		}
-
-		case Type::String:
-		case Type::EnumValue:
-		case Type::ID:
-		{
-			auto value = response.release<StringType>();
-
-			_concept->write_string(value);
-			break;
-		}
-
-		case Type::Null:
-		{
-			_concept->write_null();
-			break;
-		}
-
-		case Type::Boolean:
-		{
-			_concept->write_bool(response.get<BooleanType>());
-			break;
-		}
-
-		case Type::Int:
-		{
-			_concept->write_int(response.get<IntType>());
-			break;
-		}
-
-		case Type::Float:
-		{
-			_concept->write_float(response.get<FloatType>());
-			break;
-		}
-
-		case Type::Scalar:
-		{
-			write(response.release<ScalarType>());
-			break;
-		}
-
-		default:
-		{
-			_concept->write_null();
-			break;
-		}
-	}
 }
 
 } // namespace graphql::response
