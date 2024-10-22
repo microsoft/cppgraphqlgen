@@ -13,6 +13,7 @@
 #include "internal/DllExports.h"
 #include "internal/SortedMap.h"
 
+#include <array>
 #include <chrono>
 #include <condition_variable>
 #include <coroutine>
@@ -853,7 +854,7 @@ protected:
 private:
 	TypeNames _typeNames;
 	ResolverMap _resolvers;
-	std::vector<std::shared_ptr<const Object>> _stitched;
+	std::array<std::shared_ptr<const Object>, 2> _stitched;
 };
 
 // Test if this Type inherits from Object.
