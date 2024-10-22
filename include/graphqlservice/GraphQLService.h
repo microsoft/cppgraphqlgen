@@ -73,6 +73,9 @@ struct [[nodiscard("unnecessary construction")]] schema_error
 [[nodiscard("unnecessary memory copy")]] GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(
 	std::list<schema_error>&& structuredErrors);
 
+[[nodiscard("unnecessary memory copy")]] GRAPHQLSERVICE_EXPORT response::ValueTokenStream
+visitErrorValues(std::list<schema_error>&& structuredErrors);
+
 // This exception bubbles up 1 or more error messages to the JSON results.
 class [[nodiscard("unnecessary construction")]] schema_exception : public std::exception
 {
@@ -540,6 +543,7 @@ struct [[nodiscard("unnecessary construction")]] ResolverParams : SelectionSetPa
 struct [[nodiscard("unnecessary construction")]] ResolverResult
 {
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::Value document() &&;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::ValueTokenStream visit() &&;
 
 	response::ValueTokenStream data {};
 	std::list<schema_error> errors {};
