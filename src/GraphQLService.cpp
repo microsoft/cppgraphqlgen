@@ -1265,16 +1265,19 @@ std::shared_ptr<Object> Object::StitchObject(const std::shared_ptr<const Object>
 
 	if (schema && schema->supportsIntrospection())
 	{
-		resolvers.erase("__schema"sv);
-		resolvers.emplace("__schema"sv, [schema](ResolverParams&& params) {
+		constexpr auto schemaField = R"gql(__schema)gql"sv;
+		constexpr auto typeField = R"gql(__type)gql"sv;
+
+		resolvers.erase(schemaField);
+		resolvers.emplace(schemaField, [schema](ResolverParams&& params) {
 			return Result<Object>::convert(
 				std::static_pointer_cast<Object>(std::make_shared<introspection::object::Schema>(
 					std::make_shared<introspection::Schema>(schema))),
 				std::move(params));
 		});
 
-		resolvers.erase("__type"sv);
-		resolvers.emplace("__type"sv, [schema](ResolverParams&& params) {
+		resolvers.erase(typeField);
+		resolvers.emplace(typeField, [schema](ResolverParams&& params) {
 			auto argName = ModifiedArgument<std::string>::require("name", params.arguments);
 			const auto& baseType = schema->LookupType(argName);
 			std::shared_ptr<introspection::object::Type> result { baseType
@@ -1813,7 +1816,7 @@ std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Reque
 {
 	TypeMap operations;
 	auto schema = _schema->StitchSchema(added->_schema);
-	std::shared_ptr<Object> query;
+	std::shared_ptr<const Object> query;
 	auto itrOriginalQuery = _operations.find(strQuery);
 	auto itrAddedQuery = added->_operations.find(strQuery);
 
@@ -1835,9 +1838,10 @@ std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Reque
 
 	if (query)
 	{
-		operations.emplace(strQuery, query);
+		operations.emplace(strQuery, std::move(query));
 	}
 
+	std::shared_ptr<const Object> mutation;
 	auto itrOriginalMutation = _operations.find(strMutation);
 	auto itrAddedMutation = added->_operations.find(strMutation);
 
@@ -1845,19 +1849,24 @@ std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Reque
 	{
 		if (itrAddedMutation != added->_operations.end() && itrAddedMutation->second)
 		{
-			operations.emplace(strMutation,
-				itrOriginalMutation->second->StitchObject(itrAddedMutation->second));
+			mutation = itrOriginalMutation->second->StitchObject(itrAddedMutation->second);
 		}
 		else
 		{
-			operations.emplace(strMutation, itrOriginalMutation->second);
+			mutation = itrOriginalMutation->second;
 		}
 	}
 	else if (itrAddedMutation != added->_operations.end() && itrAddedMutation->second)
 	{
-		operations.emplace(strMutation, itrAddedMutation->second);
+		mutation = itrAddedMutation->second;
 	}
 
+	if (mutation)
+	{
+		operations.emplace(strMutation, std::move(mutation));
+	}
+
+	std::shared_ptr<const Object> subscription;
 	auto itrOriginalSubscription = _operations.find(strSubscription);
 	auto itrAddedSubscription = added->_operations.find(strSubscription);
 
@@ -1865,17 +1874,22 @@ std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Reque
 	{
 		if (itrAddedSubscription != added->_operations.end() && itrAddedSubscription->second)
 		{
-			operations.emplace(strSubscription,
-				itrOriginalSubscription->second->StitchObject(itrAddedSubscription->second));
+			subscription =
+				itrOriginalSubscription->second->StitchObject(itrAddedSubscription->second);
 		}
 		else
 		{
-			operations.emplace(strSubscription, itrOriginalSubscription->second);
+			subscription = itrOriginalSubscription->second;
 		}
 	}
 	else if (itrAddedSubscription != added->_operations.end() && itrAddedSubscription->second)
 	{
-		operations.emplace(strSubscription, itrAddedSubscription->second);
+		subscription = itrAddedSubscription->second;
+	}
+
+	if (subscription)
+	{
+		operations.emplace(strSubscription, std::move(subscription));
 	}
 
 	class StitchedRequest : public Request
