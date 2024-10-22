@@ -33,6 +33,7 @@ using service::buildErrorPath;
 
 using service::schema_error;
 using service::buildErrorValues;
+using service::visitErrorValues;
 
 using service::schema_exception;
 using service::unimplemented_method;

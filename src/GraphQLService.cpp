@@ -17,59 +17,73 @@ using namespace std::literals;
 
 namespace graphql::service {
 
-void addErrorMessage(std::string&& message, response::Value& error)
+response::ValueTokenStream addErrorMessage(std::string&& message)
 {
-	error.emplace_back(std::string { strMessage }, response::Value(std::move(message)));
+	response::ValueTokenStream result {};
+
+	result.push_back(response::ValueToken::AddMember { std::string { strMessage } });
+	result.push_back(response::ValueToken::StringValue { std::move(message) });
+
+	return result;
 }
 
-void addErrorLocation(const schema_location& location, response::Value& error)
+response::ValueTokenStream addErrorLocation(const schema_location& location)
 {
+	response::ValueTokenStream result {};
+
 	if (location.line == 0)
 	{
-		return;
+		return result;
 	}
 
-	response::Value errorLocation(response::Type::Map);
+	result.push_back(response::ValueToken::AddMember { std::string { strLocations } });
 
-	errorLocation.reserve(2);
-	errorLocation.emplace_back(std::string { strLine },
-		response::Value(static_cast<int>(location.line)));
-	errorLocation.emplace_back(std::string { strColumn },
-		response::Value(static_cast<int>(location.column)));
+	result.push_back(response::ValueToken::StartArray {});
+	result.push_back(response::ValueToken::Reserve { 1 });
+	result.push_back(response::ValueToken::StartObject {});
+	result.push_back(response::ValueToken::Reserve { 2 });
 
-	response::Value errorLocations(response::Type::List);
+	result.push_back(response::ValueToken::AddMember { std::string { strLine } });
+	result.push_back(response::ValueToken::IntValue { static_cast<int>(location.line) });
+	result.push_back(response::ValueToken::AddMember { std::string { strColumn } });
+	result.push_back(response::ValueToken::IntValue { static_cast<int>(location.column) });
 
-	errorLocations.reserve(1);
-	errorLocations.emplace_back(std::move(errorLocation));
+	result.push_back(response::ValueToken::EndObject {});
+	result.push_back(response::ValueToken::EndArray {});
 
-	error.emplace_back(std::string { strLocations }, std::move(errorLocations));
+	return result;
 }
 
-void addErrorPath(const error_path& path, response::Value& error)
+response::ValueTokenStream addErrorPath(const error_path& path)
 {
+	response::ValueTokenStream result {};
+
 	if (path.empty())
 	{
-		return;
+		return result;
 	}
 
-	response::Value errorPath(response::Type::List);
+	result.push_back(response::ValueToken::AddMember { std::string { strPath } });
+	result.push_back(response::ValueToken::StartArray {});
+	result.push_back(response::ValueToken::Reserve { path.size() });
 
-	errorPath.reserve(path.size());
 	for (const auto& segment : path)
 	{
 		if (std::holds_alternative<std::string_view>(segment))
 		{
-			errorPath.emplace_back(
-				response::Value { std::string { std::get<std::string_view>(segment) } });
+			result.push_back(response::ValueToken::StringValue {
+				std::string { std::get<std::string_view>(segment) } });
 		}
 		else if (std::holds_alternative<std::size_t>(segment))
 		{
-			errorPath.emplace_back(
-				response::Value(static_cast<int>(std::get<std::size_t>(segment))));
+			result.push_back(response::ValueToken::IntValue {
+				static_cast<int>(std::get<std::size_t>(segment)) });
 		}
 	}
 
-	error.emplace_back(std::string { strPath }, std::move(errorPath));
+	result.push_back(response::ValueToken::EndArray {});
+
+	return result;
 }
 
 error_path buildErrorPath(const std::optional<field_path>& path)
@@ -99,21 +113,29 @@ error_path buildErrorPath(const std::optional<field_path>& path)
 
 response::Value buildErrorValues(std::list<schema_error>&& structuredErrors)
 {
-	response::Value errors(response::Type::List);
+	return visitErrorValues(std::move(structuredErrors)).value();
+}
 
-	errors.reserve(structuredErrors.size());
+response::ValueTokenStream visitErrorValues(std::list<schema_error>&& structuredErrors)
+{
+	response::ValueTokenStream errors;
+
+	errors.push_back(response::ValueToken::StartArray {});
+	errors.push_back(response::ValueToken::Reserve { structuredErrors.size() });
 
 	for (auto& error : structuredErrors)
 	{
-		response::Value entry(response::Type::Map);
+		errors.push_back(response::ValueToken::StartObject {});
+		errors.push_back(response::ValueToken::Reserve { 3 });
 
-		entry.reserve(3);
-		addErrorMessage(std::move(error.message), entry);
-		addErrorLocation(error.location, entry);
-		addErrorPath(error.path, entry);
+		errors.append(addErrorMessage(std::move(error.message)));
+		errors.append(addErrorLocation(error.location));
+		errors.append(addErrorPath(error.path));
 
-		errors.emplace_back(std::move(entry));
+		errors.push_back(response::ValueToken::EndObject {});
 	}
+
+	errors.push_back(response::ValueToken::EndArray {});
 
 	return errors;
 }
@@ -245,7 +267,7 @@ void await_worker_queue::resumePending()
 // Default to immediate synchronous execution.
 await_async::await_async()
 	: _pimpl { std::static_pointer_cast<const Concept>(
-		  std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
+		std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -253,9 +275,9 @@ await_async::await_async()
 await_async::await_async(std::launch launch)
 	: _pimpl { ((launch & std::launch::async) == std::launch::async)
 			? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
-				  std::make_shared<await_worker_thread>()))
+				std::make_shared<await_worker_thread>()))
 			: std::static_pointer_cast<const Concept>(std::make_shared<Model<std::suspend_never>>(
-				  std::make_shared<std::suspend_never>())) }
+				std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -623,16 +645,25 @@ schema_location ResolverParams::getLocation() const
 
 response::Value ResolverResult::document() &&
 {
-	response::Value document { response::Type::Map };
+	return std::move(*this).visit().value();
+}
 
-	document.emplace_back(std::string { strData }, std::move(data).value());
+response::ValueTokenStream ResolverResult::visit() &&
+{
+	response::ValueTokenStream result { response::ValueToken::StartObject {} };
+
+	result.push_back(response::ValueToken::AddMember { std::string { strData } });
+	result.append(std::move(data));
 
 	if (!errors.empty())
 	{
-		document.emplace_back(std::string { strErrors }, buildErrorValues(std::move(errors)));
+		result.push_back(response::ValueToken::AddMember { std::string { strErrors } });
+		result.append(visitErrorValues(std::move(errors)));
 	}
 
-	return document;
+	result.push_back(response::ValueToken::EndObject {});
+
+	return result;
 }
 
 template <>
