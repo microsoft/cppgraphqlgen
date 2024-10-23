@@ -88,6 +88,7 @@ target_sources(graphql_internal_modules PUBLIC FILE_SET HEADERS
   FILES
     ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.h
     ${INCLUDE_ROOT}/graphqlservice/internal/Base64.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/DllExports.h
     ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.h
     ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.h
     ${INCLUDE_ROOT}/graphqlservice/internal/Schema.h
