@@ -4,6 +4,10 @@
 #include "graphqlservice/GraphQLService.h"
 
 #include "graphqlservice/internal/Grammar.h"
+#include "graphqlservice/internal/Introspection.h"
+
+#include "graphqlservice/introspection/SchemaObject.h"
+#include "graphqlservice/introspection/TypeObject.h"
 
 #include "Validation.h"
 
@@ -267,7 +271,7 @@ void await_worker_queue::resumePending()
 // Default to immediate synchronous execution.
 await_async::await_async()
 	: _pimpl { std::static_pointer_cast<const Concept>(
-		std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
+		  std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -275,9 +279,9 @@ await_async::await_async()
 await_async::await_async(std::launch launch)
 	: _pimpl { ((launch & std::launch::async) == std::launch::async)
 			? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
-				std::make_shared<await_worker_thread>()))
+				  std::make_shared<await_worker_thread>()))
 			: std::static_pointer_cast<const Concept>(std::make_shared<Model<std::suspend_never>>(
-				std::make_shared<std::suspend_never>())) }
+				  std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -1253,21 +1257,53 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers) noexcept
 {
 }
 
-std::shared_ptr<Object> Object::StitchObject(const std::shared_ptr<const Object>& added) const
+std::shared_ptr<Object> Object::StitchObject(const std::shared_ptr<const Object>& added,
+	const std::shared_ptr<schema::Schema>& schema /* = {} */) const
 {
 	auto typeNames = _typeNames;
+	auto resolvers = _resolvers;
 
-	for (const auto& name : added->_typeNames)
+	if (schema && schema->supportsIntrospection())
 	{
-		typeNames.emplace(name);
+		constexpr auto schemaField = R"gql(__schema)gql"sv;
+		constexpr auto typeField = R"gql(__type)gql"sv;
+
+		resolvers.erase(schemaField);
+		resolvers.emplace(schemaField, [schema](ResolverParams&& params) {
+			return Result<Object>::convert(
+				std::static_pointer_cast<Object>(std::make_shared<introspection::object::Schema>(
+					std::make_shared<introspection::Schema>(schema))),
+				std::move(params));
+		});
+
+		resolvers.erase(typeField);
+		resolvers.emplace(typeField, [schema](ResolverParams&& params) {
+			auto argName = ModifiedArgument<std::string>::require("name", params.arguments);
+			const auto& baseType = schema->LookupType(argName);
+			std::shared_ptr<introspection::object::Type> result { baseType
+					? std::make_shared<introspection::object::Type>(
+						  std::make_shared<introspection::Type>(baseType))
+					: nullptr };
+
+			return ModifiedResult<introspection::object::Type>::convert<TypeModifier::Nullable>(
+				result,
+				std::move(params));
+		});
 	}
 
-	auto resolvers = _resolvers;
 	bool hasStitchedResolvers = false;
 
-	for (const auto& [name, resolver] : added->_resolvers)
+	if (added)
 	{
-		hasStitchedResolvers = resolvers.emplace(name, resolver).second || hasStitchedResolvers;
+		for (const auto& name : added->_typeNames)
+		{
+			typeNames.emplace(name);
+		}
+
+		for (const auto& [name, resolver] : added->_resolvers)
+		{
+			hasStitchedResolvers = resolvers.emplace(name, resolver).second || hasStitchedResolvers;
+		}
 	}
 
 	auto object = std::make_shared<Object>(std::move(typeNames), std::move(resolvers));
@@ -1779,6 +1815,8 @@ Request::~Request()
 std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Request>& added) const
 {
 	TypeMap operations;
+	auto schema = _schema->StitchSchema(added->_schema);
+	std::shared_ptr<const Object> query;
 	auto itrOriginalQuery = _operations.find(strQuery);
 	auto itrAddedQuery = added->_operations.find(strQuery);
 
@@ -1786,19 +1824,24 @@ std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Reque
 	{
 		if (itrAddedQuery != added->_operations.end() && itrAddedQuery->second)
 		{
-			operations.emplace(strQuery,
-				itrOriginalQuery->second->StitchObject(itrAddedQuery->second));
+			query = itrOriginalQuery->second->StitchObject(itrAddedQuery->second, schema);
 		}
 		else
 		{
-			operations.emplace(strQuery, itrOriginalQuery->second);
+			query = itrOriginalQuery->second->StitchObject({}, schema);
 		}
 	}
 	else if (itrAddedQuery != added->_operations.end() && itrAddedQuery->second)
 	{
-		operations.emplace(strQuery, itrAddedQuery->second);
+		query = itrAddedQuery->second->StitchObject({}, schema);
 	}
 
+	if (query)
+	{
+		operations.emplace(strQuery, std::move(query));
+	}
+
+	std::shared_ptr<const Object> mutation;
 	auto itrOriginalMutation = _operations.find(strMutation);
 	auto itrAddedMutation = added->_operations.find(strMutation);
 
@@ -1806,19 +1849,24 @@ std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Reque
 	{
 		if (itrAddedMutation != added->_operations.end() && itrAddedMutation->second)
 		{
-			operations.emplace(strMutation,
-				itrOriginalMutation->second->StitchObject(itrAddedMutation->second));
+			mutation = itrOriginalMutation->second->StitchObject(itrAddedMutation->second);
 		}
 		else
 		{
-			operations.emplace(strMutation, itrOriginalMutation->second);
+			mutation = itrOriginalMutation->second;
 		}
 	}
 	else if (itrAddedMutation != added->_operations.end() && itrAddedMutation->second)
 	{
-		operations.emplace(strMutation, itrAddedMutation->second);
+		mutation = itrAddedMutation->second;
 	}
 
+	if (mutation)
+	{
+		operations.emplace(strMutation, std::move(mutation));
+	}
+
+	std::shared_ptr<const Object> subscription;
 	auto itrOriginalSubscription = _operations.find(strSubscription);
 	auto itrAddedSubscription = added->_operations.find(strSubscription);
 
@@ -1826,17 +1874,22 @@ std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Reque
 	{
 		if (itrAddedSubscription != added->_operations.end() && itrAddedSubscription->second)
 		{
-			operations.emplace(strSubscription,
-				itrOriginalSubscription->second->StitchObject(itrAddedSubscription->second));
+			subscription =
+				itrOriginalSubscription->second->StitchObject(itrAddedSubscription->second);
 		}
 		else
 		{
-			operations.emplace(strSubscription, itrOriginalSubscription->second);
+			subscription = itrOriginalSubscription->second;
 		}
 	}
 	else if (itrAddedSubscription != added->_operations.end() && itrAddedSubscription->second)
 	{
-		operations.emplace(strSubscription, itrAddedSubscription->second);
+		subscription = itrAddedSubscription->second;
+	}
+
+	if (subscription)
+	{
+		operations.emplace(strSubscription, std::move(subscription));
 	}
 
 	class StitchedRequest : public Request
@@ -1848,8 +1901,7 @@ std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Reque
 		}
 	};
 
-	return std::make_shared<StitchedRequest>(std::move(operations),
-		_schema->StitchSchema(added->_schema));
+	return std::make_shared<StitchedRequest>(std::move(operations), std::move(schema));
 }
 
 std::list<schema_error> Request::validate(peg::ast& query) const
