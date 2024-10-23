@@ -88,6 +88,7 @@ target_sources(graphql_internal_modules PUBLIC FILE_SET HEADERS
   FILES
     ${INCLUDE_ROOT}/graphqlservice/internal/Awaitable.h
     ${INCLUDE_ROOT}/graphqlservice/internal/Base64.h
+    ${INCLUDE_ROOT}/graphqlservice/internal/DllExports.h
     ${INCLUDE_ROOT}/graphqlservice/internal/Grammar.h
     ${INCLUDE_ROOT}/graphqlservice/internal/Introspection.h
     ${INCLUDE_ROOT}/graphqlservice/internal/Schema.h
@@ -389,9 +390,10 @@ endif()
 
 if(GRAPHQL_USE_TAOCPP_JSON)
   find_package(taocpp-json CONFIG REQUIRED)
+  get_target_property(TAOCPP_JSON_INCLUDE_DIRS taocpp::json INTERFACE_INCLUDE_DIRECTORIES)
   set(BUILD_GRAPHQLJSON ON)
   add_library(graphqljson TaoCppJSONResponse.cpp)
-  target_link_libraries(graphqljson PRIVATE taocpp::json)
+  target_include_directories(graphqljson PRIVATE ${TAOCPP_JSON_INCLUDE_DIRS})
 elseif(GRAPHQL_USE_RAPIDJSON)
   find_package(RapidJSON CONFIG REQUIRED)
   set(BUILD_GRAPHQLJSON ON)
