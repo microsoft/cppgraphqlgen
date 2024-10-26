@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef MUTATIONOBJECT_H
-#define MUTATIONOBJECT_H
+#ifndef STARWARS_MUTATIONOBJECT_H
+#define STARWARS_MUTATIONOBJECT_H
 
 #include "StarWarsSchema.h"
 
@@ -124,4 +124,4 @@ public:
 
 } // namespace graphql::learn::object
 
-#endif // MUTATIONOBJECT_H
+#endif // STARWARS_MUTATIONOBJECT_H

@@ -5,7 +5,7 @@
 
 module;
 
-#include "QueryObject.h"
+#include "TodayQueryObject.h"
 
 export module GraphQL.Today.QueryObject;
 

@@ -5,7 +5,7 @@
 
 module;
 
-#include "FolderEdgeObject.h"
+#include "TodayFolderEdgeObject.h"
 
 export module GraphQL.Today.FolderEdgeObject;
 

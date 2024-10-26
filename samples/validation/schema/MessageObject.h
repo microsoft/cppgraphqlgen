@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef MESSAGEOBJECT_H
-#define MESSAGEOBJECT_H
+#ifndef VALIDATION_MESSAGEOBJECT_H
+#define VALIDATION_MESSAGEOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // MESSAGEOBJECT_H
+#endif // VALIDATION_MESSAGEOBJECT_H

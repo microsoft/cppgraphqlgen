@@ -5,7 +5,7 @@
 
 module;
 
-#include "ExpensiveObject.h"
+#include "TodayExpensiveObject.h"
 
 export module GraphQL.Today.ExpensiveObject;
 

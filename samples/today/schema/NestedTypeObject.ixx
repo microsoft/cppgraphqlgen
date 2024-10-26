@@ -5,7 +5,7 @@
 
 module;
 
-#include "NestedTypeObject.h"
+#include "TodayNestedTypeObject.h"
 
 export module GraphQL.Today.NestedTypeObject;
 

@@ -5,7 +5,7 @@
 
 module;
 
-#include "FolderConnectionObject.h"
+#include "TodayFolderConnectionObject.h"
 
 export module GraphQL.Today.FolderConnectionObject;
 

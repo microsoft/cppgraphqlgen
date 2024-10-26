@@ -8,17 +8,17 @@
 
 #include "TodaySchema.h"
 
-#include "AppointmentEdgeObject.h"
-#include "AppointmentObject.h"
-#include "FolderEdgeObject.h"
-#include "FolderObject.h"
-#include "MutationObject.h"
-#include "NodeObject.h"
-#include "PageInfoObject.h"
-#include "QueryObject.h"
-#include "SubscriptionObject.h"
-#include "TaskEdgeObject.h"
-#include "TaskObject.h"
+#include "TodayAppointmentEdgeObject.h"
+#include "TodayAppointmentObject.h"
+#include "TodayFolderEdgeObject.h"
+#include "TodayFolderObject.h"
+#include "TodayMutationObject.h"
+#include "TodayNodeObject.h"
+#include "TodayPageInfoObject.h"
+#include "TodayQueryObject.h"
+#include "TodaySubscriptionObject.h"
+#include "TodayTaskEdgeObject.h"
+#include "TodayTaskObject.h"
 
 #include <atomic>
 #include <memory>

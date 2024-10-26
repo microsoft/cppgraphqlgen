@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef ENUMVALUEOBJECT_H
-#define ENUMVALUEOBJECT_H
+#ifndef INTROSPECTION_ENUMVALUEOBJECT_H
+#define INTROSPECTION_ENUMVALUEOBJECT_H
 
 #include "IntrospectionSchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::introspection::object
 
-#endif // ENUMVALUEOBJECT_H
+#endif // INTROSPECTION_ENUMVALUEOBJECT_H

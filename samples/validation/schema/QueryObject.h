@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef QUERYOBJECT_H
-#define QUERYOBJECT_H
+#ifndef VALIDATION_QUERYOBJECT_H
+#define VALIDATION_QUERYOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -337,4 +337,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // QUERYOBJECT_H
+#endif // VALIDATION_QUERYOBJECT_H

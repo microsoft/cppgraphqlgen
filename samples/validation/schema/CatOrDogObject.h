@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef CATORDOGOBJECT_H
-#define CATORDOGOBJECT_H
+#ifndef VALIDATION_CATORDOGOBJECT_H
+#define VALIDATION_CATORDOGOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // CATORDOGOBJECT_H
+#endif // VALIDATION_CATORDOGOBJECT_H

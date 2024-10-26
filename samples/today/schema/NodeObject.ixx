@@ -5,7 +5,7 @@
 
 module;
 
-#include "NodeObject.h"
+#include "TodayNodeObject.h"
 
 export module GraphQL.Today.NodeObject;
 
