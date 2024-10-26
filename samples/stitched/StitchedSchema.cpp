@@ -4,9 +4,7 @@
 #include "StitchedSchema.h"
 
 #include "StarWarsData.h"
-#include "StarWarsSchema.h"
-
-import GraphQL.Today.Mock;
+#include "TodayMock.h"
 
 namespace graphql::stitched {
 
