@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef APPOINTMENTOBJECT_H
-#define APPOINTMENTOBJECT_H
+#ifndef TODAY_APPOINTMENTOBJECT_H
+#define TODAY_APPOINTMENTOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -266,4 +266,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // APPOINTMENTOBJECT_H
+#endif // TODAY_APPOINTMENTOBJECT_H

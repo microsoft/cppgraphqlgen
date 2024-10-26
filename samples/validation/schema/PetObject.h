@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef PETOBJECT_H
-#define PETOBJECT_H
+#ifndef VALIDATION_PETOBJECT_H
+#define VALIDATION_PETOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // PETOBJECT_H
+#endif // VALIDATION_PETOBJECT_H

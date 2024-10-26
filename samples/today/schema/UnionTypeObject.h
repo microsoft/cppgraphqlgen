@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef UNIONTYPEOBJECT_H
-#define UNIONTYPEOBJECT_H
+#ifndef TODAY_UNIONTYPEOBJECT_H
+#define TODAY_UNIONTYPEOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // UNIONTYPEOBJECT_H
+#endif // TODAY_UNIONTYPEOBJECT_H

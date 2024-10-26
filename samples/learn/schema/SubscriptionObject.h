@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef SUBSCRIPTIONOBJECT_H
-#define SUBSCRIPTIONOBJECT_H
+#ifndef STARWARS_SUBSCRIPTIONOBJECT_H
+#define STARWARS_SUBSCRIPTIONOBJECT_H
 
 #include "StarWarsSchema.h"
 
@@ -161,4 +161,4 @@ public:
 
 } // namespace graphql::learn::object
 
-#endif // SUBSCRIPTIONOBJECT_H
+#endif // STARWARS_SUBSCRIPTIONOBJECT_H

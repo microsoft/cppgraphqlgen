@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef FOLDERCONNECTIONOBJECT_H
-#define FOLDERCONNECTIONOBJECT_H
+#ifndef TODAY_FOLDERCONNECTIONOBJECT_H
+#define TODAY_FOLDERCONNECTIONOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // FOLDERCONNECTIONOBJECT_H
+#endif // TODAY_FOLDERCONNECTIONOBJECT_H

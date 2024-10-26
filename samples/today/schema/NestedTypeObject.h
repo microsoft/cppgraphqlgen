@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef NESTEDTYPEOBJECT_H
-#define NESTEDTYPEOBJECT_H
+#ifndef TODAY_NESTEDTYPEOBJECT_H
+#define TODAY_NESTEDTYPEOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // NESTEDTYPEOBJECT_H
+#endif // TODAY_NESTEDTYPEOBJECT_H

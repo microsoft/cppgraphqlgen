@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef DIRECTIVEOBJECT_H
-#define DIRECTIVEOBJECT_H
+#ifndef INTROSPECTION_DIRECTIVEOBJECT_H
+#define INTROSPECTION_DIRECTIVEOBJECT_H
 
 #include "IntrospectionSchema.h"
 
@@ -85,4 +85,4 @@ public:
 
 } // namespace graphql::introspection::object
 
-#endif // DIRECTIVEOBJECT_H
+#endif // INTROSPECTION_DIRECTIVEOBJECT_H

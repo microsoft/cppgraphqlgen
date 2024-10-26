@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef ARGUMENTSOBJECT_H
-#define ARGUMENTSOBJECT_H
+#ifndef VALIDATION_ARGUMENTSOBJECT_H
+#define VALIDATION_ARGUMENTSOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -337,4 +337,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // ARGUMENTSOBJECT_H
+#endif // VALIDATION_ARGUMENTSOBJECT_H

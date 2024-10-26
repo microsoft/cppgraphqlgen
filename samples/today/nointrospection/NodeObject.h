@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef NODEOBJECT_H
-#define NODEOBJECT_H
+#ifndef TODAY_NODEOBJECT_H
+#define TODAY_NODEOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // NODEOBJECT_H
+#endif // TODAY_NODEOBJECT_H

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef DROIDOBJECT_H
-#define DROIDOBJECT_H
+#ifndef STARWARS_DROIDOBJECT_H
+#define STARWARS_DROIDOBJECT_H
 
 #include "StarWarsSchema.h"
 
@@ -248,4 +248,4 @@ public:
 
 } // namespace graphql::learn::object
 
-#endif // DROIDOBJECT_H
+#endif // STARWARS_DROIDOBJECT_H

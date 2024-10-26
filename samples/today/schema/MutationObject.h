@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef MUTATIONOBJECT_H
-#define MUTATIONOBJECT_H
+#ifndef TODAY_MUTATIONOBJECT_H
+#define TODAY_MUTATIONOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // MUTATIONOBJECT_H
+#endif // TODAY_MUTATIONOBJECT_H

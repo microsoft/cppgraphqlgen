@@ -2488,7 +2488,8 @@ Operations::Operations()cpp";
 	)cpp";
 			}
 			sourceFile << R"cpp(}, )cpp"
-					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp") << R"cpp());
+					   << (directive.isRepeatable ? R"cpp(true)cpp" : R"cpp(false)cpp")
+					   << R"cpp());
 )cpp";
 		}
 	}
@@ -3417,7 +3418,8 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 		{
 			std::ofstream headerFile(headerPath, std::ios_base::trunc);
-			IncludeGuardScope includeGuard { headerFile, headerFilename };
+			IncludeGuardScope includeGuard { headerFile,
+				std::format("{}_{}", _loader.getFilenamePrefix(), headerFilename) };
 
 			headerFile << R"cpp(#include ")cpp"
 					   << std::filesystem::path(_schemaHeaderPath).filename().string() << R"cpp("
@@ -3501,7 +3503,8 @@ using namespace std::literals;
 
 		{
 			std::ofstream headerFile(headerPath, std::ios_base::trunc);
-			IncludeGuardScope includeGuard { headerFile, headerFilename };
+			IncludeGuardScope includeGuard { headerFile,
+				std::format("{}_{}", _loader.getFilenamePrefix(), headerFilename) };
 
 			headerFile << R"cpp(#include ")cpp"
 					   << std::filesystem::path(_schemaHeaderPath).filename().string() << R"cpp("
@@ -3605,7 +3608,8 @@ using namespace std::literals;
 
 		{
 			std::ofstream headerFile(headerPath, std::ios_base::trunc);
-			IncludeGuardScope includeGuard { headerFile, headerFilename };
+			IncludeGuardScope includeGuard { headerFile,
+				std::format("{}_{}", _loader.getFilenamePrefix(), headerFilename) };
 
 			headerFile << R"cpp(#include ")cpp"
 					   << std::filesystem::path(_schemaHeaderPath).filename().string() << R"cpp("

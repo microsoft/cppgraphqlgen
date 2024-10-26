@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef FIELDOBJECT_H
-#define FIELDOBJECT_H
+#ifndef INTROSPECTION_FIELDOBJECT_H
+#define INTROSPECTION_FIELDOBJECT_H
 
 #include "IntrospectionSchema.h"
 
@@ -92,4 +92,4 @@ public:
 
 } // namespace graphql::introspection::object
 
-#endif // FIELDOBJECT_H
+#endif // INTROSPECTION_FIELDOBJECT_H

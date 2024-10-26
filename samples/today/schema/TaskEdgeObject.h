@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef TASKEDGEOBJECT_H
-#define TASKEDGEOBJECT_H
+#ifndef TODAY_TASKEDGEOBJECT_H
+#define TODAY_TASKEDGEOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // TASKEDGEOBJECT_H
+#endif // TODAY_TASKEDGEOBJECT_H

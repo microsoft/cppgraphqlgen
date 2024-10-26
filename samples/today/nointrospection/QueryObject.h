@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef QUERYOBJECT_H
-#define QUERYOBJECT_H
+#ifndef TODAY_QUERYOBJECT_H
+#define TODAY_QUERYOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -487,4 +487,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // QUERYOBJECT_H
+#endif // TODAY_QUERYOBJECT_H

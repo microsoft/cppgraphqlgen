@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef NODEOBJECT_H
-#define NODEOBJECT_H
+#ifndef VALIDATION_NODEOBJECT_H
+#define VALIDATION_NODEOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // NODEOBJECT_H
+#endif // VALIDATION_NODEOBJECT_H

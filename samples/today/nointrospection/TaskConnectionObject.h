@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef TASKCONNECTIONOBJECT_H
-#define TASKCONNECTIONOBJECT_H
+#ifndef TODAY_TASKCONNECTIONOBJECT_H
+#define TODAY_TASKCONNECTIONOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // TASKCONNECTIONOBJECT_H
+#endif // TODAY_TASKCONNECTIONOBJECT_H

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef EXPENSIVEOBJECT_H
-#define EXPENSIVEOBJECT_H
+#ifndef TODAY_EXPENSIVEOBJECT_H
+#define TODAY_EXPENSIVEOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -127,4 +127,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // EXPENSIVEOBJECT_H
+#endif // TODAY_EXPENSIVEOBJECT_H

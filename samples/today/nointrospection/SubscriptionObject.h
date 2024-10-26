@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef SUBSCRIPTIONOBJECT_H
-#define SUBSCRIPTIONOBJECT_H
+#ifndef TODAY_SUBSCRIPTIONOBJECT_H
+#define TODAY_SUBSCRIPTIONOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // SUBSCRIPTIONOBJECT_H
+#endif // TODAY_SUBSCRIPTIONOBJECT_H

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef COMPLETETASKPAYLOADOBJECT_H
-#define COMPLETETASKPAYLOADOBJECT_H
+#ifndef TODAY_COMPLETETASKPAYLOADOBJECT_H
+#define TODAY_COMPLETETASKPAYLOADOBJECT_H
 
 #include "TodaySchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::today::object
 
-#endif // COMPLETETASKPAYLOADOBJECT_H
+#endif // TODAY_COMPLETETASKPAYLOADOBJECT_H

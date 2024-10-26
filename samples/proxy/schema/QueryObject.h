@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef QUERYOBJECT_H
-#define QUERYOBJECT_H
+#ifndef PROXY_QUERYOBJECT_H
+#define PROXY_QUERYOBJECT_H
 
 #include "ProxySchema.h"
 
@@ -128,4 +128,4 @@ public:
 
 } // namespace graphql::proxy::object
 
-#endif // QUERYOBJECT_H
+#endif // PROXY_QUERYOBJECT_H
