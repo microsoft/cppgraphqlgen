@@ -5,7 +5,7 @@
 
 module;
 
-#include "AppointmentConnectionObject.h"
+#include "TodayAppointmentConnectionObject.h"
 
 export module GraphQL.Today.AppointmentConnectionObject;
 

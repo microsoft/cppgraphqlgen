@@ -1073,8 +1073,14 @@ void Generator::outputObjectModule(
 
 module;
 
-#include ")cpp" << cppType
-			   << R"cpp(Object.h"
+#include ")cpp";
+
+	if (_options.prefixedHeaders)
+	{
+		moduleFile << _loader.getFilenamePrefix();
+	}
+
+	moduleFile << cppType << R"cpp(Object.h"
 
 export module GraphQL.)cpp"
 			   << _loader.getFilenamePrefix() << R"cpp(.)cpp" << cppType << R"cpp(Object;
@@ -2016,7 +2022,14 @@ bool Generator::outputSchemaSource() const noexcept
 		{
 			for (const auto& operation : _loader.getOperationTypes())
 			{
-				sourceFile << R"cpp(#include ")cpp" << operation.cppType << R"cpp(Object.h"
+				sourceFile << R"cpp(#include ")cpp";
+
+				if (_options.prefixedHeaders)
+				{
+					sourceFile << _loader.getFilenamePrefix();
+				}
+
+				sourceFile << operation.cppType << R"cpp(Object.h"
 )cpp";
 			}
 		}
@@ -3413,7 +3426,9 @@ std::vector<std::string> Generator::outputSeparateFiles() const noexcept
 
 	for (const auto& interfaceType : _loader.getInterfaceTypes())
 	{
-		const auto headerFilename = std::string(interfaceType.cppType) + "Object.h";
+		const auto headerFilename = std::format("{}{}Object.h",
+			(_options.prefixedHeaders ? _loader.getFilenamePrefix() : std::string_view {}),
+			interfaceType.cppType);
 		auto headerPath = (headerDir / headerFilename).string();
 
 		{
@@ -3498,7 +3513,9 @@ using namespace std::literals;
 
 	for (const auto& unionType : _loader.getUnionTypes())
 	{
-		const auto headerFilename = std::string(unionType.cppType) + "Object.h";
+		const auto headerFilename = std::format("{}{}Object.h",
+			(_options.prefixedHeaders ? _loader.getFilenamePrefix() : std::string_view {}),
+			unionType.cppType);
 		auto headerPath = (headerDir / headerFilename).string();
 
 		{
@@ -3603,7 +3620,9 @@ using namespace std::literals;
 			}
 		}
 
-		const auto headerFilename = std::string(objectType.cppType) + "Object.h";
+		const auto headerFilename = std::format("{}{}Object.h",
+			(_options.prefixedHeaders ? _loader.getFilenamePrefix() : std::string_view {}),
+			objectType.cppType);
 		auto headerPath = (headerDir / headerFilename).string();
 
 		{
@@ -3686,8 +3705,14 @@ using namespace std::literals;
 					case OutputFieldType::Object:
 						if (includedObjects.insert(field.type).second)
 						{
-							sourceFile << R"cpp(#include ")cpp"
-									   << SchemaLoader::getSafeCppName(field.type)
+							sourceFile << R"cpp(#include ")cpp";
+
+							if (_options.prefixedHeaders)
+							{
+								sourceFile << _loader.getFilenamePrefix();
+							}
+
+							sourceFile << SchemaLoader::getSafeCppName(field.type)
 									   << R"cpp(Object.h"
 )cpp";
 						}
@@ -3788,6 +3813,7 @@ int main(int argc, char** argv)
 	bool verbose = false;
 	bool stubs = false;
 	bool noIntrospection = false;
+	bool prefixedHeaders = false;
 	std::string schemaFileName;
 	std::string filenamePrefix;
 	std::string schemaNamespace;
@@ -3814,7 +3840,9 @@ int main(int argc, char** argv)
 		"Unimplemented fields throw runtime exceptions instead of compiler errors")("no-"
 																					"introspection",
 		po::bool_switch(&noIntrospection),
-		"Do not generate support for Introspection");
+		"Do not generate support for Introspection")("prefix-headers",
+		po::bool_switch(&prefixedHeaders),
+		"Prefix generated object header filenames");
 	positional.add("schema", 1).add("prefix", 1).add("namespace", 1);
 	internalOptions.add_options()("introspection",
 		po::bool_switch(&buildIntrospection),
@@ -3879,6 +3907,7 @@ int main(int argc, char** argv)
 				verbose,										// verbose
 				stubs,											// stubs
 				noIntrospection,								// noIntrospection
+				prefixedHeaders,								// prefixedHeaders
 			})
 							   .Build();
 

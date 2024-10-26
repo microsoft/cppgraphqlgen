@@ -5,7 +5,7 @@
 
 module;
 
-#include "MutationObject.h"
+#include "TodayMutationObject.h"
 
 export module GraphQL.Today.MutationObject;
 

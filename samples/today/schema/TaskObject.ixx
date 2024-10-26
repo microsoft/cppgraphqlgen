@@ -5,7 +5,7 @@
 
 module;
 
-#include "TaskObject.h"
+#include "TodayTaskObject.h"
 
 export module GraphQL.Today.TaskObject;
 

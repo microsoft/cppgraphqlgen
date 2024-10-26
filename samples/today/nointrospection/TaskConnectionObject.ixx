@@ -5,7 +5,7 @@
 
 module;
 
-#include "TaskConnectionObject.h"
+#include "TodayTaskConnectionObject.h"
 
 export module GraphQL.Today.TaskConnectionObject;
 

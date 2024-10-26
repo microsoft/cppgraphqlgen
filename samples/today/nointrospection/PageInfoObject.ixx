@@ -5,7 +5,7 @@
 
 module;
 
-#include "PageInfoObject.h"
+#include "TodayPageInfoObject.h"
 
 export module GraphQL.Today.PageInfoObject;
 

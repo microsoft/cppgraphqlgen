@@ -5,7 +5,7 @@
 
 module;
 
-#include "UnionTypeObject.h"
+#include "TodayUnionTypeObject.h"
 
 export module GraphQL.Today.UnionTypeObject;
 

@@ -5,7 +5,7 @@
 
 module;
 
-#include "SubscriptionObject.h"
+#include "TodaySubscriptionObject.h"
 
 export module GraphQL.Today.SubscriptionObject;
 
