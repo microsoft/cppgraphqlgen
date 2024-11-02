@@ -3,17 +3,10 @@
 
 cmake_minimum_required(VERSION 3.28)
 
-if(GRAPHQL_BUILD_MODULES)
-  add_subdirectory(today)
-endif()
-
+add_subdirectory(today)
 add_subdirectory(client)
 add_subdirectory(learn)
-
-if(GRAPHQL_BUILD_MODULES)
-  add_subdirectory(stitched)
-endif()
-
+add_subdirectory(stitched)
 add_subdirectory(validation)
 
 if(GRAPHQL_BUILD_HTTP_SAMPLE)
