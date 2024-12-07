@@ -50,7 +50,14 @@ service::AwaitableResolver Result<validation::DogCommand>::convert(service::Awai
 	return ModifiedResult<validation::DogCommand>::resolve(std::move(result), std::move(params),
 		[](validation::DogCommand value, const ResolverParams&)
 		{
-			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesDogCommand[static_cast<std::size_t>(value)] } } } };
+			const size_t idx = static_cast<size_t>(value);
+
+			if (idx >= s_namesDogCommand.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for DogCommand)ex" } };
+			}
+
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesDogCommand[idx] } } } };
 		});
 }
 
@@ -102,7 +109,14 @@ service::AwaitableResolver Result<validation::CatCommand>::convert(service::Awai
 	return ModifiedResult<validation::CatCommand>::resolve(std::move(result), std::move(params),
 		[](validation::CatCommand value, const ResolverParams&)
 		{
-			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesCatCommand[static_cast<std::size_t>(value)] } } } };
+			const size_t idx = static_cast<size_t>(value);
+
+			if (idx >= s_namesCatCommand.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for CatCommand)ex" } };
+			}
+
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesCatCommand[idx] } } } };
 		});
 }
 

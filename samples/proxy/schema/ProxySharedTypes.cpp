@@ -50,7 +50,14 @@ service::AwaitableResolver Result<proxy::OperationType>::convert(service::Awaita
 	return ModifiedResult<proxy::OperationType>::resolve(std::move(result), std::move(params),
 		[](proxy::OperationType value, const ResolverParams&)
 		{
-			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesOperationType[static_cast<std::size_t>(value)] } } } };
+			const size_t idx = static_cast<size_t>(value);
+
+			if (idx >= s_namesOperationType.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for OperationType)ex" } };
+			}
+
+			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_namesOperationType[idx] } } } };
 		});
 }
 
