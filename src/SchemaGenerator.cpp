@@ -1691,8 +1691,15 @@ service::AwaitableResolver Result<)cpp"
 		[]()cpp" << _loader.getSchemaNamespace()
 				   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
+			const size_t idx = static_cast<size_t>(value);
+			if (idx >= s_names)cpp"
+					   << enumType.cppType << R"cpp(.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for )cpp"
+					   << enumType.type << R"cpp()ex" } };
+			}
 			return ResolverResult { { response::ValueToken::EnumValue { std::string { s_names)cpp"
-				   << enumType.cppType << R"cpp([static_cast<std::size_t>(value)] } } } };
+				   << enumType.cppType << R"cpp([idx] } } } };
 		});
 }
 
