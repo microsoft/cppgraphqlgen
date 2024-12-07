@@ -48,9 +48,16 @@ service::AwaitableResolver Result<introspection::TypeKind>::convert(service::Awa
 	return ModifiedResult<introspection::TypeKind>::resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind value, const ResolverParams&)
 		{
+			const auto idx = static_cast<size_t>(value);
+
+			if (idx >= s_namesTypeKind.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for __TypeKind)ex" } };
+			}
+
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesTypeKind[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesTypeKind[idx] });
 
 			return resolvedResult;
 		});
@@ -104,9 +111,16 @@ service::AwaitableResolver Result<introspection::DirectiveLocation>::convert(ser
 	return ModifiedResult<introspection::DirectiveLocation>::resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation value, const ResolverParams&)
 		{
+			const auto idx = static_cast<size_t>(value);
+
+			if (idx >= s_namesDirectiveLocation.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for __DirectiveLocation)ex" } };
+			}
+
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesDirectiveLocation[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesDirectiveLocation[idx] });
 
 			return resolvedResult;
 		});

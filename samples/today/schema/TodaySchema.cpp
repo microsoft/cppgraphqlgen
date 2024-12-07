@@ -54,9 +54,16 @@ service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableS
 	return ModifiedResult<today::TaskState>::resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)
 		{
+			const auto idx = static_cast<size_t>(value);
+
+			if (idx >= s_namesTaskState.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for TaskState)ex" } };
+			}
+
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesTaskState[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesTaskState[idx] });
 
 			return resolvedResult;
 		});
