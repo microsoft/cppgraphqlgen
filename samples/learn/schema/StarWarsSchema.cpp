@@ -53,9 +53,16 @@ service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableSca
 	return ModifiedResult<learn::Episode>::resolve(std::move(result), std::move(params),
 		[](learn::Episode value, const ResolverParams&)
 		{
+			const auto idx = static_cast<size_t>(value);
+
+			if (idx >= s_namesEpisode.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for Episode)ex" } };
+			}
+
 			response::Value resolvedResult(response::Type::EnumValue);
 
-			resolvedResult.set<std::string>(std::string { s_namesEpisode[static_cast<size_t>(value)] });
+			resolvedResult.set<std::string>(std::string { s_namesEpisode[idx] });
 
 			return resolvedResult;
 		});

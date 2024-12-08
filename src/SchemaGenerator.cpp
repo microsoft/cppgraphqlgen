@@ -1336,10 +1336,19 @@ service::AwaitableResolver Result<)cpp"
 		[]()cpp" << _loader.getSchemaNamespace()
 					   << R"cpp(::)cpp" << enumType.cppType << R"cpp( value, const ResolverParams&)
 		{
+			const auto idx = static_cast<size_t>(value);
+
+			if (idx >= s_names)cpp"
+					   << enumType.cppType << R"cpp(.size())
+			{
+				throw service::schema_exception { { R"ex(Enum value out of range for )cpp"
+					   << enumType.type << R"cpp()ex" } };
+			}
+
 			response::Value resolvedResult(response::Type::EnumValue);
 
 			resolvedResult.set<std::string>(std::string { s_names)cpp"
-					   << enumType.cppType << R"cpp([static_cast<size_t>(value)] });
+					   << enumType.cppType << R"cpp([idx] });
 
 			return resolvedResult;
 		});
