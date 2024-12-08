@@ -87,6 +87,7 @@ input CompleteTaskInput {
     testTaskState: TaskState
     isComplete: Boolean = true
     clientMutationId: String
+    boolList: [Boolean!]
 }
 
 type CompleteTaskPayload {

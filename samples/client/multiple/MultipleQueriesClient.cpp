@@ -131,6 +131,7 @@ CompleteTaskInput::CompleteTaskInput() noexcept
 	, testTaskState {}
 	, isComplete {}
 	, clientMutationId {}
+	, boolList {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -139,11 +140,13 @@ CompleteTaskInput::CompleteTaskInput(
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,
 		std::optional<bool> isCompleteArg,
-		std::optional<std::string> clientMutationIdArg) noexcept
+		std::optional<std::string> clientMutationIdArg,
+		std::optional<std::vector<bool>> boolListArg) noexcept
 	: id { std::move(idArg) }
 	, testTaskState { std::move(testTaskStateArg) }
 	, isComplete { std::move(isCompleteArg) }
 	, clientMutationId { std::move(clientMutationIdArg) }
+	, boolList { std::move(boolListArg) }
 {
 }
 
@@ -152,6 +155,7 @@ CompleteTaskInput::CompleteTaskInput(const CompleteTaskInput& other)
 	, testTaskState { ModifiedVariable<TaskState>::duplicate<TypeModifier::Nullable>(other.testTaskState) }
 	, isComplete { ModifiedVariable<bool>::duplicate<TypeModifier::Nullable>(other.isComplete) }
 	, clientMutationId { ModifiedVariable<std::string>::duplicate<TypeModifier::Nullable>(other.clientMutationId) }
+	, boolList { ModifiedVariable<bool>::duplicate<TypeModifier::Nullable, TypeModifier::List>(other.boolList) }
 {
 }
 
@@ -160,6 +164,7 @@ CompleteTaskInput::CompleteTaskInput(CompleteTaskInput&& other) noexcept
 	, testTaskState { std::move(other.testTaskState) }
 	, isComplete { std::move(other.isComplete) }
 	, clientMutationId { std::move(other.clientMutationId) }
+	, boolList { std::move(other.boolList) }
 {
 }
 
@@ -179,6 +184,7 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 	testTaskState = std::move(other.testTaskState);
 	isComplete = std::move(other.isComplete);
 	clientMutationId = std::move(other.clientMutationId);
+	boolList = std::move(other.boolList);
 
 	return *this;
 }
@@ -2316,6 +2322,7 @@ response::Value Variable<CompleteTaskInput>::serialize(CompleteTaskInput&& input
 	result.emplace_back(R"js(testTaskState)js"s, ModifiedVariable<TaskState>::serialize<TypeModifier::Nullable>(std::move(inputValue.testTaskState)));
 	result.emplace_back(R"js(isComplete)js"s, ModifiedVariable<bool>::serialize<TypeModifier::Nullable>(std::move(inputValue.isComplete)));
 	result.emplace_back(R"js(clientMutationId)js"s, ModifiedVariable<std::string>::serialize<TypeModifier::Nullable>(std::move(inputValue.clientMutationId)));
+	result.emplace_back(R"js(boolList)js"s, ModifiedVariable<bool>::serialize<TypeModifier::Nullable, TypeModifier::List>(std::move(inputValue.boolList)));
 
 	return result;
 }

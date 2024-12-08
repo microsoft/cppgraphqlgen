@@ -797,7 +797,14 @@ struct ModifiedArgument
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
 
-		std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
+		if constexpr (std::is_same_v<Type, bool> && OnlyNoneModifiers<Other...>)
+		{
+			std::copy(listValue.begin(), listValue.end(), result.begin());
+		}
+		else
+		{
+			std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
+		}
 
 		return result;
 	}

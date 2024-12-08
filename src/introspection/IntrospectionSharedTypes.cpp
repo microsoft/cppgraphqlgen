@@ -50,7 +50,7 @@ service::AwaitableResolver Result<introspection::TypeKind>::convert(service::Awa
 	return ModifiedResult<introspection::TypeKind>::resolve(std::move(result), std::move(params),
 		[](introspection::TypeKind value, const ResolverParams&)
 		{
-			const size_t idx = static_cast<size_t>(value);
+			const auto idx = static_cast<size_t>(value);
 
 			if (idx >= s_namesTypeKind.size())
 			{
@@ -109,7 +109,7 @@ service::AwaitableResolver Result<introspection::DirectiveLocation>::convert(ser
 	return ModifiedResult<introspection::DirectiveLocation>::resolve(std::move(result), std::move(params),
 		[](introspection::DirectiveLocation value, const ResolverParams&)
 		{
-			const size_t idx = static_cast<size_t>(value);
+			const auto idx = static_cast<size_t>(value);
 
 			if (idx >= s_namesDirectiveLocation.size())
 			{

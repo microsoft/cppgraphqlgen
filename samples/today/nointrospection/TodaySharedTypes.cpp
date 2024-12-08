@@ -50,7 +50,7 @@ service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableS
 	return ModifiedResult<today::TaskState>::resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)
 		{
-			const size_t idx = static_cast<size_t>(value);
+			const auto idx = static_cast<size_t>(value);
 
 			if (idx >= s_namesTaskState.size())
 			{
@@ -101,12 +101,14 @@ today::CompleteTaskInput Argument<today::CompleteTaskInput>::convert(const respo
 		? std::move(pairIsComplete.first)
 		: service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable>("isComplete", defaultValue));
 	auto valueClientMutationId = service::ModifiedArgument<std::string>::require<service::TypeModifier::Nullable>("clientMutationId", value);
+	auto valueBoolList = service::ModifiedArgument<bool>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("boolList", value);
 
 	return today::CompleteTaskInput {
 		std::move(valueId),
 		valueTestTaskState,
 		std::move(valueIsComplete),
-		std::move(valueClientMutationId)
+		std::move(valueClientMutationId),
+		std::move(valueBoolList)
 	};
 }
 
@@ -231,6 +233,7 @@ CompleteTaskInput::CompleteTaskInput() noexcept
 	, testTaskState {}
 	, isComplete {}
 	, clientMutationId {}
+	, boolList {}
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
@@ -239,11 +242,13 @@ CompleteTaskInput::CompleteTaskInput(
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,
 		std::optional<bool> isCompleteArg,
-		std::optional<std::string> clientMutationIdArg) noexcept
+		std::optional<std::string> clientMutationIdArg,
+		std::optional<std::vector<bool>> boolListArg) noexcept
 	: id { std::move(idArg) }
 	, testTaskState { std::move(testTaskStateArg) }
 	, isComplete { std::move(isCompleteArg) }
 	, clientMutationId { std::move(clientMutationIdArg) }
+	, boolList { std::move(boolListArg) }
 {
 }
 
@@ -252,6 +257,7 @@ CompleteTaskInput::CompleteTaskInput(const CompleteTaskInput& other)
 	, testTaskState { service::ModifiedArgument<TaskState>::duplicate<service::TypeModifier::Nullable>(other.testTaskState) }
 	, isComplete { service::ModifiedArgument<bool>::duplicate<service::TypeModifier::Nullable>(other.isComplete) }
 	, clientMutationId { service::ModifiedArgument<std::string>::duplicate<service::TypeModifier::Nullable>(other.clientMutationId) }
+	, boolList { service::ModifiedArgument<bool>::duplicate<service::TypeModifier::Nullable, service::TypeModifier::List>(other.boolList) }
 {
 }
 
@@ -260,6 +266,7 @@ CompleteTaskInput::CompleteTaskInput(CompleteTaskInput&& other) noexcept
 	, testTaskState { std::move(other.testTaskState) }
 	, isComplete { std::move(other.isComplete) }
 	, clientMutationId { std::move(other.clientMutationId) }
+	, boolList { std::move(other.boolList) }
 {
 }
 
@@ -283,6 +290,7 @@ CompleteTaskInput& CompleteTaskInput::operator=(CompleteTaskInput&& other) noexc
 	testTaskState = std::move(other.testTaskState);
 	isComplete = std::move(other.isComplete);
 	clientMutationId = std::move(other.clientMutationId);
+	boolList = std::move(other.boolList);
 
 	return *this;
 }

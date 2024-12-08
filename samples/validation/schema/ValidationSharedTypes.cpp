@@ -50,7 +50,7 @@ service::AwaitableResolver Result<validation::DogCommand>::convert(service::Awai
 	return ModifiedResult<validation::DogCommand>::resolve(std::move(result), std::move(params),
 		[](validation::DogCommand value, const ResolverParams&)
 		{
-			const size_t idx = static_cast<size_t>(value);
+			const auto idx = static_cast<size_t>(value);
 
 			if (idx >= s_namesDogCommand.size())
 			{
@@ -109,7 +109,7 @@ service::AwaitableResolver Result<validation::CatCommand>::convert(service::Awai
 	return ModifiedResult<validation::CatCommand>::resolve(std::move(result), std::move(params),
 		[](validation::CatCommand value, const ResolverParams&)
 		{
-			const size_t idx = static_cast<size_t>(value);
+			const auto idx = static_cast<size_t>(value);
 
 			if (idx >= s_namesCatCommand.size())
 			{

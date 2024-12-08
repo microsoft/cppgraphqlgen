@@ -168,9 +168,19 @@ struct ModifiedVariable
 		response::Value result { response::Type::List };
 
 		result.reserve(listValue.size());
-		std::ranges::for_each(listValue, [&result](auto& value) {
-			result.emplace_back(serialize<Other...>(std::move(value)));
-		});
+		if constexpr (std::is_same_v<Type, bool> && OnlyNoneModifiers<Other...>)
+		{
+			std::ranges::for_each(listValue, [&result](bool value) {
+				result.emplace_back(response::Value { value });
+			});
+		}
+		else
+		{
+			std::ranges::for_each(listValue, [&result](auto& value) {
+				result.emplace_back(serialize<Other...>(std::move(value)));
+			});
+		}
+
 		listValue.clear();
 
 		return result;
@@ -219,7 +229,14 @@ struct ModifiedVariable
 	{
 		typename VariableTraits<Type, Modifier, Other...>::type result(listValue.size());
 
-		std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
+		if constexpr (std::is_same_v<Type, bool> && OnlyNoneModifiers<Other...>)
+		{
+			std::copy(listValue.begin(), listValue.end(), result.begin());
+		}
+		else
+		{
+			std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
+		}
 
 		return result;
 	}
