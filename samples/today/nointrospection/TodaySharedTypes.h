@@ -65,7 +65,8 @@ struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,
 		std::optional<bool> isCompleteArg,
-		std::optional<std::string> clientMutationIdArg) noexcept;
+		std::optional<std::string> clientMutationIdArg,
+		std::optional<std::vector<bool>> boolListArg) noexcept;
 	CompleteTaskInput(const CompleteTaskInput& other);
 	CompleteTaskInput(CompleteTaskInput&& other) noexcept;
 	~CompleteTaskInput();
@@ -77,6 +78,7 @@ struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 	std::optional<TaskState> testTaskState;
 	std::optional<bool> isComplete;
 	std::optional<std::string> clientMutationId;
+	std::optional<std::vector<bool>> boolList;
 };
 
 struct SecondNestedInput;
