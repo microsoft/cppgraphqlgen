@@ -795,11 +795,19 @@ struct ModifiedArgument
 		duplicate(const typename ArgumentTraits<Type, Modifier, Other...>::type& listValue)
 		requires ListModifier<Modifier>
 	{
-		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
-
-		std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
-
-		return result;
+		if constexpr(std::is_same_v<Type,bool>){
+			typename ArgumentTraits<Type, Modifier, Other...>::type result;			
+			result.reserve(listValue.size());
+			for (auto const v: listValue)
+				result.push_back(v);
+			return result;
+		}
+		else
+		{
+			typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());		
+			std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
+			return result;
+		}
 	}
 };
 

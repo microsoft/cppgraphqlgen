@@ -168,9 +168,16 @@ struct ModifiedVariable
 		response::Value result { response::Type::List };
 
 		result.reserve(listValue.size());
-		std::ranges::for_each(listValue, [&result](auto& value) {
-			result.emplace_back(serialize<Other...>(std::move(value)));
-		});
+		if constexpr(std::is_same_v<Type,bool>){
+			for (auto const v: listValue)
+				result.emplace_back(Variable<bool>::serialize(bool{v}));
+		}
+		else{
+			std::ranges::for_each(listValue, [&result](auto& value) {
+				result.emplace_back(serialize<Other...>(std::move(value)));
+			});		
+		}
+		
 		listValue.clear();
 
 		return result;
@@ -217,11 +224,19 @@ struct ModifiedVariable
 		duplicate(const typename VariableTraits<Type, Modifier, Other...>::type& listValue)
 		requires ListModifier<Modifier>
 	{
-		typename VariableTraits<Type, Modifier, Other...>::type result(listValue.size());
-
-		std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
-
-		return result;
+		if constexpr(std::is_same_v<Type,bool>){
+			typename VariableTraits<Type, Modifier, Other...>::type result;			
+			result.reserve(listValue.size());
+			for (auto const v: listValue)
+				result.push_back(v);
+			return result;
+		}
+		else
+		{
+			typename VariableTraits<Type, Modifier, Other...>::type result(listValue.size());
+			std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
+			return result;
+		}
 	}
 };
 
