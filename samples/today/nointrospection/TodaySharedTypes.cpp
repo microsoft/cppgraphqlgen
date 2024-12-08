@@ -50,7 +50,7 @@ service::AwaitableResolver Result<today::TaskState>::convert(service::AwaitableS
 	return ModifiedResult<today::TaskState>::resolve(std::move(result), std::move(params),
 		[](today::TaskState value, const ResolverParams&)
 		{
-			const size_t idx = static_cast<size_t>(value);
+			const auto idx = static_cast<size_t>(value);
 
 			if (idx >= s_namesTaskState.size())
 			{

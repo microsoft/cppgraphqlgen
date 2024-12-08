@@ -50,7 +50,7 @@ service::AwaitableResolver Result<proxy::OperationType>::convert(service::Awaita
 	return ModifiedResult<proxy::OperationType>::resolve(std::move(result), std::move(params),
 		[](proxy::OperationType value, const ResolverParams&)
 		{
-			const size_t idx = static_cast<size_t>(value);
+			const auto idx = static_cast<size_t>(value);
 
 			if (idx >= s_namesOperationType.size())
 			{

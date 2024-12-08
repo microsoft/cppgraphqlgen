@@ -50,7 +50,7 @@ service::AwaitableResolver Result<learn::Episode>::convert(service::AwaitableSca
 	return ModifiedResult<learn::Episode>::resolve(std::move(result), std::move(params),
 		[](learn::Episode value, const ResolverParams&)
 		{
-			const size_t idx = static_cast<size_t>(value);
+			const auto idx = static_cast<size_t>(value);
 
 			if (idx >= s_namesEpisode.size())
 			{
