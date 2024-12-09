@@ -81,6 +81,18 @@ concept getForceError = requires (TImpl impl)
 };
 
 template <class TImpl>
+concept getArrayWithParams = requires (TImpl impl, service::FieldParams params)
+{
+	{ service::AwaitableScalar<std::vector<response::IdType>> { impl.getArray(std::move(params)) } };
+};
+
+template <class TImpl>
+concept getArray = requires (TImpl impl)
+{
+	{ service::AwaitableScalar<std::vector<response::IdType>> { impl.getArray() } };
+};
+
+template <class TImpl>
 concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
@@ -103,6 +115,7 @@ private:
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveSubject(service::ResolverParams&& params) const;
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveIsNow(service::ResolverParams&& params) const;
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveForceError(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveArray(service::ResolverParams&& params) const;
 
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
@@ -118,6 +131,7 @@ private:
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getSubject(service::FieldParams&& params) const = 0;
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<bool> getIsNow(service::FieldParams&& params) const = 0;
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getForceError(service::FieldParams&& params) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::vector<response::IdType>> getArray(service::FieldParams&& params) const = 0;
 	};
 
 	template <class T>
@@ -206,6 +220,22 @@ private:
 			else
 			{
 				throw service::unimplemented_method(R"ex(Appointment::getForceError)ex");
+			}
+		}
+
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::vector<response::IdType>> getArray(service::FieldParams&& params) const override
+		{
+			if constexpr (methods::AppointmentHas::getArrayWithParams<T>)
+			{
+				return { _pimpl->getArray(std::move(params)) };
+			}
+			else if constexpr (methods::AppointmentHas::getArray<T>)
+			{
+				return { _pimpl->getArray() };
+			}
+			else
+			{
+				throw service::unimplemented_method(R"ex(Appointment::getArray)ex");
 			}
 		}
 
