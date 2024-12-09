@@ -146,6 +146,7 @@ public:
 	std::shared_ptr<const response::Value> getSubject() const noexcept;
 	bool getIsNow() const noexcept;
 	std::optional<std::string> getForceError() const;
+	std::vector<response::IdType> getArray() const;
 
 private:
 	response::IdType _id;
