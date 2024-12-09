@@ -39,6 +39,7 @@ service::ResolverMap Appointment::getResolvers() const noexcept
 	return {
 		{ R"gql(id)gql"sv, [this](service::ResolverParams&& params) { return resolveId(std::move(params)); } },
 		{ R"gql(when)gql"sv, [this](service::ResolverParams&& params) { return resolveWhen(std::move(params)); } },
+		{ R"gql(array)gql"sv, [this](service::ResolverParams&& params) { return resolveArray(std::move(params)); } },
 		{ R"gql(isNow)gql"sv, [this](service::ResolverParams&& params) { return resolveIsNow(std::move(params)); } },
 		{ R"gql(subject)gql"sv, [this](service::ResolverParams&& params) { return resolveSubject(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
@@ -111,6 +112,17 @@ service::AwaitableResolver Appointment::resolveForceError(service::ResolverParam
 	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+service::AwaitableResolver Appointment::resolveArray(service::ResolverParams&& params) const
+{
+	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
+	auto directives = std::move(params.fieldDirectives);
+	auto result = _pimpl->getArray(service::FieldParams { std::move(selectionSetParams), std::move(directives) });
+	resolverLock.unlock();
+
+	return service::ModifiedResult<response::IdType>::convert<service::TypeModifier::List>(std::move(result), std::move(params));
+}
+
 service::AwaitableResolver Appointment::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::Result<std::string>::convert(std::string{ R"gql(Appointment)gql" }, std::move(params));
@@ -128,7 +140,8 @@ void AddAppointmentDetails(const std::shared_ptr<schema::ObjectType>& typeAppoin
 		schema::Field::Make(R"gql(when)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(DateTime)gql"sv)),
 		schema::Field::Make(R"gql(subject)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
 		schema::Field::Make(R"gql(isNow)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))),
-		schema::Field::Make(R"gql(forceError)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv))
+		schema::Field::Make(R"gql(forceError)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv)),
+		schema::Field::Make(R"gql(array)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(ID)gql"sv)))))
 	});
 }
 

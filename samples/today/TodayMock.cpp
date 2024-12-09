@@ -186,6 +186,11 @@ std::optional<std::string> Appointment::getForceError() const
 	throw std::runtime_error(R"ex(this error was forced)ex");
 }
 
+std::vector<response::IdType> Appointment::getArray() const
+{
+	return {};
+}
+
 AppointmentEdge::AppointmentEdge(std::shared_ptr<Appointment> appointment)
 	: _appointment(std::move(appointment))
 {

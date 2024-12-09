@@ -2203,6 +2203,11 @@ void Generator::outputResponseFieldVisitorReserve(std::ostream& sourceFile,
 		}
 	}
 
+	if (dereference)
+	{
+		accessor.append(R"cpp(.)cpp");
+	}
+
 	std::unordered_set<std::string_view> fieldNames;
 
 	switch (responseField.type->kind())
@@ -2211,37 +2216,6 @@ void Generator::outputResponseFieldVisitorReserve(std::ostream& sourceFile,
 		case introspection::TypeKind::INTERFACE:
 		case introspection::TypeKind::UNION:
 		{
-			dereference = true;
-
-			for (auto modifier : responseField.modifiers)
-			{
-				switch (modifier)
-				{
-					case service::TypeModifier::None:
-						break;
-
-					case service::TypeModifier::Nullable:
-						accessor.append(R"cpp(->)cpp");
-						dereference = false;
-						break;
-
-					case service::TypeModifier::List:
-						if (dereference)
-						{
-							accessor.append(R"cpp(.)cpp");
-						}
-
-						accessor.append(R"cpp(back())cpp");
-						dereference = true;
-						break;
-				}
-			}
-
-			if (dereference)
-			{
-				accessor.append(R"cpp(.)cpp");
-			}
-
 			for (const auto& field : responseField.children)
 			{
 				if (fieldNames.emplace(field.name).second)
@@ -2263,6 +2237,12 @@ void Generator::outputResponseFieldVisitorStartObject(std::ostream& sourceFile,
 	std::string_view parentAccessor /* = {} */,
 	std::string_view parentCppType /* = {} */) const noexcept
 {
+	if (responseField.type->kind() == introspection::TypeKind::SCALAR
+		&& SchemaLoader::getBuiltinTypes().contains(responseField.type->name()))
+	{
+		return;
+	}
+
 	auto state = std::format("{}_{}",
 		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
 		responseField.cppName);
