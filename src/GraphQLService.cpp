@@ -2274,10 +2274,7 @@ SubscriptionKey Request::addSubscription(RequestSubscribeParams&& params)
 		std::move(fragments),
 		itr->second);
 
-	peg::for_each_child<peg::operation_definition>(subscriptionVisitor.getRoot(),
-		[&subscriptionVisitor](const peg::ast_node& child) {
-			subscriptionVisitor.visit(child);
-		});
+	subscriptionVisitor.visit(*operationDefinition);
 
 	auto registration = subscriptionVisitor.getRegistration();
 	auto key = _nextKey++;
