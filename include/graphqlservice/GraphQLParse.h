@@ -50,7 +50,7 @@ constexpr size_t c_defaultDepthLimit = 25;
 
 } // namespace peg
 
-[[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT peg::ast operator"" _graphql(
+[[nodiscard("unnecessary parse")]] GRAPHQLPEG_EXPORT peg::ast operator""_graphql(
 	const char* text, size_t size);
 
 } // namespace graphql

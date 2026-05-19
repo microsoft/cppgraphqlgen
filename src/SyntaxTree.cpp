@@ -1148,7 +1148,7 @@ ast parseFile(std::string_view filename, size_t depthLimit)
 
 } // namespace peg
 
-peg::ast operator"" _graphql(const char* text, size_t size)
+peg::ast operator""_graphql(const char* text, size_t size)
 {
 	peg::ast result { std::make_shared<peg::ast_input>(
 						  peg::ast_input { peg::ast_string_view { { text, size } } }),
