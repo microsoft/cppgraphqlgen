@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef INPUTVALUEOBJECT_H
-#define INPUTVALUEOBJECT_H
+#ifndef INTROSPECTION_INPUTVALUEOBJECT_H
+#define INTROSPECTION_INPUTVALUEOBJECT_H
 
 #include "IntrospectionSchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::introspection::object
 
-#endif // INPUTVALUEOBJECT_H
+#endif // INTROSPECTION_INPUTVALUEOBJECT_H

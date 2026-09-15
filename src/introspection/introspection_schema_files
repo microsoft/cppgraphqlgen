@@ -1,3 +1,4 @@
+IntrospectionSharedTypes.cpp
 IntrospectionSchema.cpp
 SchemaObject.cpp
 TypeObject.cpp

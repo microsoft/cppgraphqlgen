@@ -1,13 +1,12 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.28)
 
-# Enable CMAKE_MSVC_RUNTIME_LIBRARY on Windows: https://cmake.org/cmake/help/latest/policy/CMP0091.html
-cmake_policy(SET CMP0091 NEW)
-
-# Do not set default MSVC warning flags: https://cmake.org/cmake/help/latest/policy/CMP0092.html
-cmake_policy(SET CMP0092 NEW)
+if(POLICY CMP0167)
+  # Prefer the upstream BoostConfig.cmake file instead of the builtin FindBoost module: https://cmake.org/cmake/help/latest/policy/CMP0167.html
+  cmake_policy(SET CMP0167 NEW)
+endif()
 
 # Export compile commands for other tools, e.g. SonarLint.
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -34,10 +33,11 @@ if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/.git")
   endif()
 endif()
 
+option(GRAPHQL_BUILD_MODULES "Build the C++20 module interface libraries." ON)
 option(GRAPHQL_BUILD_SCHEMAGEN "Build the schemagen tool." ON)
 option(GRAPHQL_BUILD_CLIENTGEN "Build the clientgen tool." ON)
 option(GRAPHQL_BUILD_TESTS "Build the tests and sample schema library." ON)
-option(GRAPHQL_USE_RAPIDJSON "Use RapidJSON for JSON serialization." ON)
+option(GRAPHQL_USE_TAOCPP_JSON "Use taocpp-json for JSON serialization." ON)
 
 if(GRAPHQL_BUILD_SCHEMAGEN)
   list(APPEND VCPKG_MANIFEST_FEATURES "schemagen")
@@ -51,8 +51,13 @@ if(GRAPHQL_BUILD_TESTS)
   list(APPEND VCPKG_MANIFEST_FEATURES "tests")
 endif()
 
-if(GRAPHQL_USE_RAPIDJSON)
-  list(APPEND VCPKG_MANIFEST_FEATURES "rapidjson")
+if(GRAPHQL_USE_TAOCPP_JSON)
+  list(APPEND VCPKG_MANIFEST_FEATURES "taocpp-json")
+else()
+  option(GRAPHQL_USE_RAPIDJSON "Use RapidJSON for JSON serialization." ON)
+  if(GRAPHQL_USE_RAPIDJSON)
+    list(APPEND VCPKG_MANIFEST_FEATURES "rapidjson")
+  endif()
 endif()
 
 if(GRAPHQL_BUILD_SCHEMAGEN AND GRAPHQL_BUILD_CLIENTGEN)

@@ -20,8 +20,14 @@
         "gtest"
       ]
     },
+    "taocpp-json": {
+      "description": "Build the graphqljson library with taocpp-json.",
+      "dependencies": [
+        "taocpp-json"
+      ]
+    },
     "rapidjson": {
-      "description": "Build the graphqljson library with RapidJSON.",
+      "description": "Build the graphqljson library with rapidjson.",
       "dependencies": [
         "rapidjson"
       ]

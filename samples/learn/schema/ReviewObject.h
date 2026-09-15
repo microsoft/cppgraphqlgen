@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef REVIEWOBJECT_H
-#define REVIEWOBJECT_H
+#ifndef STARWARS_REVIEWOBJECT_H
+#define STARWARS_REVIEWOBJECT_H
 
 #include "StarWarsSchema.h"
 
@@ -151,4 +151,4 @@ public:
 
 } // namespace graphql::learn::object
 
-#endif // REVIEWOBJECT_H
+#endif // STARWARS_REVIEWOBJECT_H

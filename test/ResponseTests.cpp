@@ -5,6 +5,8 @@
 
 #include "graphqlservice/GraphQLResponse.h"
 
+#include <ranges>
+
 using namespace graphql;
 
 TEST(ResponseCase, ValueConstructorFromStringLiteral)
@@ -22,7 +24,7 @@ TEST(ResponseCase, IdTypeCompareEqual)
 		std::string_view fakeIdString { "fakeId" };
 		response::IdType result(fakeIdString.size());
 
-		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+		std::ranges::copy(fakeIdString, result.begin());
 
 		return response::IdType { std::move(result) };
 	}();

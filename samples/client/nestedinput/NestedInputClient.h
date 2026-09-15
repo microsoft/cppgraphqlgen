@@ -14,20 +14,18 @@
 
 #include "graphqlservice/internal/Version.h"
 
-// Check if the library version is compatible with clientgen 4.5.0
-static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with clientgen: minor version mismatch");
-
 #include <optional>
 #include <string>
 #include <vector>
 
-namespace graphql::client {
+// Check if the library version is compatible with clientgen 5.0.0
+static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-/// <summary>
-/// Operation: query testQuery
-/// </summary>
-/// <code class="language-graphql">
+namespace graphql::nestedinput {
+
+/// # Operation: query testQuery
+/// ```graphql
 /// query testQuery($stream: InputABCD!) {
 ///   control {
 ///     test(new: $stream) {
@@ -35,14 +33,16 @@ namespace graphql::client {
 ///     }
 ///   }
 /// }
-/// </code>
-namespace nestedinput {
+/// ```
+namespace client {
 
 // Return the original text of the request document.
 [[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
+
+} // namespace client
 
 struct [[nodiscard("unnecessary construction")]] InputA
 {
@@ -116,20 +116,20 @@ struct [[nodiscard("unnecessary construction")]] InputBC
 	InputB b;
 };
 
-} // namespace nestedinput
+namespace client {
 
 namespace query::testQuery {
 
-using nestedinput::GetRequestText;
-using nestedinput::GetRequestObject;
+using graphql::nestedinput::client::GetRequestText;
+using graphql::nestedinput::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-using nestedinput::InputA;
-using nestedinput::InputB;
-using nestedinput::InputABCD;
-using nestedinput::InputBC;
+using graphql::nestedinput::InputA;
+using graphql::nestedinput::InputB;
+using graphql::nestedinput::InputABCD;
+using graphql::nestedinput::InputBC;
 
 struct [[nodiscard("unnecessary construction")]] Variables
 {
@@ -153,6 +153,37 @@ struct [[nodiscard("unnecessary construction")]] Response
 	control_Control control {};
 };
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -166,11 +197,13 @@ struct Traits
 	[[nodiscard("unnecessary conversion")]] static response::Value serializeVariables(Variables&& variables);
 
 	using Response = testQuery::Response;
+	using ResponseVisitor = testQuery::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace query::testQuery
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::nestedinput
 
 #endif // NESTEDINPUTCLIENT_H

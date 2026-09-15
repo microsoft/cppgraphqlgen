@@ -9,6 +9,8 @@
 
 #include <tao/pegtl/contrib/analyze.hpp>
 
+#include <cstddef>
+
 using namespace graphql;
 using namespace graphql::peg;
 
@@ -138,7 +140,7 @@ TEST(PegtlExecutableCase, ParseVariableDefaultEmptyList)
 
 TEST(PegtlExecutableCase, AnalyzeExecutableGrammar)
 {
-	ASSERT_EQ(size_t { 0 }, analyze<executable_document>(true))
+	ASSERT_EQ(std::size_t { 0 }, analyze<executable_document>(true))
 		<< "there shouldn't be any infinite loops in the PEG version of the grammar";
 }
 
@@ -248,8 +250,7 @@ TEST(PegtlExecutableCase, ParseFloatWithFractionalAndExponentialParts)
 
 TEST(PegtlExecutableCase, ParseIgnoreUnicodeBOM)
 {
-	memory_input<> input("query { \xEF\xBB\xBF __typename }",
-		"ParseIgnoreUnicodeBOM");
+	memory_input<> input("query { \xEF\xBB\xBF __typename }", "ParseIgnoreUnicodeBOM");
 
 	const bool result = parse<executable_document>(input);
 

@@ -6,40 +6,28 @@
 #ifndef GRAPHQLSERVICE_H
 #define GRAPHQLSERVICE_H
 
-// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLSERVICE_DLL
-		#define GRAPHQLSERVICE_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLSERVICE_DLL
-		#define GRAPHQLSERVICE_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLSERVICE_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLSERVICE_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
+#include "GraphQLParse.h"
+#include "GraphQLResponse.h"
 
-#include "graphqlservice/GraphQLParse.h"
-#include "graphqlservice/GraphQLResponse.h"
+#include "internal/Awaitable.h"
+#include "internal/DllExports.h"
+#include "internal/SortedMap.h"
 
-#include "graphqlservice/internal/Awaitable.h"
-#include "graphqlservice/internal/SortedMap.h"
-#include "graphqlservice/internal/Version.h"
-
+#include <array>
 #include <chrono>
 #include <condition_variable>
-#include <functional>
+#include <coroutine>
+#include <format>
 #include <future>
 #include <list>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <optional>
-#include <sstream>
+#include <ranges>
 #include <stdexcept>
 #include <string>
-#include <string_view>
 #include <thread>
-#include <type_traits>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -56,19 +44,19 @@ namespace service {
 // Errors should have a message string, and optional locations and a path.
 struct [[nodiscard("unnecessary construction")]] schema_location
 {
-	size_t line = 0;
-	size_t column = 1;
+	std::size_t line = 0;
+	std::size_t column = 1;
 };
 
 // The implementation details of the error path should be opaque to client code. It is carried along
 // with the SelectionSetParams and automatically added to any schema errors or exceptions thrown
 // from an accessor as part of error reporting.
-using path_segment = std::variant<std::string_view, size_t>;
+using path_segment = std::variant<std::string_view, std::size_t>;
 
 struct [[nodiscard("unnecessary construction")]] field_path
 {
 	std::optional<std::reference_wrapper<const field_path>> parent;
-	std::variant<std::string_view, size_t> segment;
+	std::variant<std::string_view, std::size_t> segment;
 };
 
 using error_path = std::vector<path_segment>;
@@ -85,6 +73,9 @@ struct [[nodiscard("unnecessary construction")]] schema_error
 
 [[nodiscard("unnecessary memory copy")]] GRAPHQLSERVICE_EXPORT response::Value buildErrorValues(
 	std::list<schema_error>&& structuredErrors);
+
+[[nodiscard("unnecessary memory copy")]] GRAPHQLSERVICE_EXPORT response::ValueTokenStream
+visitErrorValues(std::list<schema_error>&& structuredErrors);
 
 // This exception bubbles up 1 or more error messages to the JSON results.
 class [[nodiscard("unnecessary construction")]] schema_exception : public std::exception
@@ -134,18 +125,16 @@ struct [[nodiscard("unnecessary construction")]] RequestState
 
 inline namespace keywords {
 
-using namespace std::literals;
-
-constexpr std::string_view strData { "data"sv };
-constexpr std::string_view strErrors { "errors"sv };
-constexpr std::string_view strMessage { "message"sv };
-constexpr std::string_view strLocations { "locations"sv };
-constexpr std::string_view strLine { "line"sv };
-constexpr std::string_view strColumn { "column"sv };
-constexpr std::string_view strPath { "path"sv };
-constexpr std::string_view strQuery { "query"sv };
-constexpr std::string_view strMutation { "mutation"sv };
-constexpr std::string_view strSubscription { "subscription"sv };
+constexpr std::string_view strData { "data" };
+constexpr std::string_view strErrors { "errors" };
+constexpr std::string_view strMessage { "message" };
+constexpr std::string_view strLocations { "locations" };
+constexpr std::string_view strLine { "line" };
+constexpr std::string_view strColumn { "column" };
+constexpr std::string_view strPath { "path" };
+constexpr std::string_view strQuery { "query" };
+constexpr std::string_view strMutation { "mutation" };
+constexpr std::string_view strSubscription { "subscription" };
 
 } // namespace keywords
 
@@ -171,20 +160,20 @@ enum class [[nodiscard("unnecessary conversion")]] ResolverContext {
 
 // Resume coroutine execution on a new worker thread any time co_await is called. This emulates the
 // behavior of std::async when passing std::launch::async.
-struct [[nodiscard("unnecessary construction")]] await_worker_thread : coro::suspend_always
+struct [[nodiscard("unnecessary construction")]] await_worker_thread : std::suspend_always
 {
-	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+	GRAPHQLSERVICE_EXPORT void await_suspend(std::coroutine_handle<> h) const;
 };
 
 // Queue coroutine execution on a single dedicated worker thread any time co_await is called from
 // the thread which created it.
-struct [[nodiscard("unnecessary construction")]] await_worker_queue : coro::suspend_always
+struct [[nodiscard("unnecessary construction")]] await_worker_queue : std::suspend_always
 {
 	GRAPHQLSERVICE_EXPORT await_worker_queue();
 	GRAPHQLSERVICE_EXPORT ~await_worker_queue();
 
 	[[nodiscard("unexpected call")]] GRAPHQLSERVICE_EXPORT bool await_ready() const;
-	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h);
+	GRAPHQLSERVICE_EXPORT void await_suspend(std::coroutine_handle<> h);
 
 private:
 	void resumePending();
@@ -192,7 +181,7 @@ private:
 	const std::thread::id _startId;
 	std::mutex _mutex {};
 	std::condition_variable _cv {};
-	std::list<coro::coroutine_handle<>> _pending {};
+	std::list<std::coroutine_handle<>> _pending {};
 	bool _shutdown = false;
 	std::thread _worker;
 };
@@ -206,7 +195,7 @@ private:
 		virtual ~Concept() = default;
 
 		[[nodiscard("unexpected call")]] virtual bool await_ready() const = 0;
-		virtual void await_suspend(coro::coroutine_handle<> h) const = 0;
+		virtual void await_suspend(std::coroutine_handle<> h) const = 0;
 		virtual void await_resume() const = 0;
 	};
 
@@ -223,7 +212,7 @@ private:
 			return _pimpl->await_ready();
 		}
 
-		void await_suspend(coro::coroutine_handle<> h) const final
+		void await_suspend(std::coroutine_handle<> h) const final
 		{
 			_pimpl->await_suspend(std::move(h));
 		}
@@ -254,7 +243,7 @@ public:
 	GRAPHQLSERVICE_EXPORT await_async(std::launch launch);
 
 	[[nodiscard("unexpected call")]] GRAPHQLSERVICE_EXPORT bool await_ready() const;
-	GRAPHQLSERVICE_EXPORT void await_suspend(coro::coroutine_handle<> h) const;
+	GRAPHQLSERVICE_EXPORT void await_suspend(std::coroutine_handle<> h) const;
 	GRAPHQLSERVICE_EXPORT void await_resume() const;
 };
 
@@ -264,8 +253,17 @@ public:
 using Directives = std::vector<std::pair<std::string_view, response::Value>>;
 
 // Traversing a fragment spread adds a new set of directives.
-using FragmentDefinitionDirectiveStack = std::list<std::reference_wrapper<const Directives>>;
-using FragmentSpreadDirectiveStack = std::list<Directives>;
+struct [[nodiscard("unnecessary construction")]] FragmentDefinitionDirectiveStack
+{
+	const std::reference_wrapper<const Directives> directives;
+	const std::shared_ptr<FragmentDefinitionDirectiveStack> outer;
+};
+
+struct [[nodiscard("unnecessary construction")]] FragmentSpreadDirectiveStack
+{
+	const Directives directives;
+	const std::shared_ptr<FragmentSpreadDirectiveStack> outer;
+};
 
 // Pass a common bundle of parameters to all of the generated Object::getField accessors in a
 // SelectionSet
@@ -328,12 +326,12 @@ public:
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		std::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		std::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
@@ -357,40 +355,14 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard("unexpected call")]] bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] constexpr bool await_ready() const noexcept
 	{
-		return std::visit(
-			[](const auto& value) noexcept {
-				using value_type = std::decay_t<decltype(value)>;
-
-				if constexpr (std::is_same_v<value_type, T>)
-				{
-					return true;
-				}
-				else if constexpr (std::is_same_v<value_type, std::future<T>>)
-				{
-					using namespace std::literals;
-
-					return value.wait_for(0s) != std::future_status::timeout;
-				}
-				else if constexpr (std::is_same_v<value_type,
-									   std::shared_ptr<const response::Value>>)
-				{
-					return true;
-				}
-			},
-			_value);
+		return true;
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(std::coroutine_handle<> h) const
 	{
-		std::thread(
-			[this](coro::coroutine_handle<> h) noexcept {
-				std::get<std::future<T>>(_value).wait();
-				h.resume();
-			},
-			std::move(h))
-			.detach();
+		h.resume();
 	}
 
 	[[nodiscard("unnecessary construction")]] T await_resume()
@@ -458,12 +430,12 @@ public:
 			return { _promise.get_future() };
 		}
 
-		coro::suspend_never initial_suspend() const noexcept
+		std::suspend_never initial_suspend() const noexcept
 		{
 			return {};
 		}
 
-		coro::suspend_never final_suspend() const noexcept
+		std::suspend_never final_suspend() const noexcept
 		{
 			return {};
 		}
@@ -487,35 +459,14 @@ public:
 		std::promise<T> _promise;
 	};
 
-	[[nodiscard("unexpected call")]] bool await_ready() const noexcept
+	[[nodiscard("unexpected call")]] constexpr bool await_ready() const noexcept
 	{
-		return std::visit(
-			[](const auto& value) noexcept {
-				using value_type = std::decay_t<decltype(value)>;
-
-				if constexpr (std::is_same_v<value_type, T>)
-				{
-					return true;
-				}
-				else if constexpr (std::is_same_v<value_type, std::future<T>>)
-				{
-					using namespace std::literals;
-
-					return value.wait_for(0s) != std::future_status::timeout;
-				}
-			},
-			_value);
+		return true;
 	}
 
-	void await_suspend(coro::coroutine_handle<> h) const
+	void await_suspend(std::coroutine_handle<> h) const
 	{
-		std::thread(
-			[this](coro::coroutine_handle<> h) noexcept {
-				std::get<std::future<T>>(_value).wait();
-				h.resume();
-			},
-			std::move(h))
-			.detach();
+		h.resume();
 	}
 
 	[[nodiscard("unnecessary construction")]] T await_resume()
@@ -592,7 +543,10 @@ struct [[nodiscard("unnecessary construction")]] ResolverParams : SelectionSetPa
 // we're ready to return from the top level Operation.
 struct [[nodiscard("unnecessary construction")]] ResolverResult
 {
-	response::Value data;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::Value document() &&;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::ValueTokenStream visit() &&;
+
+	response::ValueTokenStream data {};
 	std::list<schema_error> errors {};
 };
 
@@ -629,17 +583,6 @@ struct Argument
 	[[nodiscard("unnecessary conversion")]] static Type convert(const response::Value& value);
 };
 
-// Custom scalar C++ types (e.g. those declared with the @cppType schema directive) are usually
-// represented with a class or struct rather than one of the built-in types. Specialize this trait
-// and inherit from std::true_type so that the custom type is treated as a scalar argument instead
-// of a generated INPUT_OBJECT type. That controls whether a nullable argument is wrapped in a
-// std::optional (scalar) or a std::unique_ptr (input object), matching the type which schemagen
-// declares for the resolver accessor.
-template <typename Type>
-struct CustomScalarArgument : std::false_type
-{
-};
-
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
@@ -658,13 +601,12 @@ GRAPHQLSERVICE_EXPORT response::Value Argument<response::Value>::convert(
 	const response::Value& value);
 #endif // GRAPHQL_DLLEXPORTS
 
-namespace {
+inline namespace modified_argument {
 
 // These types are used as scalar arguments even though they are represented with a class.
 template <typename Type>
 concept ScalarArgumentClass = std::is_same_v<Type, std::string>
-	|| std::is_same_v<Type, response::IdType> || std::is_same_v<Type, response::Value>
-	|| CustomScalarArgument<Type>::value;
+	|| std::is_same_v<Type, response::IdType> || std::is_same_v<Type, response::Value>;
 
 // Any non-scalar class used in an argument is a generated INPUT_OBJECT type.
 template <typename Type>
@@ -713,11 +655,7 @@ struct ModifiedArgument
 
 			for (auto& error : errors)
 			{
-				std::ostringstream message;
-
-				message << "Invalid argument: " << name << " error: " << error.message;
-
-				error.message = message.str();
+				error.message = std::format("Invalid argument: {} error: {}", name, error.message);
 			}
 
 			throw schema_exception(std::move(errors));
@@ -786,8 +724,8 @@ struct ModifiedArgument
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(values.size());
 		const auto& elements = values.get<response::ListType>();
 
-		std::transform(elements.cbegin(),
-			elements.cend(),
+		std::transform(elements.begin(),
+			elements.end(),
 			result.begin(),
 			[name](const response::Value& element) {
 				response::Value single(response::Type::Map);
@@ -859,7 +797,14 @@ struct ModifiedArgument
 	{
 		typename ArgumentTraits<Type, Modifier, Other...>::type result(listValue.size());
 
-		std::transform(listValue.cbegin(), listValue.cend(), result.begin(), duplicate<Other...>);
+		if constexpr (std::is_same_v<Type, bool> && OnlyNoneModifiers<Other...>)
+		{
+			std::copy(listValue.begin(), listValue.end(), result.begin());
+		}
+		else
+		{
+			std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
+		}
 
 		return result;
 	}
@@ -875,7 +820,7 @@ using BooleanArgument = ModifiedArgument<bool>;
 using IdArgument = ModifiedArgument<response::IdType>;
 using ScalarArgument = ModifiedArgument<response::Value>;
 
-} // namespace
+} // namespace modified_argument
 
 // Each type should handle fragments with type conditions matching its own
 // name and any inheritted interfaces.
@@ -890,6 +835,10 @@ class [[nodiscard("unnecessary construction")]] Object : public std::enable_shar
 public:
 	GRAPHQLSERVICE_EXPORT explicit Object(TypeNames&& typeNames, ResolverMap&& resolvers) noexcept;
 	GRAPHQLSERVICE_EXPORT virtual ~Object() = default;
+
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<Object> StitchObject(
+		const std::shared_ptr<const Object>& added,
+		const std::shared_ptr<schema::Schema>& schema = {}) const;
 
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT AwaitableResolver resolve(
 		const SelectionSetParams& selectionSetParams, const peg::ast_node& selection,
@@ -913,6 +862,7 @@ protected:
 private:
 	TypeNames _typeNames;
 	ResolverMap _resolvers;
+	std::array<std::shared_ptr<const Object>, 2> _stitched;
 };
 
 // Test if this Type inherits from Object.
@@ -973,7 +923,7 @@ template <>
 GRAPHQLSERVICE_EXPORT void Result<response::Value>::validateScalar(const response::Value& value);
 #endif // GRAPHQL_DLLEXPORTS
 
-namespace {
+inline namespace modified_result {
 
 // Test if this Type is Object.
 template <typename Type>
@@ -1088,7 +1038,7 @@ struct ModifiedResult
 
 		if (!awaitedResult)
 		{
-			co_return ResolverResult {};
+			co_return ResolverResult { { response::ValueToken::NullValue {} } };
 		}
 
 		auto modifiedResult =
@@ -1115,8 +1065,8 @@ struct ModifiedResult
 			if (value)
 			{
 				ModifiedResult::validateScalar<Modifier, Other...>(*value);
-				co_return ResolverResult { response::Value {
-					std::shared_ptr { std::move(value) } } };
+				co_return ResolverResult { { response::ValueToken::OpaqueValue {
+					std::shared_ptr { std::move(value) } } } };
 			}
 		}
 
@@ -1129,7 +1079,7 @@ struct ModifiedResult
 
 		if (!awaitedResult)
 		{
-			co_return ResolverResult {};
+			co_return ResolverResult { { response::ValueToken::NullValue {} } };
 		}
 
 		auto modifiedResult = co_await ModifiedResult::convert<Other...>(std::move(*awaitedResult),
@@ -1152,8 +1102,8 @@ struct ModifiedResult
 			if (value)
 			{
 				ModifiedResult::validateScalar<Modifier, Other...>(*value);
-				co_return ResolverResult { response::Value {
-					std::shared_ptr { std::move(value) } } };
+				co_return ResolverResult { { response::ValueToken::OpaqueValue {
+					std::shared_ptr { std::move(value) } } } };
 			}
 		}
 
@@ -1170,7 +1120,7 @@ struct ModifiedResult
 		children.reserve(awaitedResult.size());
 		params.errorPath = std::make_optional(
 			field_path { parentPath ? std::make_optional(std::cref(*parentPath)) : std::nullopt,
-				path_segment { size_t { 0 } } });
+				path_segment { std::size_t { 0 } } });
 
 		using vector_type = std::decay_t<decltype(awaitedResult)>;
 
@@ -1184,7 +1134,7 @@ struct ModifiedResult
 			{
 				children.push_back(
 					ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(params)));
-				++std::get<size_t>(params.errorPath->segment);
+				++std::get<std::size_t>(params.errorPath->segment);
 			}
 		}
 		else
@@ -1193,14 +1143,15 @@ struct ModifiedResult
 			{
 				children.push_back(
 					ModifiedResult::convert<Other...>(std::move(entry), ResolverParams(params)));
-				++std::get<size_t>(params.errorPath->segment);
+				++std::get<std::size_t>(params.errorPath->segment);
 			}
 		}
 
-		ResolverResult document { response::Value { response::Type::List } };
+		ResolverResult document;
 
-		document.data.reserve(children.size());
-		std::get<size_t>(params.errorPath->segment) = 0;
+		document.data.push_back(response::ValueToken::StartArray {});
+		document.data.push_back(response::ValueToken::Reserve { children.size() });
+		std::get<std::size_t>(params.errorPath->segment) = 0;
 
 		for (auto& child : children)
 		{
@@ -1210,11 +1161,11 @@ struct ModifiedResult
 
 				auto value = co_await std::move(child);
 
-				document.data.emplace_back(std::move(value.data));
+				document.data.append(std::move(value.data));
 
 				if (!value.errors.empty())
 				{
-					document.errors.splice(document.errors.end(), value.errors);
+					document.errors.splice(document.errors.end(), std::move(value.errors));
 				}
 			}
 			catch (schema_exception& scx)
@@ -1228,18 +1179,19 @@ struct ModifiedResult
 			}
 			catch (const std::exception& ex)
 			{
-				std::ostringstream message;
+				auto message = std::format("Field error name: {} unknown error: {}",
+					params.fieldName,
+					ex.what());
 
-				message << "Field error name: " << params.fieldName
-						<< " unknown error: " << ex.what();
-
-				document.errors.emplace_back(schema_error { message.str(),
+				document.errors.emplace_back(schema_error { std::move(message),
 					params.getLocation(),
 					buildErrorPath(params.errorPath) });
 			}
 
-			++std::get<size_t>(params.errorPath->segment);
+			++std::get<std::size_t>(params.errorPath->segment);
 		}
+
+		document.data.push_back(response::ValueToken::EndArray {});
 
 		co_return document;
 	}
@@ -1276,14 +1228,14 @@ struct ModifiedResult
 			throw schema_exception { { R"ex(not a valid List value)ex" } };
 		}
 
-		for (size_t i = 0; i < value.size(); ++i)
+		for (std::size_t i = 0; i < value.size(); ++i)
 		{
 			ModifiedResult::validateScalar<Other...>(value[i]);
 		}
 	}
 
 	using ResolverCallback =
-		std::function<response::Value(typename ResultTraits<Type>::type, const ResolverParams&)>;
+		std::function<ResolverResult(typename ResultTraits<Type>::type, const ResolverParams&)>;
 
 	[[nodiscard("unnecessary call")]] static AwaitableResolver resolve(
 		typename ResultTraits<Type>::future_type result, ResolverParams&& paramsArg,
@@ -1296,7 +1248,8 @@ struct ModifiedResult
 		if (value)
 		{
 			Result<Type>::validateScalar(*value);
-			co_return ResolverResult { response::Value { std::shared_ptr { std::move(value) } } };
+			co_return ResolverResult { { response::ValueToken::OpaqueValue {
+				std::shared_ptr { std::move(value) } } } };
 		}
 
 		auto pendingResolver = std::move(resolver);
@@ -1308,7 +1261,7 @@ struct ModifiedResult
 		try
 		{
 			co_await params.launch;
-			document.data = pendingResolver(co_await result, params);
+			document = pendingResolver(co_await result, params);
 		}
 		catch (schema_exception& scx)
 		{
@@ -1321,11 +1274,10 @@ struct ModifiedResult
 		}
 		catch (const std::exception& ex)
 		{
-			std::ostringstream message;
+			auto message =
+				std::format("Field name: {} unknown error: {}", params.fieldName, ex.what());
 
-			message << "Field name: " << params.fieldName << " unknown error: " << ex.what();
-
-			document.errors.emplace_back(schema_error { message.str(),
+			document.errors.emplace_back(schema_error { std::move(message),
 				params.getLocation(),
 				buildErrorPath(params.errorPath) });
 		}
@@ -1345,14 +1297,16 @@ using IdResult = ModifiedResult<response::IdType>;
 using ScalarResult = ModifiedResult<response::Value>;
 using ObjectResult = ModifiedResult<Object>;
 
-} // namespace
+} // namespace modified_result
 
 // Subscription callbacks receive the response::Value representing the result of evaluating the
 // SelectionSet against the payload.
 using SubscriptionCallback = std::function<void(response::Value)>;
+using SubscriptionVisitor = std::function<void(ResolverResult)>;
+using SubscriptionCallbackOrVisitor = std::variant<SubscriptionCallback, SubscriptionVisitor>;
 
 // Subscriptions are stored in maps using these keys.
-using SubscriptionKey = size_t;
+using SubscriptionKey = std::size_t;
 using SubscriptionName = std::string;
 
 using AwaitableSubscribe = internal::Awaitable<SubscriptionKey>;
@@ -1376,7 +1330,7 @@ struct [[nodiscard("unnecessary construction")]] RequestResolveParams
 struct [[nodiscard("unnecessary construction")]] RequestSubscribeParams
 {
 	// Callback which receives the event data.
-	SubscriptionCallback callback;
+	SubscriptionCallbackOrVisitor callback;
 
 	// Required query information.
 	peg::ast query;
@@ -1467,7 +1421,7 @@ struct [[nodiscard("unnecessary construction")]] SubscriptionData
 {
 	explicit SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
 		response::Value arguments, Directives fieldDirectives, peg::ast&& query,
-		std::string&& operationName, SubscriptionCallback&& callback,
+		std::string&& operationName, SubscriptionCallbackOrVisitor&& callback,
 		const peg::ast_node& selection);
 
 	std::shared_ptr<OperationData> data;
@@ -1477,7 +1431,7 @@ struct [[nodiscard("unnecessary construction")]] SubscriptionData
 	Directives fieldDirectives;
 	peg::ast query;
 	std::string operationName;
-	SubscriptionCallback callback;
+	SubscriptionCallbackOrVisitor callback;
 	const peg::ast_node& selection;
 };
 
@@ -1503,6 +1457,9 @@ protected:
 	GRAPHQLSERVICE_EXPORT virtual ~Request();
 
 public:
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<const Request> stitch(
+		const std::shared_ptr<const Request>& added) const;
+
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::list<schema_error> validate(
 		peg::ast& query) const;
 
@@ -1511,6 +1468,8 @@ public:
 	findOperationDefinition(peg::ast& query, std::string_view operationName) const;
 
 	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT response::AwaitableValue resolve(
+		RequestResolveParams params) const;
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT AwaitableResolver visit(
 		RequestResolveParams params) const;
 	[[nodiscard("leaked subscription")]] GRAPHQLSERVICE_EXPORT AwaitableSubscribe subscribe(
 		RequestSubscribeParams params);
@@ -1527,6 +1486,7 @@ private:
 	collectRegistrations(std::string_view field, RequestDeliverFilter&& filter) const noexcept;
 
 	const TypeMap _operations;
+	const std::shared_ptr<schema::Schema> _schema;
 	mutable std::mutex _validationMutex {};
 	const std::unique_ptr<ValidateExecutableVisitor> _validation;
 	mutable std::mutex _subscriptionMutex {};

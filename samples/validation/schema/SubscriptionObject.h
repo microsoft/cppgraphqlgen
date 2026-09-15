@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef SUBSCRIPTIONOBJECT_H
-#define SUBSCRIPTIONOBJECT_H
+#ifndef VALIDATION_SUBSCRIPTIONOBJECT_H
+#define VALIDATION_SUBSCRIPTIONOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -157,4 +157,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // SUBSCRIPTIONOBJECT_H
+#endif // VALIDATION_SUBSCRIPTIONOBJECT_H

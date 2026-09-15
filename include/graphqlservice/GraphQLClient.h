@@ -6,27 +6,15 @@
 #ifndef GRAPHQLCLIENT_H
 #define GRAPHQLCLIENT_H
 
-// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLCLIENT_DLL
-		#define GRAPHQLCLIENT_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLCLIENT_DLL
-		#define GRAPHQLCLIENT_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLCLIENT_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLCLIENT_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
+#include "GraphQLResponse.h"
 
-#include "graphqlservice/GraphQLResponse.h"
-
-#include "graphqlservice/internal/Version.h"
+#include "internal/DllExports.h"
 
 #include <algorithm>
 #include <iterator>
 #include <optional>
+#include <ranges>
 #include <stdexcept>
-#include <type_traits>
 #include <vector>
 
 namespace graphql::client {
@@ -96,7 +84,7 @@ template <>
 GRAPHQLCLIENT_EXPORT response::Value Variable<response::Value>::serialize(response::Value&& value);
 #endif // GRAPHQL_DLLEXPORTS
 
-namespace {
+inline namespace modified_variable {
 
 // These types are used as scalar variables even though they are represented with a class.
 template <typename Type>
@@ -180,9 +168,19 @@ struct ModifiedVariable
 		response::Value result { response::Type::List };
 
 		result.reserve(listValue.size());
-		std::for_each(listValue.begin(), listValue.end(), [&result](auto& value) {
-			result.emplace_back(serialize<Other...>(std::move(value)));
-		});
+		if constexpr (std::is_same_v<Type, bool> && OnlyNoneModifiers<Other...>)
+		{
+			std::ranges::for_each(listValue, [&result](bool value) {
+				result.emplace_back(response::Value { value });
+			});
+		}
+		else
+		{
+			std::ranges::for_each(listValue, [&result](auto& value) {
+				result.emplace_back(serialize<Other...>(std::move(value)));
+			});
+		}
+
 		listValue.clear();
 
 		return result;
@@ -231,7 +229,14 @@ struct ModifiedVariable
 	{
 		typename VariableTraits<Type, Modifier, Other...>::type result(listValue.size());
 
-		std::transform(listValue.cbegin(), listValue.cend(), result.begin(), duplicate<Other...>);
+		if constexpr (std::is_same_v<Type, bool> && OnlyNoneModifiers<Other...>)
+		{
+			std::copy(listValue.begin(), listValue.end(), result.begin());
+		}
+		else
+		{
+			std::ranges::transform(listValue, result.begin(), duplicate<Other...>);
+		}
 
 		return result;
 	}
@@ -247,7 +252,7 @@ using BooleanVariable = ModifiedVariable<bool>;
 using IdVariable = ModifiedVariable<response::IdType>;
 using ScalarVariable = ModifiedVariable<response::Value>;
 
-} // namespace
+} // namespace modified_variable
 
 // Parse a single response output value. This is the inverse of Variable for output types instead of
 // input types.
@@ -274,7 +279,7 @@ template <>
 GRAPHQLCLIENT_EXPORT response::Value Response<response::Value>::parse(response::Value&& response);
 #endif // GRAPHQL_DLLEXPORTS
 
-namespace {
+inline namespace modified_response {
 
 // Parse response output values with chained type modifiers that add nullable or list wrappers.
 // This is the inverse of ModifiedVariable for output types instead of input types.
@@ -335,8 +340,7 @@ struct ModifiedResponse
 			auto listValue = response.release<response::ListType>();
 
 			result.reserve(listValue.size());
-			std::transform(listValue.begin(),
-				listValue.end(),
+			std::ranges::transform(listValue,
 				std::back_inserter(result),
 				[](response::Value& value) {
 					return parse<Other...>(std::move(value));
@@ -357,7 +361,7 @@ using BooleanResponse = ModifiedResponse<bool>;
 using IdResponse = ModifiedResponse<response::IdType>;
 using ScalarResponse = ModifiedResponse<response::Value>;
 
-} // namespace
+} // namespace modified_response
 } // namespace graphql::client
 
 #endif // GRAPHQLCLIENT_H

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef TYPEOBJECT_H
-#define TYPEOBJECT_H
+#ifndef INTROSPECTION_TYPEOBJECT_H
+#define INTROSPECTION_TYPEOBJECT_H
 
 #include "IntrospectionSchema.h"
 
@@ -120,4 +120,4 @@ public:
 
 } // namespace graphql::introspection::object
 
-#endif // TYPEOBJECT_H
+#endif // INTROSPECTION_TYPEOBJECT_H

@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef QUERYOBJECT_H
-#define QUERYOBJECT_H
+#ifndef PROXY_QUERYOBJECT_H
+#define PROXY_QUERYOBJECT_H
 
 #include "ProxySchema.h"
 
@@ -14,15 +14,15 @@ namespace graphql::proxy::object {
 namespace methods::QueryHas {
 
 template <class TImpl>
-concept getRelayWithParams = requires (TImpl impl, service::FieldParams params, std::string queryArg, std::optional<std::string> operationNameArg, std::optional<std::string> variablesArg)
+concept getRelayWithParams = requires (TImpl impl, service::FieldParams params, QueryInput inputArg)
 {
-	{ service::AwaitableScalar<std::optional<std::string>> { impl.getRelay(std::move(params), std::move(queryArg), std::move(operationNameArg), std::move(variablesArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<QueryResults>> { impl.getRelay(std::move(params), std::move(inputArg)) } };
 };
 
 template <class TImpl>
-concept getRelay = requires (TImpl impl, std::string queryArg, std::optional<std::string> operationNameArg, std::optional<std::string> variablesArg)
+concept getRelay = requires (TImpl impl, QueryInput inputArg)
 {
-	{ service::AwaitableScalar<std::optional<std::string>> { impl.getRelay(std::move(queryArg), std::move(operationNameArg), std::move(variablesArg)) } };
+	{ service::AwaitableObject<std::shared_ptr<QueryResults>> { impl.getRelay(std::move(inputArg)) } };
 };
 
 template <class TImpl>
@@ -58,7 +58,7 @@ private:
 		virtual void beginSelectionSet(const service::SelectionSetParams& params) const = 0;
 		virtual void endSelectionSet(const service::SelectionSetParams& params) const = 0;
 
-		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getRelay(service::FieldParams&& params, std::string&& queryArg, std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<QueryResults>> getRelay(service::FieldParams&& params, QueryInput&& inputArg) const = 0;
 	};
 
 	template <class T>
@@ -70,16 +70,16 @@ private:
 		{
 		}
 
-		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getRelay(service::FieldParams&& params, std::string&& queryArg, std::optional<std::string>&& operationNameArg, std::optional<std::string>&& variablesArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<QueryResults>> getRelay(service::FieldParams&& params, QueryInput&& inputArg) const override
 		{
 			if constexpr (methods::QueryHas::getRelayWithParams<T>)
 			{
-				return { _pimpl->getRelay(std::move(params), std::move(queryArg), std::move(operationNameArg), std::move(variablesArg)) };
+				return { _pimpl->getRelay(std::move(params), std::move(inputArg)) };
 			}
 			else
 			{
 				static_assert(methods::QueryHas::getRelay<T>, R"msg(Query::getRelay is not implemented)msg");
-				return { _pimpl->getRelay(std::move(queryArg), std::move(operationNameArg), std::move(variablesArg)) };
+				return { _pimpl->getRelay(std::move(inputArg)) };
 			}
 		}
 
@@ -128,4 +128,4 @@ public:
 
 } // namespace graphql::proxy::object
 
-#endif // QUERYOBJECT_H
+#endif // PROXY_QUERYOBJECT_H
