@@ -37,9 +37,9 @@ schemagen mySchema.graphql prefix gsm
  3. Custom namespace to add *(it will be wrapped between `graphql::` and `::object`)*
 
 If you provide the same schema as this tutorial, the generated files will be (each with a `.h` and `.cpp`):
- - *prefixSchema*
- - *prefixQueryObject*
- - *prefixThingObject*
+- *prefixSchema*
+- *QueryObject*
+- *ThingObject*
 
 *Note: you will not need to edit these files, as indicated by the warning at the top of each generated file; however this tutorial will guide you towards reading them to understand how to implement your code.*
 
@@ -93,14 +93,14 @@ By exploring the schemagen `QueryObject.h` file and searching `static_assert` yo
 
 these two blocks of code are responsible for checking whether you class, of which instance you will be providing to this object, satisfies the requirement of having certain methods.
 
-For example, in this case you can see how two methods are required, one is `getStuff` and one is `getName`, and they belong to the class `Query`.
+For example, in this case you can see how two methods are required, one is `getStuff` and one is `getNames`, and they belong to the class `Query`.
 The name `Query` comes from the fact that it's a query, while `getNames` and `getStuff` are made by prefixing `get` to `name` and `stuff`.
 *This can be useful to remember, but it's not important since the compiler error, and this code, will remind you.*
 
 Other useful information are the *arguments* and *return type.*
 
 ***Get Names Signature***
-If we take as an example `getNames` we can see how the return type is indicated in the function signature, it returns a `service::AwaitableScalar<std::vector<std::string>>`, meaning that our code will have to return a `std::vector<std::string>>`; which makes sense, considering how schema returns an array of string that is *mandatory*, as in, the query *must return the field with something*.
+If we take as an example `getNames` we can see how the return type is indicated in the function signature, it returns a `service::AwaitableScalar<std::vector<std::string>>`, meaning that our code will have to return a `std::vector<std::string>`; which makes sense, considering how schema returns an array of string that is *mandatory*, as in, the query *must return the field with something*.
 The method itself is called like this `_pimpl->getNames()`, without any parameters; which makes sense since we didn't specify any on our original GraphQL schema.
 
 ***Get Stuff Signature***
