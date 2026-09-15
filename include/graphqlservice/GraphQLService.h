@@ -629,6 +629,17 @@ struct Argument
 	[[nodiscard("unnecessary conversion")]] static Type convert(const response::Value& value);
 };
 
+// Custom scalar C++ types (e.g. those declared with the @cppType schema directive) are usually
+// represented with a class or struct rather than one of the built-in types. Specialize this trait
+// and inherit from std::true_type so that the custom type is treated as a scalar argument instead
+// of a generated INPUT_OBJECT type. That controls whether a nullable argument is wrapped in a
+// std::optional (scalar) or a std::unique_ptr (input object), matching the type which schemagen
+// declares for the resolver accessor.
+template <typename Type>
+struct CustomScalarArgument : std::false_type
+{
+};
+
 #ifdef GRAPHQL_DLLEXPORTS
 // Export all of the built-in converters
 template <>
@@ -652,7 +663,8 @@ namespace {
 // These types are used as scalar arguments even though they are represented with a class.
 template <typename Type>
 concept ScalarArgumentClass = std::is_same_v<Type, std::string>
-	|| std::is_same_v<Type, response::IdType> || std::is_same_v<Type, response::Value>;
+	|| std::is_same_v<Type, response::IdType> || std::is_same_v<Type, response::Value>
+	|| CustomScalarArgument<Type>::value;
 
 // Any non-scalar class used in an argument is a generated INPUT_OBJECT type.
 template <typename Type>

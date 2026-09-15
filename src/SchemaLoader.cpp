@@ -1019,6 +1019,42 @@ void SchemaLoader::visitScalarTypeExtension(const peg::ast_node& scalarTypeExten
 
 							scalarType.specifiedByURL = std::move(specifiedByURL);
 						}
+						else if (directiveName == "cppType"sv)
+						{
+							std::string_view cppType;
+							std::string_view cppHeader;
+
+							peg::on_first_child<peg::arguments>(directive,
+								[&cppType, &cppHeader](const peg::ast_node& arguments) {
+									peg::for_each_child<peg::argument>(arguments,
+										[&cppType, &cppHeader](const peg::ast_node& argument) {
+											std::string_view argumentName;
+
+											peg::on_first_child<peg::argument_name>(argument,
+												[&argumentName](const peg::ast_node& name) {
+													argumentName = name.string_view();
+												});
+
+											if (argumentName == "name"sv)
+											{
+												peg::on_first_child<peg::string_value>(argument,
+													[&cppType](const peg::ast_node& value) {
+														cppType = value.unescaped_view();
+													});
+											}
+											else if (argumentName == "header"sv)
+											{
+												peg::on_first_child<peg::string_value>(argument,
+													[&cppHeader](const peg::ast_node& value) {
+														cppHeader = value.unescaped_view();
+													});
+											}
+										});
+								});
+
+							scalarType.cppType = std::move(cppType);
+							scalarType.cppHeader = std::move(cppHeader);
+						}
 					});
 			});
 	}
@@ -1706,7 +1742,11 @@ std::string_view SchemaLoader::getCppType(std::string_view type) const noexcept
 
 		if (itrScalar != _scalarNames.cend())
 		{
-			return s_scalarCppType;
+			const auto& scalarType = _scalarTypes[itrScalar->second];
+
+			// Scalars use response::Value by default, but the schema can override that with a
+			// custom C++ type via the @cppType directive.
+			return scalarType.cppType.empty() ? s_scalarCppType : scalarType.cppType;
 		}
 	}
 

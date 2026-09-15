@@ -232,6 +232,7 @@ There are some more targeted documents in the [doc](./doc) directory:
 * [Field Resolvers](./doc/resolvers.md)
 * [Field Parameters](./doc/fieldparams.md)
 * [Directives](./doc/directives.md)
+* [Custom Scalars](./doc/scalars.md)
 * [Subscriptions](./doc/subscriptions.md)
 
 ### Samples

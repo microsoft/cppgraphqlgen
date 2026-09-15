@@ -1,0 +1,24 @@
+# Copyright (c) Microsoft Corporation. All rights reserved.
+# Licensed under the MIT License.
+
+# This sample demonstrates a custom scalar whose C++ storage is NOT response::Value.
+#
+# The @cppType directive tells schemagen to use the bigint::BigInt C++ type (declared in
+# BigIntScalar.h) for this scalar everywhere it appears in the generated resolvers and argument
+# accessors, instead of the default response::Value. See samples/scalar/BigIntScalar.h for the
+# service::Argument/service::Result specializations which serialize and deserialize the value.
+#
+# BigInt values are too large to fit in the 32-bit response::IntType, so on the wire they are
+# represented as a JSON String, while the C++ side stores a std::int64_t.
+scalar BigInt @cppType(name: "bigint::BigInt" header: "BigIntScalar.h")
+
+type Query {
+	"Echo a BigInt argument straight back out, round-tripping through bigint::BigInt."
+	echo(value: BigInt!): BigInt!
+
+	"Add two BigInt values together on the C++ side and return the result."
+	add(left: BigInt! right: BigInt!): BigInt!
+
+	"Return an optional BigInt, or null when no value is provided."
+	maybe(value: BigInt): BigInt
+}

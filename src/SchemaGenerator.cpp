@@ -128,6 +128,29 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 
 )cpp";
 
+	// Include any headers required by custom scalar C++ types declared with the @cppType
+	// directive so their type definitions and service::Argument/service::Result specializations
+	// are visible to the generated code.
+	if (!_loader.isIntrospection())
+	{
+		bool addedCustomScalarHeader = false;
+
+		for (const auto& scalarType : _loader.getScalarTypes())
+		{
+			if (!scalarType.cppHeader.empty())
+			{
+				headerFile << R"cpp(#include ")cpp" << scalarType.cppHeader << R"cpp("
+)cpp";
+				addedCustomScalarHeader = true;
+			}
+		}
+
+		if (addedCustomScalarHeader)
+		{
+			headerFile << std::endl;
+		}
+	}
+
 	NamespaceScope graphqlNamespace { headerFile, "graphql" };
 	NamespaceScope schemaNamespace { headerFile, _loader.getSchemaNamespace() };
 	NamespaceScope objectNamespace { headerFile, "object", true };
@@ -2861,7 +2884,7 @@ std::string Generator::getArgumentAccessType(const InputField& argument) const n
 			break;
 
 		case InputFieldType::Scalar:
-			argumentType << R"cpp(response::Value)cpp";
+			argumentType << _loader.getCppType(argument.type);
 			break;
 	}
 
@@ -2887,7 +2910,7 @@ std::string Generator::getResultAccessType(const OutputField& result) const noex
 			break;
 
 		case OutputFieldType::Scalar:
-			resultType << R"cpp(response::Value)cpp";
+			resultType << _loader.getCppType(result.type);
 			break;
 	}
 

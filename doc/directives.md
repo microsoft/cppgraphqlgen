@@ -19,3 +19,10 @@ elements of the `query`. The library does not handle them automatically, but it
 will pass them to the `getField` implementations through the optional
 `graphql::service::FieldParams` struct (see [fieldparams.md](fieldparams.md)
 for more information).
+
+There is also one code-generation directive which `schemagen` consumes at build
+time and does not serve through introspection:
+
+* `@cppType(name: String! header: String)`: Map a custom `scalar` type onto a
+custom C++ type instead of the default `response::Value`. See
+[Custom Scalars](./scalars.md) for details.

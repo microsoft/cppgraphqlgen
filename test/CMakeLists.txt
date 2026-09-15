@@ -60,6 +60,15 @@ target_link_libraries(argument_tests PRIVATE
 add_bigobj_flag(argument_tests)
 gtest_add_tests(TARGET argument_tests)
 
+add_executable(scalar_tests ScalarTests.cpp)
+target_link_libraries(scalar_tests PRIVATE
+  scalargraphql
+  graphqljson
+  GTest::GTest
+  GTest::Main)
+add_bigobj_flag(scalar_tests)
+gtest_add_tests(TARGET scalar_tests)
+
 add_executable(pegtl_combined_tests PegtlCombinedTests.cpp)
 target_link_libraries(pegtl_combined_tests PRIVATE
   taocpp::pegtl
@@ -122,6 +131,7 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_dependencies(client_tests copy_test_dlls)
   add_dependencies(nointrospection_tests copy_test_dlls)
   add_dependencies(argument_tests copy_test_dlls)
+  add_dependencies(scalar_tests copy_test_dlls)
   add_dependencies(pegtl_combined_tests copy_test_dlls)
   add_dependencies(pegtl_executable_tests copy_test_dlls)
   add_dependencies(pegtl_schema_tests copy_test_dlls)

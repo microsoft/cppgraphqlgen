@@ -43,11 +43,24 @@ using TypeNameMap = std::unordered_map<std::string_view, size_t>;
 // Scalar types are opaque to the generator, it's up to the service implementation
 // to handle parsing, validating, and serializing them. We just need to track which
 // scalar type names have been declared so we recognize the references.
+//
+// By default a scalar is represented in the generated C++ code with response::Value, but
+// the schema author can override that with the @cppType directive to store, serialize, and
+// deserialize the scalar as any custom C++ type (e.g. a BigInt):
+//
+//   scalar BigInt @cppType(name: "bigint::BigInt" header: "BigIntScalar.h")
+//
+// The `name` argument is the fully-qualified C++ type used everywhere the scalar appears in
+// the generated resolvers and argument accessors. The optional `header` argument is added as
+// an #include in the generated schema header so that the custom type (and its
+// service::Argument/service::Result specializations) are visible to the generated code.
 struct [[nodiscard("unnecessary construction")]] ScalarType
 {
 	std::string_view type;
 	std::string_view description;
 	std::string_view specifiedByURL {};
+	std::string_view cppType {};
+	std::string_view cppHeader {};
 };
 
 using ScalarTypeList = std::vector<ScalarType>;
