@@ -58,7 +58,7 @@ private:
 		virtual void end_object() const = 0;
 
 		virtual void start_array() const = 0;
-		virtual void end_arrary() const = 0;
+		virtual void end_array() const = 0;
 
 		virtual void write_null() const = 0;
 		virtual void write_string(const std::string& value) const = 0;

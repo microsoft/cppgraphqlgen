@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef DOGOBJECT_H
-#define DOGOBJECT_H
+#ifndef VALIDATION_DOGOBJECT_H
+#define VALIDATION_DOGOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -297,4 +297,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // DOGOBJECT_H
+#endif // VALIDATION_DOGOBJECT_H

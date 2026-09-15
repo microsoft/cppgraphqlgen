@@ -20,18 +20,15 @@ void Human::addFriends(std::vector<SharedHero> friends) noexcept
 {
 	friends_.resize(friends.size());
 
-	std::transform(friends.begin(),
-		friends.end(),
-		friends_.begin(),
-		[](const auto& spFriend) noexcept {
-			return std::visit(
-				[](const auto& hero) noexcept {
-					return WeakHero {
-						std::weak_ptr<typename std::decay_t<decltype(hero)>::element_type> { hero }
-					};
-				},
-				spFriend);
-		});
+	std::ranges::transform(friends, friends_.begin(), [](const auto& spFriend) noexcept {
+		return std::visit(
+			[](const auto& hero) noexcept {
+				return WeakHero {
+					std::weak_ptr<typename std::decay_t<decltype(hero)>::element_type> { hero }
+				};
+			},
+			spFriend);
+	});
 }
 
 const response::IdType& Human::getId() const noexcept
@@ -48,12 +45,9 @@ std::optional<std::vector<std::shared_ptr<object::Character>>> Human::getFriends
 {
 	std::vector<std::shared_ptr<object::Character>> result(friends_.size());
 
-	std::transform(friends_.begin(),
-		friends_.end(),
-		result.begin(),
-		[](const auto& wpFriend) noexcept {
-			return make_hero(wpFriend);
-		});
+	std::ranges::transform(friends_, result.begin(), [](const auto& wpFriend) noexcept {
+		return make_hero(wpFriend);
+	});
 	result.erase(std::remove(result.begin(), result.end(), std::shared_ptr<object::Character> {}),
 		result.end());
 
@@ -64,12 +58,9 @@ std::optional<std::vector<std::optional<Episode>>> Human::getAppearsIn() const n
 {
 	std::vector<std::optional<Episode>> result(appearsIn_.size());
 
-	std::transform(appearsIn_.begin(),
-		appearsIn_.end(),
-		result.begin(),
-		[](const auto& entry) noexcept {
-			return std::make_optional(entry);
-		});
+	std::ranges::transform(appearsIn_, result.begin(), [](const auto& entry) noexcept {
+		return std::make_optional(entry);
+	});
 
 	return result.empty() ? std::nullopt : std::make_optional(std::move(result));
 }

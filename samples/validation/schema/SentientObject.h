@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef SENTIENTOBJECT_H
-#define SENTIENTOBJECT_H
+#ifndef VALIDATION_SENTIENTOBJECT_H
+#define VALIDATION_SENTIENTOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // SENTIENTOBJECT_H
+#endif // VALIDATION_SENTIENTOBJECT_H

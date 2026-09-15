@@ -9,15 +9,16 @@
 
 #include <algorithm>
 #include <array>
-#include <sstream>
+#include <cstddef>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
 
 using namespace std::literals;
 
-namespace graphql::client {
+namespace graphql {
 namespace nestedinput {
+namespace client {
 
 const std::string& GetRequestText() noexcept
 {
@@ -47,6 +48,10 @@ const peg::ast& GetRequestObject() noexcept
 
 	return s_request;
 }
+
+} // namespace client
+
+using namespace graphql::client;
 
 InputA::InputA() noexcept
 	: a {}
@@ -236,6 +241,8 @@ InputBC& InputBC::operator=(InputBC&& other) noexcept
 
 } // namespace nestedinput
 
+namespace client {
+
 using namespace nestedinput;
 
 template <>
@@ -284,9 +291,9 @@ response::Value Variable<InputBC>::serialize(InputBC&& inputValue)
 }
 
 template <>
-query::testQuery::Response::control_Control::test_Output Response<query::testQuery::Response::control_Control::test_Output>::parse(response::Value&& response)
+graphql::nestedinput::client::query::testQuery::Response::control_Control::test_Output Response<graphql::nestedinput::client::query::testQuery::Response::control_Control::test_Output>::parse(response::Value&& response)
 {
-	query::testQuery::Response::control_Control::test_Output result;
+	graphql::nestedinput::client::query::testQuery::Response::control_Control::test_Output result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -306,9 +313,9 @@ query::testQuery::Response::control_Control::test_Output Response<query::testQue
 }
 
 template <>
-query::testQuery::Response::control_Control Response<query::testQuery::Response::control_Control>::parse(response::Value&& response)
+graphql::nestedinput::client::query::testQuery::Response::control_Control Response<graphql::nestedinput::client::query::testQuery::Response::control_Control>::parse(response::Value&& response)
 {
-	query::testQuery::Response::control_Control result;
+	graphql::nestedinput::client::query::testQuery::Response::control_Control result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -318,7 +325,7 @@ query::testQuery::Response::control_Control Response<query::testQuery::Response:
 		{
 			if (member.first == R"js(test)js"sv)
 			{
-				result.test = ModifiedResponse<query::testQuery::Response::control_Control::test_Output>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.test = ModifiedResponse<graphql::nestedinput::client::query::testQuery::Response::control_Control::test_Output>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -327,7 +334,9 @@ query::testQuery::Response::control_Control Response<query::testQuery::Response:
 	return result;
 }
 
-namespace query::testQuery {
+} // namespace client
+
+namespace nestedinput::client::query::testQuery {
 
 const std::string& GetOperationName() noexcept
 {
@@ -338,6 +347,8 @@ const std::string& GetOperationName() noexcept
 
 response::Value serializeVariables(Variables&& variables)
 {
+	using namespace graphql::client;
+
 	response::Value result { response::Type::Map };
 
 	result.emplace_back(R"js(stream)js"s, ModifiedVariable<InputABCD>::serialize(std::move(variables.stream)));
@@ -345,8 +356,292 @@ response::Value serializeVariables(Variables&& variables)
 	return result;
 }
 
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_control,
+		Member_control_test,
+		Member_control_test_id,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_control:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.control = ModifiedResponse<Response::control_Control>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_control_test:
+			_pimpl->state = impl::VisitorState::Member_control;
+			_pimpl->response.control.test = ModifiedResponse<Response::control_Control::test_Output>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_control_test_id:
+			_pimpl->state = impl::VisitorState::Member_control_test;
+			_pimpl->response.control.test->id = ModifiedResponse<bool>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_control_test:
+			_pimpl->response.control.test = std::make_optional<Response::control_Control::test_Output>({});
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "control"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_control;
+			}
+			break;
+
+		case impl::VisitorState::Member_control:
+			if (key == "test"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_control_test;
+			}
+			break;
+
+		case impl::VisitorState::Member_control_test:
+			if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_control_test_id;
+			}
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_control_test:
+			_pimpl->state = impl::VisitorState::Member_control;
+			break;
+
+		case impl::VisitorState::Member_control:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_control_test:
+			_pimpl->state = impl::VisitorState::Member_control;
+			_pimpl->response.control.test = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_control_test_id:
+			_pimpl->state = impl::VisitorState::Member_control_test;
+			_pimpl->response.control.test->id = std::nullopt;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_control_test_id:
+			_pimpl->state = impl::VisitorState::Member_control_test;
+			_pimpl->response.control.test->id = value;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
+}
+
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -368,12 +663,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return nestedinput::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return nestedinput::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -391,5 +686,5 @@ Response parseResponse(response::Value&& response)
 	return testQuery::parseResponse(std::move(response));
 }
 
-} // namespace query::testQuery
-} // namespace graphql::client
+} // namespace nestedinput::client::query::testQuery
+} // namespace graphql

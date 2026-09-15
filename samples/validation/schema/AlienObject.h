@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef ALIENOBJECT_H
-#define ALIENOBJECT_H
+#ifndef VALIDATION_ALIENOBJECT_H
+#define VALIDATION_ALIENOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -176,4 +176,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // ALIENOBJECT_H
+#endif // VALIDATION_ALIENOBJECT_H

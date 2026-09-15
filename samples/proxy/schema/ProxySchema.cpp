@@ -11,8 +11,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <functional>
-#include <sstream>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -20,8 +20,7 @@
 
 using namespace std::literals;
 
-namespace graphql {
-namespace proxy {
+namespace graphql::proxy {
 
 Operations::Operations(std::shared_ptr<object::Query> query)
 	: service::Request({
@@ -33,10 +32,31 @@ Operations::Operations(std::shared_ptr<object::Query> query)
 
 void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 {
+	auto typeOperationType = schema::EnumType::Make(R"gql(OperationType)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(OperationType)gql"sv, typeOperationType);
+	auto typeQueryInput = schema::InputObjectType::Make(R"gql(QueryInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(QueryInput)gql"sv, typeQueryInput);
 	auto typeQuery = schema::ObjectType::Make(R"gql(Query)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Query)gql"sv, typeQuery);
+	auto typeQueryResults = schema::ObjectType::Make(R"gql(QueryResults)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(QueryResults)gql"sv, typeQueryResults);
+
+	static const auto s_namesOperationType = getOperationTypeNames();
+	typeOperationType->AddEnumValues({
+		{ s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::QUERY)], R"md()md"sv, std::nullopt },
+		{ s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::MUTATION)], R"md()md"sv, std::nullopt },
+		{ s_namesOperationType[static_cast<std::size_t>(proxy::OperationType::SUBSCRIPTION)], R"md()md"sv, std::nullopt }
+	});
+
+	typeQueryInput->AddInputValues({
+		schema::InputValue::Make(R"gql(type)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(OperationType)gql"sv)), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(query)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), R"gql()gql"sv),
+		schema::InputValue::Make(R"gql(operationName)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql(null)gql"sv),
+		schema::InputValue::Make(R"gql(variables)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql(null)gql"sv)
+	});
 
 	AddQueryDetails(typeQuery, schema);
+	AddQueryResultsDetails(typeQueryResults, schema);
 
 	schema->AddQueryType(typeQuery);
 }
@@ -57,5 +77,4 @@ std::shared_ptr<schema::Schema> GetSchema()
 	return schema;
 }
 
-} // namespace proxy
-} // namespace graphql
+} // namespace graphql::proxy

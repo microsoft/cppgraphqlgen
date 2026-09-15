@@ -4,67 +4,90 @@
 #include "graphqlservice/GraphQLService.h"
 
 #include "graphqlservice/internal/Grammar.h"
+#include "graphqlservice/internal/Introspection.h"
+
+#include "graphqlservice/introspection/SchemaObject.h"
+#include "graphqlservice/introspection/TypeObject.h"
 
 #include "Validation.h"
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <iostream>
+#include <stack>
+
+using namespace std::literals;
 
 namespace graphql::service {
 
-void addErrorMessage(std::string&& message, response::Value& error)
+response::ValueTokenStream addErrorMessage(std::string&& message)
 {
-	error.emplace_back(std::string { strMessage }, response::Value(std::move(message)));
+	response::ValueTokenStream result {};
+
+	result.push_back(response::ValueToken::AddMember { std::string { strMessage } });
+	result.push_back(response::ValueToken::StringValue { std::move(message) });
+
+	return result;
 }
 
-void addErrorLocation(const schema_location& location, response::Value& error)
+response::ValueTokenStream addErrorLocation(const schema_location& location)
 {
+	response::ValueTokenStream result {};
+
 	if (location.line == 0)
 	{
-		return;
+		return result;
 	}
 
-	response::Value errorLocation(response::Type::Map);
+	result.push_back(response::ValueToken::AddMember { std::string { strLocations } });
 
-	errorLocation.reserve(2);
-	errorLocation.emplace_back(std::string { strLine },
-		response::Value(static_cast<int>(location.line)));
-	errorLocation.emplace_back(std::string { strColumn },
-		response::Value(static_cast<int>(location.column)));
+	result.push_back(response::ValueToken::StartArray {});
+	result.push_back(response::ValueToken::Reserve { 1 });
+	result.push_back(response::ValueToken::StartObject {});
+	result.push_back(response::ValueToken::Reserve { 2 });
 
-	response::Value errorLocations(response::Type::List);
+	result.push_back(response::ValueToken::AddMember { std::string { strLine } });
+	result.push_back(response::ValueToken::IntValue { static_cast<int>(location.line) });
+	result.push_back(response::ValueToken::AddMember { std::string { strColumn } });
+	result.push_back(response::ValueToken::IntValue { static_cast<int>(location.column) });
 
-	errorLocations.reserve(1);
-	errorLocations.emplace_back(std::move(errorLocation));
+	result.push_back(response::ValueToken::EndObject {});
+	result.push_back(response::ValueToken::EndArray {});
 
-	error.emplace_back(std::string { strLocations }, std::move(errorLocations));
+	return result;
 }
 
-void addErrorPath(const error_path& path, response::Value& error)
+response::ValueTokenStream addErrorPath(const error_path& path)
 {
+	response::ValueTokenStream result {};
+
 	if (path.empty())
 	{
-		return;
+		return result;
 	}
 
-	response::Value errorPath(response::Type::List);
+	result.push_back(response::ValueToken::AddMember { std::string { strPath } });
+	result.push_back(response::ValueToken::StartArray {});
+	result.push_back(response::ValueToken::Reserve { path.size() });
 
-	errorPath.reserve(path.size());
 	for (const auto& segment : path)
 	{
 		if (std::holds_alternative<std::string_view>(segment))
 		{
-			errorPath.emplace_back(
-				response::Value { std::string { std::get<std::string_view>(segment) } });
+			result.push_back(response::ValueToken::StringValue {
+				std::string { std::get<std::string_view>(segment) } });
 		}
-		else if (std::holds_alternative<size_t>(segment))
+		else if (std::holds_alternative<std::size_t>(segment))
 		{
-			errorPath.emplace_back(response::Value(static_cast<int>(std::get<size_t>(segment))));
+			result.push_back(response::ValueToken::IntValue {
+				static_cast<int>(std::get<std::size_t>(segment)) });
 		}
 	}
 
-	error.emplace_back(std::string { strPath }, std::move(errorPath));
+	result.push_back(response::ValueToken::EndArray {});
+
+	return result;
 }
 
 error_path buildErrorPath(const std::optional<field_path>& path)
@@ -82,8 +105,7 @@ error_path buildErrorPath(const std::optional<field_path>& path)
 		}
 
 		result.reserve(segments.size());
-		std::transform(segments.cbegin(),
-			segments.cend(),
+		std::ranges::transform(segments,
 			std::back_inserter(result),
 			[](const auto& segment) noexcept {
 				return segment.get();
@@ -95,21 +117,29 @@ error_path buildErrorPath(const std::optional<field_path>& path)
 
 response::Value buildErrorValues(std::list<schema_error>&& structuredErrors)
 {
-	response::Value errors(response::Type::List);
+	return visitErrorValues(std::move(structuredErrors)).value();
+}
 
-	errors.reserve(structuredErrors.size());
+response::ValueTokenStream visitErrorValues(std::list<schema_error>&& structuredErrors)
+{
+	response::ValueTokenStream errors;
+
+	errors.push_back(response::ValueToken::StartArray {});
+	errors.push_back(response::ValueToken::Reserve { structuredErrors.size() });
 
 	for (auto& error : structuredErrors)
 	{
-		response::Value entry(response::Type::Map);
+		errors.push_back(response::ValueToken::StartObject {});
+		errors.push_back(response::ValueToken::Reserve { 3 });
 
-		entry.reserve(3);
-		addErrorMessage(std::move(error.message), entry);
-		addErrorLocation(error.location, entry);
-		addErrorPath(error.path, entry);
+		errors.append(addErrorMessage(std::move(error.message)));
+		errors.append(addErrorLocation(error.location));
+		errors.append(addErrorPath(error.path));
 
-		errors.emplace_back(std::move(entry));
+		errors.push_back(response::ValueToken::EndObject {});
 	}
+
+	errors.push_back(response::ValueToken::EndArray {});
 
 	return errors;
 }
@@ -129,12 +159,9 @@ std::list<schema_error> schema_exception::convertMessages(
 {
 	std::list<schema_error> errors;
 
-	std::transform(messages.begin(),
-		messages.end(),
-		std::back_inserter(errors),
-		[](std::string& message) noexcept {
-			return schema_error { std::move(message) };
-		});
+	std::ranges::transform(messages, std::back_inserter(errors), [](std::string& message) noexcept {
+		return schema_error { std::move(message) };
+	});
 
 	return errors;
 }
@@ -170,19 +197,13 @@ unimplemented_method::unimplemented_method(std::string_view methodName)
 
 std::string unimplemented_method::getMessage(std::string_view methodName) noexcept
 {
-	using namespace std::literals;
-
-	std::ostringstream oss;
-
-	oss << methodName << R"ex( is not implemented)ex"sv;
-
-	return oss.str();
+	return std::format(R"ex({} is not implemented)ex", methodName);
 }
 
-void await_worker_thread::await_suspend(coro::coroutine_handle<> h) const
+void await_worker_thread::await_suspend(std::coroutine_handle<> h) const
 {
 	std::thread(
-		[](coro::coroutine_handle<>&& h) {
+		[](std::coroutine_handle<>&& h) {
 			h.resume();
 		},
 		std::move(h))
@@ -213,7 +234,7 @@ bool await_worker_queue::await_ready() const
 	return std::this_thread::get_id() != _startId;
 }
 
-void await_worker_queue::await_suspend(coro::coroutine_handle<> h)
+void await_worker_queue::await_suspend(std::coroutine_handle<> h)
 {
 	std::unique_lock lock { _mutex };
 
@@ -232,7 +253,7 @@ void await_worker_queue::resumePending()
 			return _shutdown || !_pending.empty();
 		});
 
-		std::list<coro::coroutine_handle<>> pending;
+		std::list<std::coroutine_handle<>> pending;
 
 		std::swap(pending, _pending);
 
@@ -250,7 +271,7 @@ void await_worker_queue::resumePending()
 // Default to immediate synchronous execution.
 await_async::await_async()
 	: _pimpl { std::static_pointer_cast<const Concept>(
-		std::make_shared<Model<coro::suspend_never>>(std::make_shared<coro::suspend_never>())) }
+		  std::make_shared<Model<std::suspend_never>>(std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -258,9 +279,9 @@ await_async::await_async()
 await_async::await_async(std::launch launch)
 	: _pimpl { ((launch & std::launch::async) == std::launch::async)
 			? std::static_pointer_cast<const Concept>(std::make_shared<Model<await_worker_thread>>(
-				std::make_shared<await_worker_thread>()))
-			: std::static_pointer_cast<const Concept>(std::make_shared<Model<coro::suspend_never>>(
-				std::make_shared<coro::suspend_never>())) }
+				  std::make_shared<await_worker_thread>()))
+			: std::static_pointer_cast<const Concept>(std::make_shared<Model<std::suspend_never>>(
+				  std::make_shared<std::suspend_never>())) }
 {
 }
 
@@ -269,7 +290,7 @@ bool await_async::await_ready() const
 	return _pimpl->await_ready();
 }
 
-void await_async::await_suspend(coro::coroutine_handle<> h) const
+void await_async::await_suspend(std::coroutine_handle<> h) const
 {
 	_pimpl->await_suspend(std::move(h));
 }
@@ -371,12 +392,10 @@ void ValueVisitor::visitVariable(const peg::ast_node& variable)
 	if (itr == _variables.get<response::MapType>().cend())
 	{
 		auto position = variable.begin();
-		std::ostringstream error;
-
-		error << "Unknown variable name: " << name;
+		auto error = std::format("Unknown variable name: {}", name);
 
 		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column } } }
+			{ schema_error { std::move(error), { position.line, position.column } } }
 		};
 	}
 
@@ -535,11 +554,9 @@ bool DirectiveVisitor::shouldSkip() const
 
 		if (arguments.type() != response::Type::Map)
 		{
-			std::ostringstream error;
+			auto error = std::format("Invalid arguments to directive: {}", directiveName);
 
-			error << "Invalid arguments to directive: " << directiveName;
-
-			throw schema_exception { { error.str() } };
+			throw schema_exception { { std::move(error) } };
 		}
 
 		bool argumentTrue = false;
@@ -550,12 +567,11 @@ bool DirectiveVisitor::shouldSkip() const
 			if (argumentTrue || argumentFalse || argumentValue.type() != response::Type::Boolean
 				|| argumentName != "if")
 			{
-				std::ostringstream error;
+				auto error = std::format("Invalid argument to directive: {} name: {}",
+					directiveName,
+					argumentName);
 
-				error << "Invalid argument to directive: " << directiveName
-					  << " name: " << argumentName;
-
-				throw schema_exception { { error.str() } };
+				throw schema_exception { { std::move(error) } };
 			}
 
 			argumentTrue = argumentValue.get<bool>();
@@ -572,11 +588,9 @@ bool DirectiveVisitor::shouldSkip() const
 		}
 		else
 		{
-			std::ostringstream error;
+			auto error = std::format("Missing argument directive: {} name: if", directiveName);
 
-			error << "Missing argument directive: " << directiveName << " name: if";
-
-			throw schema_exception { { error.str() } };
+			throw schema_exception { { std::move(error) } };
 		}
 	}
 
@@ -631,6 +645,29 @@ schema_location ResolverParams::getLocation() const
 	auto position = field.begin();
 
 	return { position.line, position.column };
+}
+
+response::Value ResolverResult::document() &&
+{
+	return std::move(*this).visit().value();
+}
+
+response::ValueTokenStream ResolverResult::visit() &&
+{
+	response::ValueTokenStream result { response::ValueToken::StartObject {} };
+
+	result.push_back(response::ValueToken::AddMember { std::string { strData } });
+	result.append(std::move(data));
+
+	if (!errors.empty())
+	{
+		result.push_back(response::ValueToken::AddMember { std::string { strErrors } });
+		result.append(visitErrorValues(std::move(errors)));
+	}
+
+	result.push_back(response::ValueToken::EndObject {});
+
+	return result;
 }
 
 template <>
@@ -700,11 +737,9 @@ void blockSubFields(const ResolverParams& params)
 	if (params.selection != nullptr)
 	{
 		auto position = params.selection->begin();
-		std::ostringstream error;
+		auto error = std::format("Field may not have sub-fields name: {}", params.fieldName);
 
-		error << "Field may not have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error { error.str(),
+		throw schema_exception { { schema_error { std::move(error),
 			{ position.line, position.column },
 			buildErrorPath(params.errorPath) } } };
 	}
@@ -718,7 +753,7 @@ AwaitableResolver Result<int>::convert(AwaitableScalar<int> result, ResolverPara
 	return ModifiedResult<int>::resolve(std::move(result),
 		std::move(params),
 		[](int&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { response::ValueToken::IntValue { value } } };
 		});
 }
 
@@ -730,7 +765,7 @@ AwaitableResolver Result<double>::convert(AwaitableScalar<double> result, Resolv
 	return ModifiedResult<double>::resolve(std::move(result),
 		std::move(params),
 		[](double&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { response::ValueToken::FloatValue { value } } };
 		});
 }
 
@@ -743,7 +778,7 @@ AwaitableResolver Result<std::string>::convert(
 	return ModifiedResult<std::string>::resolve(std::move(result),
 		std::move(params),
 		[](std::string&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { response::ValueToken::StringValue { std::move(value) } } };
 		});
 }
 
@@ -755,7 +790,7 @@ AwaitableResolver Result<bool>::convert(AwaitableScalar<bool> result, ResolverPa
 	return ModifiedResult<bool>::resolve(std::move(result),
 		std::move(params),
 		[](bool&& value, const ResolverParams&) {
-			return response::Value(value);
+			return ResolverResult { { response::ValueToken::BoolValue { value } } };
 		});
 }
 
@@ -768,7 +803,8 @@ AwaitableResolver Result<response::Value>::convert(
 	return ModifiedResult<response::Value>::resolve(std::move(result),
 		std::move(params),
 		[](response::Value&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { response::ValueToken::OpaqueValue {
+				std::make_shared<response::Value>(std::move(value)) } } };
 		});
 }
 
@@ -781,7 +817,7 @@ AwaitableResolver Result<response::IdType>::convert(
 	return ModifiedResult<response::IdType>::resolve(std::move(result),
 		std::move(params),
 		[](response::IdType&& value, const ResolverParams&) {
-			return response::Value(std::move(value));
+			return ResolverResult { { response::ValueToken::IdValue { std::move(value) } } };
 		});
 }
 
@@ -791,11 +827,9 @@ void requireSubFields(const ResolverParams& params)
 	if (params.selection == nullptr)
 	{
 		auto position = params.field.begin();
-		std::ostringstream error;
+		auto error = std::format("Field must have sub-fields name: {}", params.fieldName);
 
-		error << "Field must have sub-fields name: " << params.fieldName;
-
-		throw schema_exception { { schema_error { error.str(),
+		throw schema_exception { { schema_error { std::move(error),
 			{ position.line, position.column },
 			buildErrorPath(params.errorPath) } } };
 	}
@@ -816,7 +850,7 @@ AwaitableResolver Result<Object>::convert(
 
 	if (!awaitedResult)
 	{
-		co_return ResolverResult {};
+		co_return ResolverResult { { response::ValueToken::NullValue {} } };
 	}
 
 	auto document = co_await awaitedResult->resolve(params,
@@ -885,7 +919,7 @@ class SelectionVisitor
 public:
 	explicit SelectionVisitor(const SelectionSetParams& selectionSetParams,
 		const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
-		const ResolverMap& resolvers, size_t count);
+		const ResolverMap& resolvers, std::size_t count);
 
 	void visit(const peg::ast_node& selection);
 
@@ -913,6 +947,8 @@ private:
 	const TypeNames& _typeNames;
 	const ResolverMap& _resolvers;
 
+	static const Directives s_emptyFragmentDefinitionDirectives;
+
 	std::shared_ptr<FragmentDefinitionDirectiveStack> _fragmentDefinitionDirectives;
 	std::shared_ptr<FragmentSpreadDirectiveStack> _fragmentSpreadDirectives;
 	std::shared_ptr<FragmentSpreadDirectiveStack> _inlineFragmentDirectives;
@@ -920,9 +956,11 @@ private:
 	std::vector<VisitorValue> _values;
 };
 
+const Directives SelectionVisitor::s_emptyFragmentDefinitionDirectives {};
+
 SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	const FragmentMap& fragments, const response::Value& variables, const TypeNames& typeNames,
-	const ResolverMap& resolvers, size_t count)
+	const ResolverMap& resolvers, std::size_t count)
 	: _resolverContext(selectionSetParams.resolverContext)
 	, _state(selectionSetParams.state)
 	, _operationDirectives(selectionSetParams.operationDirectives)
@@ -934,19 +972,17 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	, _variables(variables)
 	, _typeNames(typeNames)
 	, _resolvers(resolvers)
-	, _fragmentDefinitionDirectives { selectionSetParams.fragmentDefinitionDirectives }
-	, _fragmentSpreadDirectives { selectionSetParams.fragmentSpreadDirectives }
-	, _inlineFragmentDirectives { selectionSetParams.inlineFragmentDirectives }
+	, _fragmentDefinitionDirectives { std::make_shared<FragmentDefinitionDirectiveStack>(
+		  FragmentDefinitionDirectiveStack { std::cref(s_emptyFragmentDefinitionDirectives),
+			  selectionSetParams.fragmentDefinitionDirectives }) }
+	, _fragmentSpreadDirectives { std::make_shared<FragmentSpreadDirectiveStack>(
+		  FragmentSpreadDirectiveStack { {}, selectionSetParams.fragmentSpreadDirectives }) }
+	, _inlineFragmentDirectives { std::make_shared<FragmentSpreadDirectiveStack>(
+		  FragmentSpreadDirectiveStack { {}, selectionSetParams.inlineFragmentDirectives }) }
 {
-	static const Directives s_emptyFragmentDefinitionDirectives;
-
 	// Traversing a SelectionSet from an Object type field should start tracking new fragment
 	// directives. The outer fragment directives are still there in the FragmentSpreadDirectiveStack
 	// if the field accessors want to inspect them.
-	_fragmentDefinitionDirectives->push_front(std::cref(s_emptyFragmentDefinitionDirectives));
-	_fragmentSpreadDirectives->push_front({});
-	_inlineFragmentDirectives->push_front({});
-
 	_names.reserve(count);
 	_values.reserve(count);
 }
@@ -1007,12 +1043,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	{
 		std::promise<ResolverResult> promise;
 		auto position = field.begin();
-		std::ostringstream error;
-
-		error << "Unknown field name: " << name;
+		auto error = std::format("Unknown field name: {}", name);
 
 		promise.set_exception(
-			std::make_exception_ptr(schema_exception { { schema_error { error.str(),
+			std::make_exception_ptr(schema_exception { { schema_error { std::move(error),
 				{ position.line, position.column },
 				buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } }));
 
@@ -1101,12 +1135,10 @@ void SelectionVisitor::visitField(const peg::ast_node& field)
 	catch (const std::exception& ex)
 	{
 		std::promise<ResolverResult> promise;
-		std::ostringstream message;
-
-		message << "Field error name: " << alias << " unknown error: " << ex.what();
+		auto message = std::format("Field error name: {} unknown error: {}", alias, ex.what());
 
 		promise.set_exception(
-			std::make_exception_ptr(schema_exception { { schema_error { message.str(),
+			std::make_exception_ptr(schema_exception { { schema_error { std::move(message),
 				{ position.line, position.column },
 				buildErrorPath(selectionSetParams.errorPath) } } }));
 
@@ -1122,11 +1154,9 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 	if (itr == _fragments.end())
 	{
 		auto position = fragmentSpread.begin();
-		std::ostringstream error;
+		auto error = std::format("Unknown fragment name: {}", name);
 
-		error << "Unknown fragment name: " << name;
-
-		throw schema_exception { { schema_error { error.str(),
+		throw schema_exception { { schema_error { std::move(error),
 			{ position.line, position.column },
 			buildErrorPath(_path ? std::make_optional(_path->get()) : std::nullopt) } } };
 	}
@@ -1149,10 +1179,14 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		return;
 	}
 
-	_fragmentDefinitionDirectives->push_front(itr->second.getDirectives());
-	_fragmentSpreadDirectives->push_front(directiveVisitor.getDirectives());
+	_fragmentDefinitionDirectives = std::make_shared<FragmentDefinitionDirectiveStack>(
+		FragmentDefinitionDirectiveStack { itr->second.getDirectives(),
+			_fragmentDefinitionDirectives });
+	_fragmentSpreadDirectives = std::make_shared<FragmentSpreadDirectiveStack>(
+		FragmentSpreadDirectiveStack { directiveVisitor.getDirectives(),
+			_fragmentSpreadDirectives });
 
-	const size_t count = itr->second.getSelection().children.size();
+	const std::size_t count = itr->second.getSelection().children.size();
 
 	if (count > 1)
 	{
@@ -1165,8 +1199,8 @@ void SelectionVisitor::visitFragmentSpread(const peg::ast_node& fragmentSpread)
 		visit(*selection);
 	}
 
-	_fragmentSpreadDirectives->pop_front();
-	_fragmentDefinitionDirectives->pop_front();
+	_fragmentSpreadDirectives = _fragmentSpreadDirectives->outer;
+	_fragmentDefinitionDirectives = _fragmentDefinitionDirectives->outer;
 }
 
 void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
@@ -1195,9 +1229,11 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 	{
 		peg::on_first_child<peg::selection_set>(inlineFragment,
 			[this, &directiveVisitor](const peg::ast_node& child) {
-				_inlineFragmentDirectives->push_front(directiveVisitor.getDirectives());
+				_inlineFragmentDirectives = std::make_shared<FragmentSpreadDirectiveStack>(
+					FragmentSpreadDirectiveStack { directiveVisitor.getDirectives(),
+						_inlineFragmentDirectives });
 
-				const size_t count = child.children.size();
+				const std::size_t count = child.children.size();
 
 				if (count > 1)
 				{
@@ -1210,7 +1246,7 @@ void SelectionVisitor::visitInlineFragment(const peg::ast_node& inlineFragment)
 					visit(*selection);
 				}
 
-				_inlineFragmentDirectives->pop_front();
+				_inlineFragmentDirectives = _inlineFragmentDirectives->outer;
 			});
 	}
 }
@@ -1219,6 +1255,67 @@ Object::Object(TypeNames&& typeNames, ResolverMap&& resolvers) noexcept
 	: _typeNames(std::move(typeNames))
 	, _resolvers(std::move(resolvers))
 {
+}
+
+std::shared_ptr<Object> Object::StitchObject(const std::shared_ptr<const Object>& added,
+	const std::shared_ptr<schema::Schema>& schema /* = {} */) const
+{
+	auto typeNames = _typeNames;
+	auto resolvers = _resolvers;
+
+	if (schema && schema->supportsIntrospection())
+	{
+		constexpr auto schemaField = R"gql(__schema)gql"sv;
+		constexpr auto typeField = R"gql(__type)gql"sv;
+
+		resolvers.erase(schemaField);
+		resolvers.emplace(schemaField, [schema](ResolverParams&& params) {
+			return Result<Object>::convert(
+				std::static_pointer_cast<Object>(std::make_shared<introspection::object::Schema>(
+					std::make_shared<introspection::Schema>(schema))),
+				std::move(params));
+		});
+
+		resolvers.erase(typeField);
+		resolvers.emplace(typeField, [schema](ResolverParams&& params) {
+			auto argName = ModifiedArgument<std::string>::require("name", params.arguments);
+			const auto& baseType = schema->LookupType(argName);
+			std::shared_ptr<introspection::object::Type> result { baseType
+					? std::make_shared<introspection::object::Type>(
+						  std::make_shared<introspection::Type>(baseType))
+					: nullptr };
+
+			return ModifiedResult<introspection::object::Type>::convert<TypeModifier::Nullable>(
+				result,
+				std::move(params));
+		});
+	}
+
+	bool hasStitchedResolvers = false;
+
+	if (added)
+	{
+		for (const auto& name : added->_typeNames)
+		{
+			typeNames.emplace(name);
+		}
+
+		for (const auto& [name, resolver] : added->_resolvers)
+		{
+			hasStitchedResolvers = resolvers.emplace(name, resolver).second || hasStitchedResolvers;
+		}
+	}
+
+	auto object = std::make_shared<Object>(std::move(typeNames), std::move(resolvers));
+
+	object->_stitched[0] = shared_from_this();
+
+	if (hasStitchedResolvers)
+	{
+		object->_stitched[1] = added;
+	}
+
+	return object;
 }
 
 AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
@@ -1243,9 +1340,10 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 	auto children = visitor.getValues();
 	const auto launch = selectionSetParams.launch;
-	ResolverResult document { response::Value { response::Type::Map } };
+	ResolverResult document {};
 
-	document.data.reserve(children.size());
+	document.data.push_back(response::ValueToken::StartObject {});
+	document.data.push_back(response::ValueToken::Reserve { children.size() });
 
 	const auto parent = selectionSetParams.errorPath
 		? std::make_optional(std::cref(*selectionSetParams.errorPath))
@@ -1259,22 +1357,12 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 			auto value = co_await std::move(child.result);
 
-			if (!document.data.emplace_back(std::string { child.name }, std::move(value.data)))
-			{
-				std::ostringstream message;
-
-				message << "Ambiguous field error name: " << child.name;
-
-				field_path path { parent, path_segment { child.name } };
-
-				document.errors.push_back({ message.str(),
-					child.location.value_or(schema_location {}),
-					buildErrorPath(std::make_optional(path)) });
-			}
+			document.data.push_back(response::ValueToken::AddMember { std::string { child.name } });
+			document.data.append(std::move(value.data));
 
 			if (!value.errors.empty())
 			{
-				document.errors.splice(document.errors.end(), value.errors);
+				document.errors.splice(document.errors.end(), std::move(value.errors));
 			}
 		}
 		catch (schema_exception& scx)
@@ -1283,25 +1371,27 @@ AwaitableResolver Object::resolve(const SelectionSetParams& selectionSetParams,
 
 			if (!errors.empty())
 			{
-				std::copy(errors.begin(), errors.end(), std::back_inserter(document.errors));
+				std::ranges::copy(errors, std::back_inserter(document.errors));
 			}
 
-			document.data.emplace_back(std::string { child.name }, {});
+			document.data.push_back(response::ValueToken::AddMember { std::string { child.name } });
+			document.data.push_back(response::ValueToken::NullValue {});
 		}
 		catch (const std::exception& ex)
 		{
-			std::ostringstream message;
-
-			message << "Field error name: " << child.name << " unknown error: " << ex.what();
-
+			auto message =
+				std::format("Field error name: {} unknown error: {}", child.name, ex.what());
 			field_path path { parent, path_segment { child.name } };
 
-			document.errors.push_back({ message.str(),
+			document.errors.push_back({ std::move(message),
 				child.location.value_or(schema_location {}),
 				buildErrorPath(std::make_optional(path)) });
-			document.data.emplace_back(std::string { child.name }, {});
+			document.data.push_back(response::ValueToken::AddMember { std::string { child.name } });
+			document.data.push_back(response::ValueToken::NullValue {});
 		}
 	}
+
+	document.data.push_back(response::ValueToken::EndObject {});
 
 	co_return std::move(document);
 }
@@ -1400,7 +1490,7 @@ AwaitableResolver OperationDefinitionVisitor::getValue()
 {
 	if (!_result)
 	{
-		co_return ResolverResult {};
+		co_return ResolverResult { { response::ValueToken::NullValue {} } };
 	}
 
 	auto result = std::move(*_result);
@@ -1466,9 +1556,9 @@ void OperationDefinitionVisitor::visit(
 		_resolverContext,
 		_params->state,
 		_params->directives,
-		std::make_shared<FragmentDefinitionDirectiveStack>(),
-		std::make_shared<FragmentSpreadDirectiveStack>(),
-		std::make_shared<FragmentSpreadDirectiveStack>(),
+		std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+		std::shared_ptr<FragmentSpreadDirectiveStack> {},
+		std::shared_ptr<FragmentSpreadDirectiveStack> {},
 		std::nullopt,
 		_launch,
 	};
@@ -1481,7 +1571,8 @@ void OperationDefinitionVisitor::visit(
 
 SubscriptionData::SubscriptionData(std::shared_ptr<OperationData> data, SubscriptionName&& field,
 	response::Value arguments, Directives fieldDirectives, peg::ast&& query,
-	std::string&& operationName, SubscriptionCallback&& callback, const peg::ast_node& selection)
+	std::string&& operationName, SubscriptionCallbackOrVisitor&& callback,
+	const peg::ast_node& selection)
 	: data(std::move(data))
 	, field(std::move(field))
 	, arguments(std::move(arguments))
@@ -1598,12 +1689,10 @@ void SubscriptionDefinitionVisitor::visitField(const peg::ast_node& field)
 	if (!_field.empty())
 	{
 		auto position = field.begin();
-		std::ostringstream error;
-
-		error << "Extra subscription root field name: " << name;
+		auto error = std::format("Extra subscription root field name: {}", name);
 
 		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column } } }
+			{ schema_error { std::move(error), { position.line, position.column } } }
 		};
 	}
 
@@ -1645,12 +1734,10 @@ void SubscriptionDefinitionVisitor::visitFragmentSpread(const peg::ast_node& fra
 	if (itr == _fragments.end())
 	{
 		auto position = fragmentSpread.begin();
-		std::ostringstream error;
-
-		error << "Unknown fragment name: " << name;
+		auto error = std::format("Unknown fragment name: {}", name);
 
 		throw schema_exception {
-			{ schema_error { error.str(), { position.line, position.column } } }
+			{ schema_error { std::move(error), { position.line, position.column } } }
 		};
 	}
 
@@ -1713,6 +1800,7 @@ void SubscriptionDefinitionVisitor::visitInlineFragment(const peg::ast_node& inl
 
 Request::Request(TypeMap operationTypes, std::shared_ptr<schema::Schema> schema)
 	: _operations(std::move(operationTypes))
+	, _schema(schema)
 	, _validation(std::make_unique<ValidateExecutableVisitor>(std::move(schema)))
 {
 }
@@ -1722,6 +1810,98 @@ Request::~Request()
 	// The default implementation is fine, but it can't be declared as = default because it
 	// needs to know how to destroy the _validation member and it can't do that with just a
 	// forward declaration of the class.
+}
+
+std::shared_ptr<const Request> Request::stitch(const std::shared_ptr<const Request>& added) const
+{
+	TypeMap operations;
+	auto schema = _schema->StitchSchema(added->_schema);
+	std::shared_ptr<const Object> query;
+	auto itrOriginalQuery = _operations.find(strQuery);
+	auto itrAddedQuery = added->_operations.find(strQuery);
+
+	if (itrOriginalQuery != _operations.end() && itrOriginalQuery->second)
+	{
+		if (itrAddedQuery != added->_operations.end() && itrAddedQuery->second)
+		{
+			query = itrOriginalQuery->second->StitchObject(itrAddedQuery->second, schema);
+		}
+		else
+		{
+			query = itrOriginalQuery->second->StitchObject({}, schema);
+		}
+	}
+	else if (itrAddedQuery != added->_operations.end() && itrAddedQuery->second)
+	{
+		query = itrAddedQuery->second->StitchObject({}, schema);
+	}
+
+	if (query)
+	{
+		operations.emplace(strQuery, std::move(query));
+	}
+
+	std::shared_ptr<const Object> mutation;
+	auto itrOriginalMutation = _operations.find(strMutation);
+	auto itrAddedMutation = added->_operations.find(strMutation);
+
+	if (itrOriginalMutation != _operations.end() && itrOriginalMutation->second)
+	{
+		if (itrAddedMutation != added->_operations.end() && itrAddedMutation->second)
+		{
+			mutation = itrOriginalMutation->second->StitchObject(itrAddedMutation->second);
+		}
+		else
+		{
+			mutation = itrOriginalMutation->second;
+		}
+	}
+	else if (itrAddedMutation != added->_operations.end() && itrAddedMutation->second)
+	{
+		mutation = itrAddedMutation->second;
+	}
+
+	if (mutation)
+	{
+		operations.emplace(strMutation, std::move(mutation));
+	}
+
+	std::shared_ptr<const Object> subscription;
+	auto itrOriginalSubscription = _operations.find(strSubscription);
+	auto itrAddedSubscription = added->_operations.find(strSubscription);
+
+	if (itrOriginalSubscription != _operations.end() && itrOriginalSubscription->second)
+	{
+		if (itrAddedSubscription != added->_operations.end() && itrAddedSubscription->second)
+		{
+			subscription =
+				itrOriginalSubscription->second->StitchObject(itrAddedSubscription->second);
+		}
+		else
+		{
+			subscription = itrOriginalSubscription->second;
+		}
+	}
+	else if (itrAddedSubscription != added->_operations.end() && itrAddedSubscription->second)
+	{
+		subscription = itrAddedSubscription->second;
+	}
+
+	if (subscription)
+	{
+		operations.emplace(strSubscription, std::move(subscription));
+	}
+
+	class StitchedRequest : public Request
+	{
+	public:
+		StitchedRequest(TypeMap operations, std::shared_ptr<schema::Schema> schema)
+			: Request { std::move(operations), std::move(schema) }
+		{
+		}
+	};
+
+	return std::make_shared<StitchedRequest>(std::move(operations), std::move(schema));
 }
 
 std::list<schema_error> Request::validate(peg::ast& query) const
@@ -1783,6 +1963,11 @@ std::pair<std::string_view, const peg::ast_node*> Request::findOperationDefiniti
 
 response::AwaitableValue Request::resolve(RequestResolveParams params) const
 {
+	co_return (co_await visit(std::move(params))).document();
+}
+
+AwaitableResolver Request::visit(RequestResolveParams params) const
+{
 	try
 	{
 		FragmentDefinitionVisitor fragmentVisitor(params.variables);
@@ -1798,31 +1983,27 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 
 		if (!operationDefinition)
 		{
-			std::ostringstream message;
-
-			message << "Missing operation";
+			auto message = "Missing operation"s;
 
 			if (!params.operationName.empty())
 			{
-				message << " name: " << params.operationName;
+				message += std::format(" name: {}", params.operationName);
 			}
 
-			throw schema_exception { { message.str() } };
+			throw schema_exception { { std::move(message) } };
 		}
 		else if (operationType == strSubscription)
 		{
 			auto position = operationDefinition->begin();
-			std::ostringstream message;
-
-			message << "Unexpected subscription";
+			auto message = "Unexpected subscription"s;
 
 			if (!params.operationName.empty())
 			{
-				message << " name: " << params.operationName;
+				message += std::format(" name: {}", params.operationName);
 			}
 
 			throw schema_exception {
-				{ schema_error { message.str(), { position.line, position.column } } }
+				{ schema_error { std::move(message), { position.line, position.column } } }
 			};
 		}
 
@@ -1842,27 +2023,11 @@ response::AwaitableValue Request::resolve(RequestResolveParams params) const
 		co_await params.launch;
 		operationVisitor.visit(operationType, *operationDefinition);
 
-		auto result = co_await operationVisitor.getValue();
-		response::Value document { response::Type::Map };
-
-		document.emplace_back(std::string { strData }, std::move(result.data));
-
-		if (!result.errors.empty())
-		{
-			document.emplace_back(std::string { strErrors },
-				buildErrorValues(std::move(result.errors)));
-		}
-
-		co_return std::move(document);
+		co_return co_await operationVisitor.getValue();
 	}
 	catch (schema_exception& ex)
 	{
-		response::Value document(response::Type::Map);
-
-		document.emplace_back(std::string { strData }, response::Value());
-		document.emplace_back(std::string { strErrors }, ex.getErrors());
-
-		co_return std::move(document);
+		co_return { {}, ex.getStructuredErrors() };
 	}
 }
 
@@ -1891,10 +2056,10 @@ AwaitableSubscribe Request::subscribe(RequestSubscribeParams params)
 			ResolverContext::NotifySubscribe,
 			registration->data->state,
 			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			{},
+			std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::nullopt,
 			launch,
 		};
 
@@ -1953,10 +2118,10 @@ AwaitableUnsubscribe Request::unsubscribe(RequestUnsubscribeParams params)
 			ResolverContext::NotifyUnsubscribe,
 			registration->data->state,
 			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			{},
+			std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::nullopt,
 			params.launch,
 		};
 
@@ -2016,39 +2181,43 @@ AwaitableDeliver Request::deliver(RequestDeliverParams params) const
 			ResolverContext::Subscription,
 			registration->data->state,
 			registration->data->directives,
-			std::make_shared<FragmentDefinitionDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
-			std::make_shared<FragmentSpreadDirectiveStack>(),
+			std::shared_ptr<FragmentDefinitionDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
+			std::shared_ptr<FragmentSpreadDirectiveStack> {},
 			std::nullopt,
 			params.launch,
 		};
 
-		response::Value document { response::Type::Map };
+		ResolverResult document {};
 
 		try
 		{
 			co_await params.launch;
 
-			auto result = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
+			document = co_await optionalOrDefaultSubscription->resolve(selectionSetParams,
 				registration->selection,
 				registration->data->fragments,
 				registration->data->variables);
-
-			document.emplace_back(std::string { strData }, std::move(result.data));
-
-			if (!result.errors.empty())
-			{
-				document.emplace_back(std::string { strErrors },
-					buildErrorValues(std::move(result.errors)));
-			}
 		}
 		catch (schema_exception& ex)
 		{
-			document.emplace_back(std::string { strData }, response::Value());
-			document.emplace_back(std::string { strErrors }, ex.getErrors());
+			document.errors.splice(document.errors.end(), ex.getStructuredErrors());
 		}
 
-		registration->callback(std::move(document));
+		std::visit(
+			[result = std::move(document)](const auto& callback) mutable {
+				using callback_type = std::decay_t<decltype(callback)>;
+
+				if constexpr (std::is_same_v<callback_type, SubscriptionCallback>)
+				{
+					callback(std::move(result).document());
+				}
+				else if constexpr (std::is_same_v<callback_type, SubscriptionVisitor>)
+				{
+					callback(std::move(result));
+				}
+			},
+			registration->callback);
 	}
 
 	co_return;
@@ -2076,31 +2245,27 @@ SubscriptionKey Request::addSubscription(RequestSubscribeParams&& params)
 
 	if (!operationDefinition)
 	{
-		std::ostringstream message;
-
-		message << "Missing subscription";
+		auto message = "Missing subscription"s;
 
 		if (!params.operationName.empty())
 		{
-			message << " name: " << params.operationName;
+			message += std::format(" name: {}", params.operationName);
 		}
 
-		throw schema_exception { { message.str() } };
+		throw schema_exception { { std::move(message) } };
 	}
 	else if (operationType != strSubscription)
 	{
 		auto position = operationDefinition->begin();
-		std::ostringstream message;
-
-		message << "Unexpected operation type: " << operationType;
+		auto message = std::format("Unexpected operation type: {}", operationType);
 
 		if (!params.operationName.empty())
 		{
-			message << " name: " << params.operationName;
+			message += std::format(" name: {}", params.operationName);
 		}
 
 		throw schema_exception {
-			{ schema_error { message.str(), { position.line, position.column } } }
+			{ schema_error { std::move(message), { position.line, position.column } } }
 		};
 	}
 
@@ -2166,8 +2331,7 @@ std::vector<std::shared_ptr<const SubscriptionData>> Request::collectRegistratio
 		{
 			// Return all of the registered subscriptions for this field.
 			registrations.reserve(itrListeners->second.size());
-			std::transform(itrListeners->second.begin(),
-				itrListeners->second.end(),
+			std::ranges::transform(itrListeners->second,
 				std::back_inserter(registrations),
 				[this](const auto& key) noexcept {
 					const auto itr = _subscriptions.find(key);

@@ -87,6 +87,7 @@ input CompleteTaskInput {
     testTaskState: TaskState
     isComplete: Boolean = true
     clientMutationId: String
+    boolList: [Boolean!]
 }
 
 type CompleteTaskPayload {
@@ -131,6 +132,7 @@ type Appointment implements Node {
     subject: String
     isNow: Boolean!
     forceError: String
+    array: [ID!]!
 }
 
 type Task implements Node {

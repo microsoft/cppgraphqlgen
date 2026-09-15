@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef HUMANOBJECT_H
-#define HUMANOBJECT_H
+#ifndef STARWARS_HUMANOBJECT_H
+#define STARWARS_HUMANOBJECT_H
 
 #include "StarWarsSchema.h"
 
@@ -248,4 +248,4 @@ public:
 
 } // namespace graphql::learn::object
 
-#endif // HUMANOBJECT_H
+#endif // STARWARS_HUMANOBJECT_H

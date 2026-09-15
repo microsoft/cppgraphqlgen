@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef MUTATIONOBJECT_H
-#define MUTATIONOBJECT_H
+#ifndef VALIDATION_MUTATIONOBJECT_H
+#define VALIDATION_MUTATIONOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -127,4 +127,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // MUTATIONOBJECT_H
+#endif // VALIDATION_MUTATIONOBJECT_H

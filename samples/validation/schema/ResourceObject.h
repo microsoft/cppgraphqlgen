@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef RESOURCEOBJECT_H
-#define RESOURCEOBJECT_H
+#ifndef VALIDATION_RESOURCEOBJECT_H
+#define VALIDATION_RESOURCEOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // RESOURCEOBJECT_H
+#endif // VALIDATION_RESOURCEOBJECT_H

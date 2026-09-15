@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef QUERYOBJECT_H
-#define QUERYOBJECT_H
+#ifndef STARWARS_QUERYOBJECT_H
+#define STARWARS_QUERYOBJECT_H
 
 #include "StarWarsSchema.h"
 
@@ -182,4 +182,4 @@ public:
 
 } // namespace graphql::learn::object
 
-#endif // QUERYOBJECT_H
+#endif // STARWARS_QUERYOBJECT_H

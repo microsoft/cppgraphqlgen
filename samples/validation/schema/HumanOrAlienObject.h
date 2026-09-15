@@ -5,8 +5,8 @@
 
 #pragma once
 
-#ifndef HUMANORALIENOBJECT_H
-#define HUMANORALIENOBJECT_H
+#ifndef VALIDATION_HUMANORALIENOBJECT_H
+#define VALIDATION_HUMANORALIENOBJECT_H
 
 #include "ValidationSchema.h"
 
@@ -78,4 +78,4 @@ public:
 
 } // namespace graphql::validation::object
 
-#endif // HUMANORALIENOBJECT_H
+#endif // VALIDATION_HUMANORALIENOBJECT_H

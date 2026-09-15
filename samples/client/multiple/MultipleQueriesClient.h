@@ -14,20 +14,18 @@
 
 #include "graphqlservice/internal/Version.h"
 
-// Check if the library version is compatible with clientgen 4.5.0
-static_assert(graphql::internal::MajorVersion == 4, "regenerate with clientgen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with clientgen: minor version mismatch");
-
 #include <optional>
 #include <string>
 #include <vector>
 
-namespace graphql::client {
+// Check if the library version is compatible with clientgen 5.0.0
+static_assert(graphql::internal::MajorVersion == 5, "regenerate with clientgen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 0, "regenerate with clientgen: minor version mismatch");
 
-/// <summary>
-/// Operations: query Appointments, query Tasks, query UnreadCounts, query Miscellaneous, mutation CompleteTaskMutation
-/// </summary>
-/// <code class="language-graphql">
+namespace graphql::multiple {
+
+/// # Operations: query Appointments, query Tasks, query UnreadCounts, query Miscellaneous, mutation CompleteTaskMutation
+/// ```graphql
 /// # Copyright (c) Microsoft Corporation. All rights reserved.
 /// # Licensed under the MIT License.
 /// 
@@ -108,14 +106,16 @@ namespace graphql::client {
 ///     clientMutationId @skip(if: $skipClientMutationId)
 ///   }
 /// }
-/// </code>
-namespace multiple {
+/// ```
+namespace client {
 
 // Return the original text of the request document.
 [[nodiscard("unnecessary call")]] const std::string& GetRequestText() noexcept;
 
 // Return a pre-parsed, pre-validated request object.
 [[nodiscard("unnecessary call")]] const peg::ast& GetRequestObject() noexcept;
+
+} // namespace client
 
 enum class [[nodiscard("unnecessary conversion")]] TaskState
 {
@@ -132,7 +132,8 @@ struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 		response::IdType idArg,
 		std::optional<TaskState> testTaskStateArg,
 		std::optional<bool> isCompleteArg,
-		std::optional<std::string> clientMutationIdArg) noexcept;
+		std::optional<std::string> clientMutationIdArg,
+		std::optional<std::vector<bool>> boolListArg) noexcept;
 	CompleteTaskInput(const CompleteTaskInput& other);
 	CompleteTaskInput(CompleteTaskInput&& other) noexcept;
 	~CompleteTaskInput();
@@ -144,14 +145,15 @@ struct [[nodiscard("unnecessary construction")]] CompleteTaskInput
 	std::optional<TaskState> testTaskState;
 	std::optional<bool> isComplete;
 	std::optional<std::string> clientMutationId;
+	std::optional<std::vector<bool>> boolList;
 };
 
-} // namespace multiple
+namespace client {
 
 namespace query::Appointments {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -180,6 +182,37 @@ struct [[nodiscard("unnecessary construction")]] Response
 	appointments_AppointmentConnection appointments {};
 };
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -189,6 +222,7 @@ struct Traits
 	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Appointments::Response;
+	using ResponseVisitor = Appointments::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
@@ -197,8 +231,8 @@ struct Traits
 
 namespace query::Tasks {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -226,6 +260,37 @@ struct [[nodiscard("unnecessary construction")]] Response
 	tasks_TaskConnection tasks {};
 };
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -235,6 +300,7 @@ struct Traits
 	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Tasks::Response;
+	using ResponseVisitor = Tasks::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
@@ -243,8 +309,8 @@ struct Traits
 
 namespace query::UnreadCounts {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
@@ -272,6 +338,37 @@ struct [[nodiscard("unnecessary construction")]] Response
 	unreadCounts_FolderConnection unreadCounts {};
 };
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -281,6 +378,7 @@ struct Traits
 	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = UnreadCounts::Response;
+	using ResponseVisitor = UnreadCounts::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
@@ -289,13 +387,13 @@ struct Traits
 
 namespace query::Miscellaneous {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-using multiple::TaskState;
+using graphql::multiple::TaskState;
 
 struct [[nodiscard("unnecessary construction")]] Response
 {
@@ -315,6 +413,37 @@ struct [[nodiscard("unnecessary construction")]] Response
 	std::optional<std::string> default_ {};
 };
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -324,6 +453,7 @@ struct Traits
 	[[nodiscard("unnecessary call")]] static const std::string& GetOperationName() noexcept;
 
 	using Response = Miscellaneous::Response;
+	using ResponseVisitor = Miscellaneous::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
@@ -332,15 +462,15 @@ struct Traits
 
 namespace mutation::CompleteTaskMutation {
 
-using multiple::GetRequestText;
-using multiple::GetRequestObject;
+using graphql::multiple::client::GetRequestText;
+using graphql::multiple::client::GetRequestObject;
 
 // Return the name of this operation in the shared request document.
 [[nodiscard("unnecessary call")]] const std::string& GetOperationName() noexcept;
 
-using multiple::TaskState;
+using graphql::multiple::TaskState;
 
-using multiple::CompleteTaskInput;
+using graphql::multiple::CompleteTaskInput;
 
 struct [[nodiscard("unnecessary construction")]] Variables
 {
@@ -368,6 +498,37 @@ struct [[nodiscard("unnecessary construction")]] Response
 	completedTask_CompleteTaskPayload completedTask {};
 };
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -381,11 +542,13 @@ struct Traits
 	[[nodiscard("unnecessary conversion")]] static response::Value serializeVariables(Variables&& variables);
 
 	using Response = CompleteTaskMutation::Response;
+	using ResponseVisitor = CompleteTaskMutation::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
 
 } // namespace mutation::CompleteTaskMutation
-} // namespace graphql::client
+} // namespace client
+} // namespace graphql::multiple
 
 #endif // MULTIPLEQUERIESCLIENT_H

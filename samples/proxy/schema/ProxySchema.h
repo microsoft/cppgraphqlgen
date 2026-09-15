@@ -8,22 +8,28 @@
 #ifndef PROXYSCHEMA_H
 #define PROXYSCHEMA_H
 
+#include "graphqlservice/GraphQLResponse.h"
+#include "graphqlservice/GraphQLService.h"
+
+#include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 4.5.0
-static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
+#include "ProxySharedTypes.h"
 
 #include <array>
 #include <memory>
 #include <string>
 #include <string_view>
 
-namespace graphql {
-namespace proxy {
+// Check if the library version is compatible with schemagen 5.0.0
+static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
+
+namespace graphql::proxy {
 namespace object {
 
 class Query;
+class QueryResults;
 
 } // namespace object
 
@@ -46,10 +52,10 @@ private:
 };
 
 void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema);
+void AddQueryResultsDetails(const std::shared_ptr<schema::ObjectType>& typeQueryResults, const std::shared_ptr<schema::Schema>& schema);
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} // namespace proxy
-} // namespace graphql
+} // namespace graphql::proxy
 
 #endif // PROXYSCHEMA_H

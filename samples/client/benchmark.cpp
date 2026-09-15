@@ -1,23 +1,29 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "BenchmarkClient.h"
-#include "TodayMock.h"
-
+#include <algorithm>
 #include <chrono>
+#include <cstddef>
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+
+import GraphQL.Client;
+import GraphQL.Service;
+
+import GraphQL.Today.Mock;
+import GraphQL.Today.TodayClient;
 
 using namespace graphql;
 
 using namespace std::literals;
 
 void outputOverview(
-	size_t iterations, const std::chrono::steady_clock::duration& totalDuration) noexcept
+	std::size_t iterations, const std::chrono::steady_clock::duration& totalDuration) noexcept
 {
 	const auto requestsPerSecond =
 		((static_cast<double>(iterations)
@@ -39,7 +45,7 @@ void outputOverview(
 void outputSegment(
 	std::string_view name, std::vector<std::chrono::steady_clock::duration>& durations) noexcept
 {
-	std::sort(durations.begin(), durations.end());
+	std::ranges::sort(durations);
 
 	const auto count = durations.size();
 	const auto total =
@@ -60,14 +66,14 @@ void outputSegment(
 
 int main(int argc, char** argv)
 {
-	const size_t iterations = [](const char* arg) noexcept -> size_t {
+	const std::size_t iterations = [](const char* arg) noexcept -> std::size_t {
 		if (arg)
 		{
 			const int parsed = std::atoi(arg);
 
 			if (parsed > 0)
 			{
-				return static_cast<size_t>(parsed);
+				return static_cast<std::size_t>(parsed);
 			}
 		}
 
@@ -80,29 +86,30 @@ int main(int argc, char** argv)
 	const auto mockService = today::mock_service();
 	const auto& service = mockService->service;
 	std::vector<std::chrono::steady_clock::duration> durationResolve(iterations);
-	std::vector<std::chrono::steady_clock::duration> durationParseServiceResponse(iterations);
 	std::vector<std::chrono::steady_clock::duration> durationParseResponse(iterations);
 	const auto startTime = std::chrono::steady_clock::now();
 
 	try
 	{
-		using namespace client::query::Query;
+		using namespace today::client::query::Query;
 
 		auto query = GetRequestObject();
 		const auto& name = GetOperationName();
+		auto visitor = std::make_shared<ResponseVisitor>();
+		auto responseVisitor = std::make_shared<response::ValueVisitor>(visitor);
 
-		for (size_t i = 0; i < iterations; ++i)
+		for (std::size_t i = 0; i < iterations; ++i)
 		{
 			const auto startResolve = std::chrono::steady_clock::now();
-			auto response = service->resolve({ query, name }).get();
-			const auto startParseServiceResponse = std::chrono::steady_clock::now();
-			auto serviceResponse = client::parseServiceResponse(std::move(response));
+			auto response = service->visit({ query, name }).get();
 			const auto startParseResponse = std::chrono::steady_clock::now();
-			const auto parsed = parseResponse(std::move(serviceResponse.data));
+
+			std::move(response.data).visit(responseVisitor);
+
+			const auto parsed = visitor->response();
 			const auto endParseResponse = std::chrono::steady_clock::now();
 
-			durationResolve[i] = startParseServiceResponse - startResolve;
-			durationParseServiceResponse[i] = startParseResponse - startParseServiceResponse;
+			durationResolve[i] = startParseResponse - startResolve;
 			durationParseResponse[i] = endParseResponse - startParseResponse;
 		}
 	}
@@ -118,7 +125,6 @@ int main(int argc, char** argv)
 	outputOverview(iterations, totalDuration);
 
 	outputSegment("Resolve"sv, durationResolve);
-	outputSegment("ParseServiceResponse"sv, durationParseServiceResponse);
 	outputSegment("ParseResponse"sv, durationParseResponse);
 
 	return 0;

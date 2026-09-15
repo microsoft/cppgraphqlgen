@@ -6,9 +6,14 @@
 #ifndef GRAPHQLSCHEMA_H
 #define GRAPHQLSCHEMA_H
 
-#include "graphqlservice/GraphQLService.h"
+#include "DllExports.h"
+#include "SortedMap.h"
 
+#include <memory>
+#include <optional>
 #include <shared_mutex>
+#include <string_view>
+#include <vector>
 
 namespace graphql {
 namespace introspection {
@@ -40,6 +45,9 @@ public:
 	GRAPHQLSERVICE_EXPORT explicit Schema(
 		bool noIntrospection = false, std::string_view description = "");
 
+	[[nodiscard("unnecessary call")]] GRAPHQLSERVICE_EXPORT std::shared_ptr<Schema> StitchSchema(
+		const std::shared_ptr<const Schema>& added) const;
+
 	GRAPHQLSERVICE_EXPORT void AddQueryType(std::shared_ptr<ObjectType> query);
 	GRAPHQLSERVICE_EXPORT void AddMutationType(std::shared_ptr<ObjectType> mutation);
 	GRAPHQLSERVICE_EXPORT void AddSubscriptionType(std::shared_ptr<ObjectType> subscription);
@@ -69,13 +77,16 @@ public:
 	directives() const noexcept;
 
 private:
+	[[nodiscard("unnecessary call")]] std::shared_ptr<const BaseType> StitchFieldType(
+		std::shared_ptr<const BaseType> fieldType);
+
 	const bool _noIntrospection = false;
 	const std::string_view _description;
 
 	std::shared_ptr<const ObjectType> _query;
 	std::shared_ptr<const ObjectType> _mutation;
 	std::shared_ptr<const ObjectType> _subscription;
-	internal::string_view_map<size_t> _typeMap;
+	internal::string_view_map<std::size_t> _typeMap;
 	std::vector<std::pair<std::string_view, std::shared_ptr<const BaseType>>> _types;
 	std::vector<std::shared_ptr<const Directive>> _directives;
 	std::shared_mutex _nonNullWrappersMutex;

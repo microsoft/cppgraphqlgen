@@ -6,11 +6,17 @@
 #include "graphqlservice/internal/Base64.h"
 
 #include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <iterator>
 #include <map>
 #include <optional>
+#include <stack>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <variant>
+#include <vector>
 
 namespace graphql::response {
 
@@ -31,7 +37,7 @@ IdType::~IdType()
 	// omitted, declare it explicitly and define it in graphqlresponse.
 }
 
-IdType::IdType(size_t count, typename ByteData::value_type value /* = 0 */)
+IdType::IdType(std::size_t count, typename ByteData::value_type value /* = 0 */)
 	: _data { ByteData(count, value) }
 {
 }
@@ -161,7 +167,7 @@ bool IdType::empty() const noexcept
 		_data);
 }
 
-size_t IdType::size() const noexcept
+std::size_t IdType::size() const noexcept
 {
 	return std::visit(
 		[](const auto& data) noexcept {
@@ -170,7 +176,7 @@ size_t IdType::size() const noexcept
 		_data);
 }
 
-size_t IdType::max_size() const noexcept
+std::size_t IdType::max_size() const noexcept
 {
 	return std::visit(
 		[](const auto& data) noexcept {
@@ -179,7 +185,7 @@ size_t IdType::max_size() const noexcept
 		_data);
 }
 
-void IdType::reserve(size_t new_cap)
+void IdType::reserve(std::size_t new_cap)
 {
 	std::visit(
 		[new_cap](auto& data) {
@@ -188,7 +194,7 @@ void IdType::reserve(size_t new_cap)
 		_data);
 }
 
-size_t IdType::capacity() const noexcept
+std::size_t IdType::capacity() const noexcept
 {
 	return std::visit(
 		[](const auto& data) noexcept {
@@ -215,7 +221,7 @@ void IdType::clear() noexcept
 		_data);
 }
 
-const std::uint8_t& IdType::at(size_t pos) const
+const std::uint8_t& IdType::at(std::size_t pos) const
 {
 	if (!std::holds_alternative<ByteData>(_data))
 	{
@@ -225,7 +231,7 @@ const std::uint8_t& IdType::at(size_t pos) const
 	return std::get<ByteData>(_data).at(pos);
 }
 
-std::uint8_t& IdType::at(size_t pos)
+std::uint8_t& IdType::at(std::size_t pos)
 {
 	if (!std::holds_alternative<ByteData>(_data))
 	{
@@ -235,7 +241,7 @@ std::uint8_t& IdType::at(size_t pos)
 	return std::get<ByteData>(_data).at(pos);
 }
 
-const std::uint8_t& IdType::operator[](size_t pos) const
+const std::uint8_t& IdType::operator[](std::size_t pos) const
 {
 	if (!std::holds_alternative<ByteData>(_data))
 	{
@@ -245,7 +251,7 @@ const std::uint8_t& IdType::operator[](size_t pos) const
 	return std::get<ByteData>(_data)[pos];
 }
 
-std::uint8_t& IdType::operator[](size_t pos)
+std::uint8_t& IdType::operator[](std::size_t pos)
 {
 	if (!std::holds_alternative<ByteData>(_data))
 	{
@@ -1003,7 +1009,7 @@ Value::Value(const Value& other)
 				copy.map.push_back({ entry.first, Value { entry.second } });
 			}
 
-			std::map<std::string_view, size_t> members;
+			std::map<std::string_view, std::size_t> members;
 
 			for (const auto& entry : copy.map)
 			{
@@ -1027,7 +1033,7 @@ Value::Value(const Value& other)
 			ListType copy {};
 
 			copy.reserve(other.size());
-			for (size_t i = 0; i < other.size(); ++i)
+			for (std::size_t i = 0; i < other.size(); ++i)
 			{
 				copy.push_back(Value { other[i] });
 			}
@@ -1090,38 +1096,40 @@ Type Value::typeOf(const TypeData& data) noexcept
 	// As long as the order of the variant alternatives matches the Type enum, we can cast the index
 	// to the Type in one step.
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Map), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::Map), TypeData>,
 			MapData>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::List), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::List), TypeData>,
 			ListType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::String), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::String), TypeData>,
 			StringData>,
 		"type mistmatch");
-	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Boolean), TypeData>,
-			BooleanType>,
+	static_assert(std::is_same_v<
+					  std::variant_alternative_t<static_cast<std::size_t>(Type::Boolean), TypeData>,
+					  BooleanType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Int), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::Int), TypeData>,
 			IntType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Float), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::Float), TypeData>,
 			FloatType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::EnumValue), TypeData>,
+		std::is_same_v<
+			std::variant_alternative_t<static_cast<std::size_t>(Type::EnumValue), TypeData>,
 			EnumData>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::ID), TypeData>, IdType>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::ID), TypeData>,
+			IdType>,
 		"type mistmatch");
 	static_assert(
-		std::is_same_v<std::variant_alternative_t<static_cast<size_t>(Type::Scalar), TypeData>,
+		std::is_same_v<std::variant_alternative_t<static_cast<std::size_t>(Type::Scalar), TypeData>,
 			ScalarData>,
 		"type mistmatch");
 
@@ -1270,7 +1278,7 @@ bool Value::maybe_id() const noexcept
 	return false;
 }
 
-void Value::reserve(size_t count)
+void Value::reserve(std::size_t count)
 {
 	if (std::holds_alternative<SharedData>(_data))
 	{
@@ -1299,7 +1307,7 @@ void Value::reserve(size_t count)
 	}
 }
 
-size_t Value::size() const
+std::size_t Value::size() const
 {
 	switch (type())
 	{
@@ -1331,10 +1339,9 @@ bool Value::emplace_back(std::string&& name, Value&& value)
 	}
 
 	auto& mapData = std::get<MapData>(_data);
-	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
-		mapData.members.cend(),
+	const auto [itr, itrEnd] = std::ranges::equal_range(mapData.members,
 		std::nullopt,
-		[&mapData, &name](std::optional<size_t> lhs, std::optional<size_t> rhs) noexcept {
+		[&mapData, &name](std::optional<std::size_t> lhs, std::optional<std::size_t> rhs) noexcept {
 			std::string_view lhsName { lhs == std::nullopt ? name : mapData.map[*lhs].first };
 			std::string_view rhsName { rhs == std::nullopt ? name : mapData.map[*rhs].first };
 			return lhsName < rhsName;
@@ -1361,10 +1368,9 @@ MapType::const_iterator Value::find(std::string_view name) const
 	}
 
 	const auto& mapData = std::get<MapData>(typeData);
-	const auto [itr, itrEnd] = std::equal_range(mapData.members.cbegin(),
-		mapData.members.cend(),
+	const auto [itr, itrEnd] = std::ranges::equal_range(mapData.members,
 		std::nullopt,
-		[&mapData, name](std::optional<size_t> lhs, std::optional<size_t> rhs) noexcept {
+		[&mapData, name](std::optional<std::size_t> lhs, std::optional<std::size_t> rhs) noexcept {
 			std::string_view lhsName { lhs == std::nullopt ? name : mapData.map[*lhs].first };
 			std::string_view rhsName { rhs == std::nullopt ? name : mapData.map[*rhs].first };
 			return lhsName < rhsName;
@@ -1429,7 +1435,7 @@ void Value::emplace_back(Value&& value)
 	std::get<ListType>(_data).emplace_back(std::move(value));
 }
 
-const Value& Value::operator[](size_t index) const
+const Value& Value::operator[](std::size_t index) const
 {
 	const auto& typeData = data();
 
@@ -1441,87 +1447,482 @@ const Value& Value::operator[](size_t index) const
 	return std::get<ListType>(typeData).at(index);
 }
 
-void Writer::write(Value response) const
+void ValueVisitor::add_value(std::shared_ptr<const Value>&& value)
 {
-	switch (response.type())
+	_concept->add_value(std::move(value));
+}
+
+void ValueVisitor::reserve(std::size_t count)
+{
+	_concept->reserve(count);
+}
+
+void ValueVisitor::start_object()
+{
+	_concept->start_object();
+}
+
+void ValueVisitor::add_member(std::string&& key)
+{
+	_concept->add_member(std::move(key));
+}
+
+void ValueVisitor::end_object()
+{
+	_concept->end_object();
+}
+
+void ValueVisitor::start_array()
+{
+	_concept->start_array();
+}
+
+void ValueVisitor::end_array()
+{
+	_concept->end_array();
+}
+
+void ValueVisitor::add_null()
+{
+	_concept->add_null();
+}
+
+void ValueVisitor::add_string(std::string&& value)
+{
+	_concept->add_string(std::move(value));
+}
+
+void ValueVisitor::add_enum(std::string&& value)
+{
+	_concept->add_enum(std::move(value));
+}
+
+void ValueVisitor::add_id(response::IdType&& value)
+{
+	_concept->add_id(std::move(value));
+}
+
+void ValueVisitor::add_bool(bool value)
+{
+	_concept->add_bool(value);
+}
+
+void ValueVisitor::add_int(int value)
+{
+	_concept->add_int(value);
+}
+
+void ValueVisitor::add_float(double value)
+{
+	_concept->add_float(value);
+}
+
+void ValueVisitor::complete()
+{
+	_concept->complete();
+}
+
+ValueToken::ValueToken(OpaqueValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(Reserve&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(StartObject&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(AddMember&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(EndObject&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(StartArray&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(EndArray&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(NullValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(StringValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(EnumValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(IdValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(BoolValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(IntValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+ValueToken::ValueToken(FloatValue&& value)
+	: _value { std::move(value) }
+{
+}
+
+void ValueToken::visit(const std::shared_ptr<ValueVisitor>& visitor) &&
+{
+	std::visit(
+		[&visitor](auto&& value) {
+			using value_type = std::decay_t<decltype(value)>;
+
+			if constexpr (std::is_same_v<value_type, OpaqueValue>)
+			{
+				visitor->add_value(std::move(value));
+			}
+			else if constexpr (std::is_same_v<value_type, Reserve>)
+			{
+				visitor->reserve(value.capacity);
+			}
+			else if constexpr (std::is_same_v<value_type, StartObject>)
+			{
+				visitor->start_object();
+			}
+			else if constexpr (std::is_same_v<value_type, AddMember>)
+			{
+				visitor->add_member(std::move(value.key));
+			}
+			else if constexpr (std::is_same_v<value_type, EndObject>)
+			{
+				visitor->end_object();
+			}
+			else if constexpr (std::is_same_v<value_type, StartArray>)
+			{
+				visitor->start_array();
+			}
+			else if constexpr (std::is_same_v<value_type, EndArray>)
+			{
+				visitor->end_array();
+			}
+			else if constexpr (std::is_same_v<value_type, NullValue>)
+			{
+				visitor->add_null();
+			}
+			else if constexpr (std::is_same_v<value_type, StringValue>)
+			{
+				visitor->add_string(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, EnumValue>)
+			{
+				visitor->add_enum(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, IdValue>)
+			{
+				visitor->add_id(std::move(value.value));
+			}
+			else if constexpr (std::is_same_v<value_type, BoolValue>)
+			{
+				visitor->add_bool(value.value);
+			}
+			else if constexpr (std::is_same_v<value_type, IntValue>)
+			{
+				visitor->add_int(value.value);
+			}
+			else if constexpr (std::is_same_v<value_type, FloatValue>)
+			{
+				visitor->add_float(value.value);
+			}
+		},
+		std::move(_value));
+}
+
+class ValueTokenStreamVisitor
+{
+public:
+	void add_value(std::shared_ptr<const Value>&& value);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Value value();
+
+private:
+	void add_value(Value&& value);
+
+	Value _result {};
+	std::stack<Value> _values {};
+	std::stack<std::string> _keys {};
+};
+
+void ValueTokenStreamVisitor::add_value(std::shared_ptr<const Value>&& value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::reserve(std::size_t count)
+{
+	_values.top().reserve(count);
+}
+
+void ValueTokenStreamVisitor::start_object()
+{
+	_values.push(Value { response::Type::Map });
+}
+
+void ValueTokenStreamVisitor::add_member(std::string&& key)
+{
+	_keys.push(std::move(key));
+}
+
+void ValueTokenStreamVisitor::end_object()
+{
+	auto value = std::move(_values.top());
+
+	_values.pop();
+	add_value(std::move(value));
+}
+
+void ValueTokenStreamVisitor::start_array()
+{
+	_values.push(Value { response::Type::List });
+}
+
+void ValueTokenStreamVisitor::end_array()
+{
+	auto value = std::move(_values.top());
+
+	_values.pop();
+	add_value(std::move(value));
+}
+
+void ValueTokenStreamVisitor::add_null()
+{
+	add_value(Value {});
+}
+
+void ValueTokenStreamVisitor::add_string(std::string&& value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::add_enum(std::string&& value)
+{
+	Value enumValue { response::Type::EnumValue };
+
+	enumValue.set<response::StringType>(std::move(value));
+	add_value(std::move(enumValue));
+}
+
+void ValueTokenStreamVisitor::add_id(response::IdType&& value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::add_bool(bool value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::add_int(int value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::add_float(double value)
+{
+	add_value(Value { std::move(value) });
+}
+
+void ValueTokenStreamVisitor::complete()
+{
+}
+
+Value ValueTokenStreamVisitor::value()
+{
+	auto value = std::move(_result);
+
+	return value;
+}
+
+void ValueTokenStreamVisitor::add_value(Value&& value)
+{
+	if (_values.empty())
+	{
+		_result = std::move(value);
+		return;
+	}
+
+	switch (_values.top().type())
+	{
+		case response::Type::Map:
+			_values.top().emplace_back(std::move(_keys.top()), std::move(value));
+			_keys.pop();
+			break;
+
+		case response::Type::List:
+			_values.top().emplace_back(std::move(value));
+			break;
+
+		default:
+			throw std::logic_error("Invalid call to Value::emplace_back");
+			break;
+	}
+}
+
+ValueTokenStream::ValueTokenStream(Value&& value)
+{
+	switch (value.type())
 	{
 		case Type::Map:
 		{
-			auto members = response.release<MapType>();
+			auto members = value.release<MapType>();
 
-			_concept->start_object();
+			push_back(ValueToken::StartObject {});
+			push_back(ValueToken::Reserve { members.size() });
 
 			for (auto& entry : members)
 			{
-				_concept->add_member(entry.first);
-				write(std::move(entry.second));
+				push_back(ValueToken::AddMember { std::move(entry.first) });
+				append(ValueTokenStream { std::move(entry.second) });
 			}
 
-			_concept->end_object();
+			push_back(ValueToken::EndObject {});
 			break;
 		}
 
 		case Type::List:
 		{
-			auto elements = response.release<ListType>();
+			auto elements = value.release<ListType>();
 
-			_concept->start_array();
+			push_back(ValueToken::StartArray {});
+			push_back(ValueToken::Reserve { elements.size() });
 
 			for (auto& entry : elements)
 			{
-				write(std::move(entry));
+				append(ValueTokenStream { std::move(entry) });
 			}
 
-			_concept->end_arrary();
+			push_back(ValueToken::EndArray {});
 			break;
 		}
 
 		case Type::String:
-		case Type::EnumValue:
-		case Type::ID:
 		{
-			auto value = response.release<StringType>();
+			auto stringValue = value.release<StringType>();
 
-			_concept->write_string(value);
+			push_back(ValueToken::StringValue { std::move(stringValue) });
 			break;
 		}
 
 		case Type::Null:
 		{
-			_concept->write_null();
+			push_back(ValueToken::NullValue {});
 			break;
 		}
 
 		case Type::Boolean:
 		{
-			_concept->write_bool(response.get<BooleanType>());
+			push_back(ValueToken::BoolValue { value.get<BooleanType>() });
 			break;
 		}
 
 		case Type::Int:
 		{
-			_concept->write_int(response.get<IntType>());
+			push_back(ValueToken::IntValue { value.get<IntType>() });
 			break;
 		}
 
 		case Type::Float:
 		{
-			_concept->write_float(response.get<FloatType>());
+			push_back(ValueToken::FloatValue { value.get<FloatType>() });
+			break;
+		}
+
+		case Type::EnumValue:
+		{
+			auto enumValue = value.release<StringType>();
+
+			push_back(ValueToken::EnumValue { std::move(enumValue) });
+			break;
+		}
+
+		case Type::ID:
+		{
+			auto idValue = value.release<IdType>();
+
+			push_back(ValueToken::IdValue { std::move(idValue) });
 			break;
 		}
 
 		case Type::Scalar:
 		{
-			write(response.release<ScalarType>());
+			append(ValueTokenStream { value.release<ScalarType>() });
 			break;
 		}
 
 		default:
 		{
-			_concept->write_null();
+			push_back(ValueToken::NullValue {});
 			break;
 		}
 	}
+}
+
+void ValueTokenStream::append(ValueTokenStream&& other)
+{
+	_tokens.splice(_tokens.end(), std::move(other._tokens));
+}
+
+void ValueTokenStream::visit(const std::shared_ptr<ValueVisitor>& visitor) &&
+{
+	for (auto& token : _tokens)
+	{
+		std::move(token).visit(visitor);
+	}
+
+	visitor->complete();
+}
+
+Value ValueTokenStream::value() &&
+{
+	auto visitor = std::make_shared<ValueTokenStreamVisitor>();
+
+	std::move(*this).visit(std::make_shared<ValueVisitor>(visitor));
+
+	return visitor->value();
 }
 
 } // namespace graphql::response

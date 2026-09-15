@@ -1,0 +1,120 @@
+{
+    "version": 8,
+    "configurePresets": [
+        {
+            "hidden": true,
+            "name": "ninja-generator",
+            "binaryDir": "build/${presetName}",
+            "toolchainFile": "${sourceDir}/vcpkg/scripts/buildsystems/vcpkg.cmake",
+            "generator": "Ninja"
+        },
+        {
+            "name": "debug",
+            "inherits": [ "ninja-generator" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Debug"
+            }
+        },
+        {
+            "name": "release",
+            "inherits": [ "ninja-generator" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        },
+        {
+            "name": "gcc-14-debug",
+            "inherits": [ "debug" ],
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/gcc-14",
+                "CMAKE_CXX_COMPILER": "/usr/bin/g++-14",
+                "GRAPHQL_BUILD_MODULES": false
+            }
+        },
+        {
+            "name": "gcc-14-release",
+            "inherits": [ "gcc-14-debug" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+            }
+        },
+        {
+            "name": "clang-18-debug",
+            "inherits": [ "debug" ],
+            "condition": {
+                "type": "notEquals",
+                "lhs": "${hostSystemName}",
+                "rhs": "Windows"
+            },
+            "cacheVariables": {
+                "CMAKE_C_COMPILER": "/usr/bin/clang-18",
+                "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
+                "CMAKE_CXX_COMPILER_CLANG_SCAN_DEPS": "/usr/bin/clang-scan-deps-18"
+            }
+        },
+        {
+            "name": "clang-18-release",
+            "inherits": [ "clang-18-debug" ],
+            "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release"
+            }
+        }
+    ],
+    "buildPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "gcc-14-debug",
+            "configurePreset": "gcc-14-debug"
+        },
+        {
+            "name": "gcc-14-release",
+            "configurePreset": "gcc-14-release"
+        },
+        {
+            "name": "clang-18-debug",
+            "configurePreset": "clang-18-debug"
+        },
+        {
+            "name": "clang-18-release",
+            "configurePreset": "clang-18-release"
+        }
+    ],
+    "testPresets": [
+        {
+            "name": "debug",
+            "configurePreset": "debug"
+        },
+        {
+            "name": "release",
+            "configurePreset": "release"
+        },
+        {
+            "name": "gcc-14-debug",
+            "configurePreset": "gcc-14-debug"
+        },
+        {
+            "name": "gcc-14-release",
+            "configurePreset": "gcc-14-release"
+        },
+        {
+            "name": "clang-18-debug",
+            "configurePreset": "clang-18-debug"
+        },
+        {
+            "name": "clang-18-release",
+            "configurePreset": "clang-18-release"
+        }
+    ]
+}

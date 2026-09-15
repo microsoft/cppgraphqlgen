@@ -3,6 +3,8 @@
 
 #include "graphqlservice/GraphQLClient.h"
 
+#include <cstddef>
+
 using namespace std::literals;
 
 namespace graphql::client {
@@ -21,7 +23,7 @@ ErrorLocation parseServiceErrorLocation(response::Value&& location)
 			{
 				if (member.second.type() == response::Type::Int)
 				{
-					result.line = static_cast<size_t>(member.second.get<int>());
+					result.line = static_cast<std::size_t>(member.second.get<int>());
 				}
 
 				continue;
@@ -31,7 +33,7 @@ ErrorLocation parseServiceErrorLocation(response::Value&& location)
 			{
 				if (member.second.type() == response::Type::Int)
 				{
-					result.column = static_cast<size_t>(member.second.get<int>());
+					result.column = static_cast<std::size_t>(member.second.get<int>());
 				}
 
 				continue;
@@ -90,8 +92,7 @@ Error parseServiceError(response::Value&& error)
 					auto locations = member.second.release<response::ListType>();
 
 					result.locations.reserve(locations.size());
-					std::transform(locations.begin(),
-						locations.end(),
+					std::ranges::transform(locations,
 						std::back_inserter(result.locations),
 						[](response::Value& location) {
 							return parseServiceErrorLocation(std::move(location));
@@ -108,8 +109,7 @@ Error parseServiceError(response::Value&& error)
 					auto segments = member.second.release<response::ListType>();
 
 					result.path.reserve(segments.size());
-					std::transform(segments.begin(),
-						segments.end(),
+					std::ranges::transform(segments,
 						std::back_inserter(result.path),
 						[](response::Value& segment) {
 							return parseServiceErrorPathSegment(std::move(segment));
@@ -148,8 +148,7 @@ ServiceResponse parseServiceResponse(response::Value response)
 					auto errors = member.second.release<response::ListType>();
 
 					result.errors.reserve(errors.size());
-					std::transform(errors.begin(),
-						errors.end(),
+					std::ranges::transform(errors,
 						std::back_inserter(result.errors),
 						[](response::Value& error) {
 							return parseServiceError(std::move(error));

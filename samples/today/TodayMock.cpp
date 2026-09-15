@@ -3,19 +3,20 @@
 
 #include "TodayMock.h"
 
-#include "AppointmentConnectionObject.h"
-#include "CompleteTaskPayloadObject.h"
-#include "ExpensiveObject.h"
-#include "FolderConnectionObject.h"
-#include "NestedTypeObject.h"
-#include "TaskConnectionObject.h"
-#include "UnionTypeObject.h"
+#include "TodayAppointmentConnectionObject.h"
+#include "TodayCompleteTaskPayloadObject.h"
+#include "TodayExpensiveObject.h"
+#include "TodayFolderConnectionObject.h"
+#include "TodayNestedTypeObject.h"
+#include "TodayTaskConnectionObject.h"
+#include "TodayUnionTypeObject.h"
 
 #include <algorithm>
 #include <chrono>
-#include <future>
+#include <format>
 #include <iostream>
 #include <mutex>
+#include <ranges>
 
 namespace graphql::today {
 
@@ -25,7 +26,7 @@ const response::IdType& getFakeAppointmentId() noexcept
 		std::string_view fakeIdString { "fakeAppointmentId" };
 		response::IdType result(fakeIdString.size());
 
-		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+		std::ranges::copy(fakeIdString, result.begin());
 
 		return response::IdType { std::move(result) };
 	}();
@@ -39,7 +40,7 @@ const response::IdType& getFakeTaskId() noexcept
 		std::string_view fakeIdString { "fakeTaskId" };
 		response::IdType result(fakeIdString.size());
 
-		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+		std::ranges::copy(fakeIdString, result.begin());
 
 		return response::IdType { std::move(result) };
 	}();
@@ -53,7 +54,7 @@ const response::IdType& getFakeFolderId() noexcept
 		std::string_view fakeIdString { "fakeFolderId" };
 		response::IdType result(fakeIdString.size());
 
-		std::copy(fakeIdString.cbegin(), fakeIdString.cend(), result.begin());
+		std::ranges::copy(fakeIdString, result.begin());
 
 		return response::IdType { std::move(result) };
 	}();
@@ -61,52 +62,71 @@ const response::IdType& getFakeFolderId() noexcept
 	return s_fakeId;
 }
 
-std::unique_ptr<TodayMockService> mock_service() noexcept
+std::shared_ptr<Query> mock_query(const std::shared_ptr<TodayMockService>& service) noexcept
 {
-	auto result = std::make_unique<TodayMockService>();
-
-	auto query = std::make_shared<Query>(
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Appointment>> {
-			++mockService->getAppointmentsCount;
+	return std::make_shared<Query>(
+		[weakService = std::weak_ptr { service }]() -> std::vector<std::shared_ptr<Appointment>> {
+			if (auto mockService = weakService.lock())
+			{
+				++mockService->getAppointmentsCount;
+			}
 			return { std::make_shared<Appointment>(response::IdType(getFakeAppointmentId()),
 				"tomorrow",
 				"Lunch?",
 				false) };
 		},
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Task>> {
-			++mockService->getTasksCount;
+		[weakService = std::weak_ptr { service }]() -> std::vector<std::shared_ptr<Task>> {
+			if (auto mockService = weakService.lock())
+			{
+				++mockService->getTasksCount;
+			}
 			return {
 				std::make_shared<Task>(response::IdType(getFakeTaskId()), "Don't forget", true)
 			};
 		},
-		[mockService = result.get()]() -> std::vector<std::shared_ptr<Folder>> {
-			++mockService->getUnreadCountsCount;
+		[weakService = std::weak_ptr { service }]() -> std::vector<std::shared_ptr<Folder>> {
+			if (auto mockService = weakService.lock())
+			{
+				++mockService->getUnreadCountsCount;
+			}
 			return {
 				std::make_shared<Folder>(response::IdType(getFakeFolderId()), "\"Fake\" Inbox", 3)
 			};
 		});
-	auto mutation = std::make_shared<Mutation>(
+}
+
+std::shared_ptr<Mutation> mock_mutation() noexcept
+{
+	return std::make_shared<Mutation>(
 		[](CompleteTaskInput&& input) -> std::shared_ptr<CompleteTaskPayload> {
 			return std::make_shared<CompleteTaskPayload>(
 				std::make_shared<Task>(std::move(input.id), "Mutated Task!", *(input.isComplete)),
 				std::move(input.clientMutationId));
 		});
-	auto subscription = std::make_shared<NextAppointmentChange>(
+}
+
+std::shared_ptr<NextAppointmentChange> mock_subscription() noexcept
+{
+	return std::make_shared<NextAppointmentChange>(
 		[](const std::shared_ptr<service::RequestState>&) -> std::shared_ptr<Appointment> {
 			return { std::make_shared<Appointment>(response::IdType(getFakeAppointmentId()),
 				"tomorrow",
 				"Lunch?",
 				true) };
 		});
+}
 
-	result->service = std::make_shared<Operations>(std::move(query),
-		std::move(mutation),
-		std::move(subscription));
+std::shared_ptr<TodayMockService> mock_service() noexcept
+{
+	auto result = std::make_shared<TodayMockService>();
+
+	result->service =
+		std::make_shared<Operations>(mock_query(result), mock_mutation(), mock_subscription());
 
 	return result;
 }
 
-RequestState::RequestState(size_t id)
+RequestState::RequestState(std::size_t id)
 	: requestId(id)
 {
 }
@@ -166,6 +186,11 @@ std::optional<std::string> Appointment::getForceError() const
 	throw std::runtime_error(R"ex(this error was forced)ex");
 }
 
+std::vector<response::IdType> Appointment::getArray() const
+{
+	return {};
+}
+
 AppointmentEdge::AppointmentEdge(std::shared_ptr<Appointment> appointment)
 	: _appointment(std::move(appointment))
 {
@@ -199,8 +224,7 @@ std::optional<std::vector<std::shared_ptr<object::AppointmentEdge>>> Appointment
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::AppointmentEdge>>>(
 		_appointments.size());
 
-	std::transform(_appointments.cbegin(),
-		_appointments.cend(),
+	std::ranges::transform(_appointments,
 		result->begin(),
 		[](const std::shared_ptr<Appointment>& node) {
 			return std::make_shared<object::AppointmentEdge>(
@@ -269,12 +293,9 @@ std::optional<std::vector<std::shared_ptr<object::TaskEdge>>> TaskConnection::ge
 {
 	auto result = std::make_optional<std::vector<std::shared_ptr<object::TaskEdge>>>(_tasks.size());
 
-	std::transform(_tasks.cbegin(),
-		_tasks.cend(),
-		result->begin(),
-		[](const std::shared_ptr<Task>& node) {
-			return std::make_shared<object::TaskEdge>(std::make_shared<TaskEdge>(node));
-		});
+	std::ranges::transform(_tasks, result->begin(), [](const std::shared_ptr<Task>& node) {
+		return std::make_shared<object::TaskEdge>(std::make_shared<TaskEdge>(node));
+	});
 
 	return result;
 }
@@ -339,12 +360,9 @@ std::optional<std::vector<std::shared_ptr<object::FolderEdge>>> FolderConnection
 	auto result =
 		std::make_optional<std::vector<std::shared_ptr<object::FolderEdge>>>(_folders.size());
 
-	std::transform(_folders.cbegin(),
-		_folders.cend(),
-		result->begin(),
-		[](const std::shared_ptr<Folder>& node) {
-			return std::make_shared<object::FolderEdge>(std::make_shared<FolderEdge>(node));
-		});
+	std::ranges::transform(_folders, result->begin(), [](const std::shared_ptr<Folder>& node) {
+		return std::make_shared<object::FolderEdge>(std::make_shared<FolderEdge>(node));
+	});
 
 	return result;
 }
@@ -477,7 +495,7 @@ auto operator co_await(std::chrono::duration<_Rep, _Period> delay)
 			return true;
 		}
 
-		void await_suspend(coro::coroutine_handle<> h) noexcept
+		void await_suspend(std::coroutine_handle<> h) noexcept
 		{
 			h.resume();
 		}
@@ -576,10 +594,8 @@ struct EdgeConstraints
 		{
 			if (*first < 0)
 			{
-				std::ostringstream error;
-
-				error << "Invalid argument: first value: " << *first;
-				throw service::schema_exception { { service::schema_error { error.str() } } };
+				auto error = std::format("Invalid argument: first value: {}", *first);
+				throw service::schema_exception { { service::schema_error { std::move(error) } } };
 			}
 
 			if (itrLast - itrFirst > *first)
@@ -592,10 +608,8 @@ struct EdgeConstraints
 		{
 			if (*last < 0)
 			{
-				std::ostringstream error;
-
-				error << "Invalid argument: last value: " << *last;
-				throw service::schema_exception { { service::schema_error { error.str() } } };
+				auto error = std::format("Invalid argument: last value: {}", *last);
+				throw service::schema_exception { { service::schema_error { std::move(error) } } };
 			}
 
 			if (itrLast - itrFirst > *last)
@@ -709,12 +723,9 @@ std::vector<std::shared_ptr<object::Appointment>> Query::getAppointmentsById(
 {
 	std::vector<std::shared_ptr<object::Appointment>> result(ids.size());
 
-	std::transform(ids.cbegin(),
-		ids.cend(),
-		result.begin(),
-		[this, &params](const response::IdType& id) {
-			return std::make_shared<object::Appointment>(findAppointment(params, id));
-		});
+	std::ranges::transform(ids, result.begin(), [this, &params](const response::IdType& id) {
+		return std::make_shared<object::Appointment>(findAppointment(params, id));
+	});
 
 	return result;
 }
@@ -724,12 +735,9 @@ std::vector<std::shared_ptr<object::Task>> Query::getTasksById(
 {
 	std::vector<std::shared_ptr<object::Task>> result(ids.size());
 
-	std::transform(ids.cbegin(),
-		ids.cend(),
-		result.begin(),
-		[this, &params](const response::IdType& id) {
-			return std::make_shared<object::Task>(findTask(params, id));
-		});
+	std::ranges::transform(ids, result.begin(), [this, &params](const response::IdType& id) {
+		return std::make_shared<object::Task>(findTask(params, id));
+	});
 
 	return result;
 }
@@ -739,12 +747,9 @@ std::vector<std::shared_ptr<object::Folder>> Query::getUnreadCountsById(
 {
 	std::vector<std::shared_ptr<object::Folder>> result(ids.size());
 
-	std::transform(ids.cbegin(),
-		ids.cend(),
-		result.begin(),
-		[this, &params](const response::IdType& id) {
-			return std::make_shared<object::Folder>(findUnreadCount(params, id));
-		});
+	std::ranges::transform(ids, result.begin(), [this, &params](const response::IdType& id) {
+		return std::make_shared<object::Folder>(findUnreadCount(params, id));
+	});
 
 	return result;
 }
@@ -778,13 +783,10 @@ std::vector<std::shared_ptr<object::UnionType>> Query::getAnyType(
 
 	std::vector<std::shared_ptr<object::UnionType>> result(_appointments.size());
 
-	std::transform(_appointments.cbegin(),
-		_appointments.cend(),
-		result.begin(),
-		[](const auto& appointment) noexcept {
-			return std::make_shared<object::UnionType>(
-				std::make_shared<object::Appointment>(appointment));
-		});
+	std::ranges::transform(_appointments, result.begin(), [](const auto& appointment) noexcept {
+		return std::make_shared<object::UnionType>(
+			std::make_shared<object::Appointment>(appointment));
+	});
 
 	return result;
 }
@@ -845,16 +847,16 @@ std::shared_ptr<object::Node> Subscription::getNodeChange(const response::IdType
 	throw std::runtime_error("Unexpected call to getNodeChange");
 }
 
-size_t NextAppointmentChange::_notifySubscribeCount = 0;
-size_t NextAppointmentChange::_subscriptionCount = 0;
-size_t NextAppointmentChange::_notifyUnsubscribeCount = 0;
+std::size_t NextAppointmentChange::_notifySubscribeCount = 0;
+std::size_t NextAppointmentChange::_subscriptionCount = 0;
+std::size_t NextAppointmentChange::_notifyUnsubscribeCount = 0;
 
 NextAppointmentChange::NextAppointmentChange(nextAppointmentChange&& changeNextAppointment)
 	: _changeNextAppointment(std::move(changeNextAppointment))
 {
 }
 
-size_t NextAppointmentChange::getCount(service::ResolverContext resolverContext)
+std::size_t NextAppointmentChange::getCount(service::ResolverContext resolverContext)
 {
 	switch (resolverContext)
 	{
@@ -929,15 +931,15 @@ NestedType::NestedType(service::FieldParams&& params, int depth)
 	: depth(depth)
 {
 	_capturedParams.push({ { params.operationDirectives },
-		params.fragmentDefinitionDirectives->empty()
+		!params.fragmentDefinitionDirectives
 			? service::Directives {}
-			: service::Directives { params.fragmentDefinitionDirectives->front().get() },
-		params.fragmentSpreadDirectives->empty()
+			: service::Directives { params.fragmentDefinitionDirectives->directives.get() },
+		!params.fragmentSpreadDirectives
 			? service::Directives {}
-			: service::Directives { params.fragmentSpreadDirectives->front() },
-		params.inlineFragmentDirectives->empty()
+			: service::Directives { params.fragmentSpreadDirectives->directives },
+		!params.inlineFragmentDirectives
 			? service::Directives {}
-			: service::Directives { params.inlineFragmentDirectives->front() },
+			: service::Directives { params.inlineFragmentDirectives->directives },
 		std::move(params.fieldDirectives) });
 }
 
@@ -963,9 +965,9 @@ std::stack<CapturedParams> NestedType::getCapturedParams() noexcept
 std::mutex Expensive::testMutex {};
 std::mutex Expensive::pendingExpensiveMutex {};
 std::condition_variable Expensive::pendingExpensiveCondition {};
-size_t Expensive::pendingExpensive = 0;
+std::size_t Expensive::pendingExpensive = 0;
 
-std::atomic<size_t> Expensive::instances = 0;
+std::atomic<std::size_t> Expensive::instances = 0;
 
 bool Expensive::Reset() noexcept
 {

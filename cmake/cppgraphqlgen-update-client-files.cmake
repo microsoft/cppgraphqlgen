@@ -11,7 +11,7 @@ get_filename_component(REQUEST_GRAPHQL "${CLIENT_SOURCE_DIR}/${REQUEST_GRAPHQL}"
 file(MAKE_DIRECTORY ${CLIENT_BINARY_DIR})
 
 # Cleanup all of the stale files in the binary directory
-file(GLOB PREVIOUS_FILES ${CLIENT_BINARY_DIR}/*.h ${CLIENT_BINARY_DIR}/*.cpp
+file(GLOB PREVIOUS_FILES ${CLIENT_BINARY_DIR}/*.h ${CLIENT_BINARY_DIR}/*.ixx ${CLIENT_BINARY_DIR}/*.cpp
      ${CLIENT_BINARY_DIR}/${CLIENT_TARGET}_client_files)
 foreach(PREVIOUS_FILE ${PREVIOUS_FILES})
   file(REMOVE ${PREVIOUS_FILE})
@@ -30,7 +30,7 @@ execute_process(
 
 # Get the up-to-date list of files in the binary directory
 set(FILE_NAMES "")
-file(GLOB NEW_FILES ${CLIENT_BINARY_DIR}/*.h ${CLIENT_BINARY_DIR}/*.cpp)
+file(GLOB NEW_FILES ${CLIENT_BINARY_DIR}/*.h ${CLIENT_BINARY_DIR}/*.ixx ${CLIENT_BINARY_DIR}/*.cpp)
 foreach(NEW_FILE ${NEW_FILES})
   get_filename_component(NEW_FILE ${NEW_FILE} NAME)
   list(APPEND FILE_NAMES "${NEW_FILE}")
@@ -45,11 +45,11 @@ endif()
 cmake_policy(SET CMP0057 NEW)
 
 # Remove stale files in the source directory
-file(GLOB OLD_FILES ${CLIENT_SOURCE_DIR}/*.h ${CLIENT_SOURCE_DIR}/*.cpp)
+file(GLOB OLD_FILES ${CLIENT_SOURCE_DIR}/*.h ${CLIENT_SOURCE_DIR}/*.ixx ${CLIENT_SOURCE_DIR}/*.cpp)
 foreach(OLD_FILE ${OLD_FILES})
   get_filename_component(OLD_FILE ${OLD_FILE} NAME)
   if(NOT OLD_FILE IN_LIST FILE_NAMES)
-    if(OLD_FILE MATCHES "Client\\.h$" OR OLD_FILE MATCHES "Client\\.cpp$")
+    if(OLD_FILE MATCHES "Client\\.h$" OR OLD_FILE MATCHES "Client\\.ixx$" OR OLD_FILE MATCHES "Client\\.cpp$")
       file(REMOVE "${CLIENT_SOURCE_DIR}/${OLD_FILE}")
     else()
       message(WARNING "Unexpected file in ${CLIENT_TARGET} client sources: ${OLD_FILE}")

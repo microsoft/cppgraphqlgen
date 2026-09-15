@@ -9,7 +9,7 @@
 #ifndef GRAPHQLGRAMMAR_H
 #define GRAPHQLGRAMMAR_H
 
-#include "graphqlservice/internal/SyntaxTree.h"
+#include "SyntaxTree.h"
 
 #include <functional>
 
