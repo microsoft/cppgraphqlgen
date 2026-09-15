@@ -264,6 +264,8 @@ public:
 		std::string_view type) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getInputCppType(
 		const InputField& field) const noexcept;
+	[[nodiscard("unnecessary memory copy")]] std::string getArgumentCppType(
+		const InputField& field) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getOutputCppType(
 		const OutputField& field) const noexcept;
 
@@ -276,6 +278,9 @@ public:
 		const InputField& field) noexcept;
 
 private:
+	[[nodiscard("unnecessary memory copy")]] std::string getArgumentCppType(
+		const InputField& field, bool useOptional) const noexcept;
+
 	[[nodiscard("unnecessary call")]] static bool isExtension(
 		const peg::ast_node& definition) noexcept;
 

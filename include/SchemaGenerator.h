@@ -81,9 +81,9 @@ private:
 		std::size_t level, const response::Value& defaultValue) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getArgumentDeclaration(
 		const InputField& argument, const char* prefixToken, const char* argumentsToken,
-		const char* defaultToken) const noexcept;
+		const char* defaultToken, bool useOptional) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getArgumentAccessType(
-		const InputField& argument) const noexcept;
+		const InputField& argument, bool useOptional) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getResultAccessType(
 		const OutputField& result) const noexcept;
 	[[nodiscard("unnecessary memory copy")]] std::string getTypeModifiers(
