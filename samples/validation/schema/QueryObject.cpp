@@ -50,7 +50,8 @@ service::ResolverMap Query::getResolvers() const noexcept
 		{ R"gql(resource)gql"sv, [this](service::ResolverParams&& params) { return resolveResource(std::move(params)); } },
 		{ R"gql(arguments)gql"sv, [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ R"gql(booleanList)gql"sv, [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } }
+		{ R"gql(booleanList)gql"sv, [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } },
+		{ R"gql(findDogName)gql"sv, [this](service::ResolverParams&& params) { return resolveFindDogName(std::move(params)); } }
 	};
 }
 
@@ -132,7 +133,7 @@ service::AwaitableResolver Query::resolveResource(service::ResolverParams&& para
 
 service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& params) const
 {
-	auto argComplex = service::ModifiedArgument<validation::ComplexInput>::require<service::TypeModifier::Nullable>("complex", params.arguments);
+	auto argComplex = service::ModifiedArgument<validation::ComplexInput, true>::require<service::TypeModifier::Nullable>("complex", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);
@@ -140,6 +141,18 @@ service::AwaitableResolver Query::resolveFindDog(service::ResolverParams&& param
 	resolverLock.unlock();
 
 	return service::ModifiedResult<Dog>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
+}
+
+service::AwaitableResolver Query::resolveFindDogName(service::ResolverParams&& params) const
+{
+	auto argComplex = service::ModifiedArgument<validation::ComplexInput, true>::require<service::TypeModifier::Nullable>("complex", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
+	auto directives = std::move(params.fieldDirectives);
+	auto result = _pimpl->getFindDogName(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argComplex));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<std::string>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
 service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& params) const
@@ -171,6 +184,9 @@ void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const
 		schema::Field::Make(R"gql(arguments)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Arguments)gql"sv)),
 		schema::Field::Make(R"gql(resource)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Resource)gql"sv)),
 		schema::Field::Make(R"gql(findDog)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Dog)gql"sv), {
+			schema::InputValue::Make(R"gql(complex)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ComplexInput)gql"sv), R"gql()gql"sv)
+		}),
+		schema::Field::Make(R"gql(findDogName)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(String)gql"sv), {
 			schema::InputValue::Make(R"gql(complex)gql"sv, R"md()md"sv, schema->LookupType(R"gql(ComplexInput)gql"sv), R"gql()gql"sv)
 		}),
 		schema::Field::Make(R"gql(booleanList)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Boolean)gql"sv), {

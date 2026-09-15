@@ -80,7 +80,7 @@ service::AwaitableResolver Cat::resolveNickname(service::ResolverParams&& params
 
 service::AwaitableResolver Cat::resolveDoesKnowCommand(service::ResolverParams&& params) const
 {
-	auto argCatCommand = service::ModifiedArgument<CatCommand>::require("catCommand", params.arguments);
+	auto argCatCommand = service::ModifiedArgument<validation::CatCommand>::require("catCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);

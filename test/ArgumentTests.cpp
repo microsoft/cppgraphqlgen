@@ -452,6 +452,10 @@ template <typename Type>
 using NullableType = typename service::ModifiedArgument<Type>::template ArgumentTraits<Type,
 	service::TypeModifier::Nullable>::type;
 
+template <typename Type>
+using NullableArgumentType = typename service::ModifiedArgument<Type,
+	true>::template ArgumentTraits<Type, service::TypeModifier::Nullable>::type;
+
 TEST(ArgumentsCase, ArgumentTraitsUniquePtr)
 {
 	constexpr bool boolType = std::is_same_v<NullableType<bool>, std::optional<bool>>;
@@ -476,4 +480,13 @@ TEST(ArgumentsCase, ArgumentTraitsUniquePtr)
 	ASSERT_TRUE(valueClass) << "NullableType<response::Value> is std::optional<response::Value>";
 	ASSERT_TRUE(fakeStruct) << "NullableType<FakeInput> is std::unique_ptr<FakeInput>";
 	ASSERT_TRUE(fakeEnum) << "NullableType<FakeEnum> is std::optional<FakeEnum>";
+}
+
+TEST(ArgumentsCase, ArgumentTraitsOptionalInput)
+{
+	constexpr bool fakeStruct =
+		std::is_same_v<NullableArgumentType<FakeInput>, std::optional<FakeInput>>;
+
+	static_assert(fakeStruct, "NullableArgumentType<FakeInput> is std::optional<FakeInput>");
+	ASSERT_TRUE(fakeStruct) << "NullableArgumentType<FakeInput> is std::optional<FakeInput>";
 }

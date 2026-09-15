@@ -666,7 +666,7 @@ concept InputArgumentUniquePtr = InputArgumentClass<Type> && OnlyNoneModifiers<O
 // If the argument is not optional, use require and let it throw a schema_exception when the
 // argument is missing or not the correct type. If it's optional, use find and check the second
 // element in the pair to see if it was found or if you just got the default value for that type.
-template <typename Type>
+template <typename Type, bool UseOptional = false>
 struct ModifiedArgument
 {
 	// Peel off modifiers until we get to the underlying type.
@@ -675,8 +675,8 @@ struct ModifiedArgument
 	{
 		// Peel off modifiers until we get to the underlying type.
 		using type = typename std::conditional_t<TypeModifier::Nullable == Modifier,
-			typename std::conditional_t<InputArgumentUniquePtr<U, Other...>, std::unique_ptr<U>,
-				std::optional<typename ArgumentTraits<U, Other...>::type>>,
+			typename std::conditional_t<!UseOptional && InputArgumentUniquePtr<U, Other...>,
+				std::unique_ptr<U>, std::optional<typename ArgumentTraits<U, Other...>::type>>,
 			typename std::conditional_t<TypeModifier::List == Modifier,
 				std::vector<typename ArgumentTraits<U, Other...>::type>, U>>;
 	};
@@ -754,7 +754,7 @@ struct ModifiedArgument
 
 		auto result = require<Other...>(name, arguments);
 
-		if constexpr (InputArgumentUniquePtr<Type, Other...>)
+		if constexpr (!UseOptional && InputArgumentUniquePtr<Type, Other...>)
 		{
 			return std::make_unique<decltype(result)>(std::move(result));
 		}
@@ -824,7 +824,7 @@ struct ModifiedArgument
 
 		if (nullableValue)
 		{
-			if constexpr (InputArgumentUniquePtr<Type, Other...>)
+			if constexpr (!UseOptional && InputArgumentUniquePtr<Type, Other...>)
 			{
 				// Special case duplicating the std::unique_ptr.
 				result = std::make_unique<Type>(Type { *nullableValue });
