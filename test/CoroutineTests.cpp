@@ -287,6 +287,9 @@ TEST_F(CoroutineCase, QueryEverythingThreaded)
 	auto query = R"(
 		query Everything {
 			appointments {
+				pageInfo {
+					...PageInfoFields
+				}
 				edges {
 					node {
 						id
@@ -298,6 +301,9 @@ TEST_F(CoroutineCase, QueryEverythingThreaded)
 				}
 			}
 			tasks {
+				pageInfo {
+					...PageInfoFields
+				}
 				edges {
 					node {
 						id
@@ -308,6 +314,9 @@ TEST_F(CoroutineCase, QueryEverythingThreaded)
 				}
 			}
 			unreadCounts {
+				pageInfo {
+					...PageInfoFields
+				}
 				edges {
 					node {
 						id
@@ -317,6 +326,10 @@ TEST_F(CoroutineCase, QueryEverythingThreaded)
 					}
 				}
 			}
+		}
+		fragment PageInfoFields on PageInfo {
+			hasNextPage
+			hasPreviousPage
 		})"_graphql;
 	response::Value variables(response::Type::Map);
 	auto state = std::make_shared<today::RequestState>(3);

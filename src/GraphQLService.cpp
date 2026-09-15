@@ -934,9 +934,12 @@ SelectionVisitor::SelectionVisitor(const SelectionSetParams& selectionSetParams,
 	, _variables(variables)
 	, _typeNames(typeNames)
 	, _resolvers(resolvers)
-	, _fragmentDefinitionDirectives { selectionSetParams.fragmentDefinitionDirectives }
-	, _fragmentSpreadDirectives { selectionSetParams.fragmentSpreadDirectives }
-	, _inlineFragmentDirectives { selectionSetParams.inlineFragmentDirectives }
+	, _fragmentDefinitionDirectives { std::make_shared<FragmentDefinitionDirectiveStack>(
+		  *selectionSetParams.fragmentDefinitionDirectives) }
+	, _fragmentSpreadDirectives { std::make_shared<FragmentSpreadDirectiveStack>(
+		  *selectionSetParams.fragmentSpreadDirectives) }
+	, _inlineFragmentDirectives { std::make_shared<FragmentSpreadDirectiveStack>(
+		  *selectionSetParams.inlineFragmentDirectives) }
 {
 	static const Directives s_emptyFragmentDefinitionDirectives;
 
