@@ -524,6 +524,11 @@ bool Value::NullData::operator==(const NullData&) const
 
 bool Value::ScalarData::operator==(const ScalarData& rhs) const
 {
+	if (any || rhs.any)
+	{
+		return any == rhs.any;
+	}
+
 	if (scalar && rhs.scalar)
 	{
 		return *scalar == *rhs.scalar;
@@ -626,7 +631,7 @@ void Value::set<ScalarType>(ScalarType&& value)
 		throw std::logic_error("Invalid call to Value::set for ScalarType");
 	}
 
-	_data = { ScalarData { std::make_unique<ScalarType>(std::move(value)) } };
+	_data = { ScalarData { std::make_unique<ScalarType>(std::move(value)), {} } };
 }
 
 template <>
@@ -984,6 +989,11 @@ Value::Value(IdType&& value)
 {
 }
 
+Value::Value(AnyScalar&& value)
+	: _data(TypeData { ScalarData { {}, std::make_shared<const AnyScalar>(std::move(value)) } })
+{
+}
+
 Value::Value(Value&& other) noexcept
 	: _data(std::move(other._data))
 {
@@ -1071,8 +1081,19 @@ Value::Value(const Value& other)
 			break;
 
 		case Type::Scalar:
-			_data = { ScalarData { std::make_unique<ScalarType>(other.get<ScalarType>()) } };
+		{
+			const auto& scalarData = std::get<ScalarData>(other._data);
+
+			if (scalarData.any)
+			{
+				_data = { ScalarData { {}, scalarData.any } };
+			}
+			else
+			{
+				_data = { ScalarData { std::make_unique<ScalarType>(other.get<ScalarType>()), {} } };
+			}
 			break;
+		}
 	}
 }
 
@@ -1229,6 +1250,40 @@ bool Value::operator==(const Value& rhs) const noexcept
 Type Value::type() const noexcept
 {
 	return typeOf(_data);
+}
+
+bool Value::isAny() const noexcept
+{
+	const auto& typeData = data();
+
+	if (!std::holds_alternative<ScalarData>(typeData))
+	{
+		return false;
+	}
+
+	return static_cast<bool>(std::get<ScalarData>(typeData).any);
+}
+
+SharedAnyScalar Value::releaseAny()
+{
+	if (std::holds_alternative<SharedData>(_data))
+	{
+		*this = Value { *std::get<SharedData>(_data) };
+	}
+
+	if (!std::holds_alternative<ScalarData>(_data))
+	{
+		throw std::logic_error("Invalid call to Value::releaseAny");
+	}
+
+	auto any = std::move(std::get<ScalarData>(_data).any);
+
+	if (!any)
+	{
+		throw std::logic_error("Invalid call to Value::releaseAny");
+	}
+
+	return any;
 }
 
 Value&& Value::from_json() noexcept
@@ -1527,6 +1582,11 @@ ValueToken::ValueToken(OpaqueValue&& value)
 {
 }
 
+ValueToken::ValueToken(AnyValue&& value)
+	: _value { std::move(value) }
+{
+}
+
 ValueToken::ValueToken(Reserve&& value)
 	: _value { std::move(value) }
 {
@@ -1601,6 +1661,10 @@ void ValueToken::visit(const std::shared_ptr<ValueVisitor>& visitor) &&
 			if constexpr (std::is_same_v<value_type, OpaqueValue>)
 			{
 				visitor->add_value(std::move(value));
+			}
+			else if constexpr (std::is_same_v<value_type, AnyValue>)
+			{
+				value->serialize(value->value, visitor);
 			}
 			else if constexpr (std::is_same_v<value_type, Reserve>)
 			{
@@ -1889,7 +1953,14 @@ ValueTokenStream::ValueTokenStream(Value&& value)
 
 		case Type::Scalar:
 		{
-			append(ValueTokenStream { value.release<ScalarType>() });
+			if (value.isAny())
+			{
+				push_back(ValueToken::AnyValue { value.releaseAny() });
+			}
+			else
+			{
+				append(ValueTokenStream { value.release<ScalarType>() });
+			}
 			break;
 		}
 

@@ -9,8 +9,10 @@
 #include "internal/Awaitable.h"
 #include "internal/DllExports.h"
 
+#include <any>
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
 #include <iterator>
 #include <list>
@@ -39,6 +41,7 @@ enum class [[nodiscard("unnecessary conversion")]] Type : std::uint8_t {
 };
 
 struct Value;
+class ValueVisitor;
 
 using MapType = std::vector<std::pair<std::string, Value>>;
 using ListType = std::vector<Value>;
@@ -162,6 +165,22 @@ template <>
 GRAPHQLRESPONSE_EXPORT IdType::OpaqueString IdType::release<IdType::OpaqueString>();
 #endif // GRAPHQL_DLLEXPORTS
 
+// A type-erased payload for scalar values whose C++ representation can't be expressed with any
+// of Value's other alternatives (e.g. a BigInt backed by std::int64_t). The implementer supplies
+// both the std::any payload and a serializer that knows how to drive a ValueVisitor with it, so
+// this stays a private implementation detail of a hand-written resolver -- it's never exposed to
+// the schema definition (no IDL/directive changes) or to the client (the wire format is still
+// ordinary JSON, produced by whatever the serializer calls on the visitor).
+struct [[nodiscard("unnecessary construction")]] AnyScalar
+{
+	using Serializer = std::function<void(const std::any&, const std::shared_ptr<ValueVisitor>&)>;
+
+	std::any value;
+	Serializer serialize;
+};
+
+using SharedAnyScalar = std::shared_ptr<const AnyScalar>;
+
 template <typename ValueType>
 struct ValueTypeTraits
 {
@@ -225,6 +244,7 @@ struct [[nodiscard("unnecessary conversion")]] Value
 	GRAPHQLRESPONSE_EXPORT explicit Value(IntType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(FloatType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(IdType&& value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(AnyScalar&& value);
 
 	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
@@ -240,6 +260,10 @@ struct [[nodiscard("unnecessary conversion")]] Value
 
 	// Check the Type
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT Type type() const noexcept;
+
+	// Check for and release a type-erased AnyScalar payload attached to a Type::Scalar value.
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT bool isAny() const noexcept;
+	GRAPHQLRESPONSE_EXPORT SharedAnyScalar releaseAny();
 
 	// JSON doesn't distinguish between Type::String, Type::EnumValue, and Type::ID, so if this
 	// value comes from JSON and it's a string we need to track the fact that it can be interpreted
@@ -318,6 +342,7 @@ private:
 		[[nodiscard("unnecessary call")]] bool operator==(const ScalarData& rhs) const;
 
 		std::unique_ptr<ScalarType> scalar;
+		SharedAnyScalar any;
 	};
 
 	using SharedData = std::shared_ptr<const Value>;
@@ -533,6 +558,10 @@ struct [[nodiscard("unnecessary construction")]] ValueToken
 
 	GRAPHQLRESPONSE_EXPORT explicit ValueToken(OpaqueValue&& value);
 
+	using AnyValue = SharedAnyScalar;
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(AnyValue&& value);
+
 	struct Reserve
 	{
 		std::size_t capacity;
@@ -623,8 +652,8 @@ struct [[nodiscard("unnecessary construction")]] ValueToken
 
 private:
 	using variant_type =
-		std::variant<OpaqueValue, Reserve, StartObject, AddMember, EndObject, StartArray, EndArray,
-			NullValue, StringValue, EnumValue, IdValue, BoolValue, IntValue, FloatValue>;
+		std::variant<OpaqueValue, AnyValue, Reserve, StartObject, AddMember, EndObject, StartArray,
+			EndArray, NullValue, StringValue, EnumValue, IdValue, BoolValue, IntValue, FloatValue>;
 
 	variant_type _value;
 };

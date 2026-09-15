@@ -230,6 +230,7 @@ There are some more targeted documents in the [doc](./doc) directory:
 * [Query Responses](./doc/responses.md)
 * [JSON Representation](./doc/json.md)
 * [Field Resolvers](./doc/resolvers.md)
+* [Custom Scalar Payloads](./doc/scalars.md)
 * [Field Parameters](./doc/fieldparams.md)
 * [Directives](./doc/directives.md)
 * [Subscriptions](./doc/subscriptions.md)

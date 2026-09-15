@@ -100,6 +100,16 @@ target_include_directories(response_tests PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET response_tests)
 
+add_executable(anyscalar_tests AnyScalarTests.cpp)
+target_link_libraries(anyscalar_tests PRIVATE
+  graphqlservice
+  graphqljson
+  GTest::GTest
+  GTest::Main)
+target_include_directories(anyscalar_tests PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+gtest_add_tests(TARGET anyscalar_tests)
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_command(OUTPUT copied_test_dlls
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
