@@ -1,3 +1,4 @@
+StarWarsSharedTypes.cpp
 StarWarsSchema.cpp
 CharacterObject.cpp
 HumanObject.cpp
@@ -5,3 +6,4 @@ DroidObject.cpp
 QueryObject.cpp
 ReviewObject.cpp
 MutationObject.cpp
+SubscriptionObject.cpp

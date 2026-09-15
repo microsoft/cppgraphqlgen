@@ -8,66 +8,24 @@
 #ifndef STARWARSSCHEMA_H
 #define STARWARSSCHEMA_H
 
+#include "graphqlservice/GraphQLResponse.h"
+#include "graphqlservice/GraphQLService.h"
+
+#include "graphqlservice/internal/Version.h"
 #include "graphqlservice/internal/Schema.h"
 
-// Check if the library version is compatible with schemagen 4.5.0
-static_assert(graphql::internal::MajorVersion == 4, "regenerate with schemagen: major version mismatch");
-static_assert(graphql::internal::MinorVersion == 5, "regenerate with schemagen: minor version mismatch");
+#include "StarWarsSharedTypes.h"
 
 #include <array>
 #include <memory>
 #include <string>
 #include <string_view>
 
-namespace graphql {
-namespace learn {
+// Check if the library version is compatible with schemagen 5.0.0
+static_assert(graphql::internal::MajorVersion == 5, "regenerate with schemagen: major version mismatch");
+static_assert(graphql::internal::MinorVersion == 0, "regenerate with schemagen: minor version mismatch");
 
-enum class [[nodiscard("unnecessary conversion")]] Episode
-{
-	NEW_HOPE,
-	EMPIRE,
-	JEDI
-};
-
-[[nodiscard("unnecessary call")]] constexpr auto getEpisodeNames() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::string_view, 3> {
-		R"gql(NEW_HOPE)gql"sv,
-		R"gql(EMPIRE)gql"sv,
-		R"gql(JEDI)gql"sv
-	};
-}
-
-[[nodiscard("unnecessary call")]] constexpr auto getEpisodeValues() noexcept
-{
-	using namespace std::literals;
-
-	return std::array<std::pair<std::string_view, Episode>, 3> {
-		std::make_pair(R"gql(JEDI)gql"sv, Episode::JEDI),
-		std::make_pair(R"gql(EMPIRE)gql"sv, Episode::EMPIRE),
-		std::make_pair(R"gql(NEW_HOPE)gql"sv, Episode::NEW_HOPE)
-	};
-}
-
-struct [[nodiscard("unnecessary construction")]] ReviewInput
-{
-	explicit ReviewInput() noexcept;
-	explicit ReviewInput(
-		int starsArg,
-		std::optional<std::string> commentaryArg) noexcept;
-	ReviewInput(const ReviewInput& other);
-	ReviewInput(ReviewInput&& other) noexcept;
-	~ReviewInput();
-
-	ReviewInput& operator=(const ReviewInput& other);
-	ReviewInput& operator=(ReviewInput&& other) noexcept;
-
-	int stars;
-	std::optional<std::string> commentary;
-};
-
+namespace graphql::learn {
 namespace object {
 
 class Character;
@@ -77,6 +35,7 @@ class Droid;
 class Query;
 class Review;
 class Mutation;
+class Subscription;
 
 } // namespace object
 
@@ -84,13 +43,14 @@ class [[nodiscard("unnecessary construction")]] Operations final
 	: public service::Request
 {
 public:
-	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation);
+	explicit Operations(std::shared_ptr<object::Query> query, std::shared_ptr<object::Mutation> mutation, std::shared_ptr<object::Subscription> subscription);
 
-	template <class TQuery, class TMutation>
-	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation)
+	template <class TQuery, class TMutation, class TSubscription = service::SubscriptionPlaceholder>
+	explicit Operations(std::shared_ptr<TQuery> query, std::shared_ptr<TMutation> mutation, std::shared_ptr<TSubscription> subscription = {})
 		: Operations {
 			std::make_shared<object::Query>(std::move(query)),
-			std::make_shared<object::Mutation>(std::move(mutation))
+			std::make_shared<object::Mutation>(std::move(mutation)),
+			subscription ? std::make_shared<object::Subscription>(std::move(subscription)) : std::shared_ptr<object::Subscription> {}
 		}
 	{
 	}
@@ -98,6 +58,7 @@ public:
 private:
 	std::shared_ptr<object::Query> _query;
 	std::shared_ptr<object::Mutation> _mutation;
+	std::shared_ptr<object::Subscription> _subscription;
 };
 
 void AddCharacterDetails(const std::shared_ptr<schema::InterfaceType>& typeCharacter, const std::shared_ptr<schema::Schema>& schema);
@@ -107,10 +68,10 @@ void AddDroidDetails(const std::shared_ptr<schema::ObjectType>& typeDroid, const
 void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const std::shared_ptr<schema::Schema>& schema);
 void AddReviewDetails(const std::shared_ptr<schema::ObjectType>& typeReview, const std::shared_ptr<schema::Schema>& schema);
 void AddMutationDetails(const std::shared_ptr<schema::ObjectType>& typeMutation, const std::shared_ptr<schema::Schema>& schema);
+void AddSubscriptionDetails(const std::shared_ptr<schema::ObjectType>& typeSubscription, const std::shared_ptr<schema::Schema>& schema);
 
 std::shared_ptr<schema::Schema> GetSchema();
 
-} // namespace learn
-} // namespace graphql
+} // namespace graphql::learn
 
 #endif // STARWARSSCHEMA_H

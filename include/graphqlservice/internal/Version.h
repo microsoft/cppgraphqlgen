@@ -6,15 +6,20 @@
 #ifndef GRAPHQLVERSION_H
 #define GRAPHQLVERSION_H
 
+#include <cstddef>
 #include <string_view>
 
 namespace graphql::internal {
 
-constexpr std::string_view FullVersion { "4.5.9" };
+inline namespace version {
 
-constexpr size_t MajorVersion = 4;
-constexpr size_t MinorVersion = 5;
-constexpr size_t PatchVersion = 9;
+constexpr std::string_view FullVersion { "5.0.0" };
+
+constexpr std::size_t MajorVersion = 5;
+constexpr std::size_t MinorVersion = 0;
+constexpr std::size_t PatchVersion = 0;
+
+} // namespace version
 
 } // namespace graphql::internal
 

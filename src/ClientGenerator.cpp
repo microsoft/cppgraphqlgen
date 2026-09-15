@@ -5,7 +5,6 @@
 #include "GeneratorUtil.h"
 
 #include "graphqlservice/internal/Version.h"
-
 #include "graphqlservice/introspection/IntrospectionSchema.h"
 
 #ifdef _MSC_VER
@@ -20,8 +19,10 @@
 #pragma warning(pop)
 #endif // _MSC_VER
 
+#include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <format>
 #include <fstream>
 #include <iostream>
 #include <regex>
@@ -40,6 +41,7 @@ Generator::Generator(
 	, _headerDir(getHeaderDir())
 	, _sourceDir(getSourceDir())
 	, _headerPath(getHeaderPath())
+	, _modulePath(getModulePath())
 	, _sourcePath(getSourcePath())
 {
 }
@@ -77,6 +79,15 @@ std::string Generator::getHeaderPath() const noexcept
 	return fullPath.string();
 }
 
+std::string Generator::getModulePath() const noexcept
+{
+	std::filesystem::path fullPath { _headerDir };
+
+	fullPath /= (std::string { _schemaLoader.getFilenamePrefix() } + "Client.ixx");
+
+	return fullPath.string();
+}
+
 std::string Generator::getSourcePath() const noexcept
 {
 	std::filesystem::path fullPath { _sourceDir };
@@ -88,7 +99,7 @@ std::string Generator::getSourcePath() const noexcept
 
 const std::string& Generator::getClientNamespace() const noexcept
 {
-	static const auto s_namespace = R"cpp(graphql::client)cpp"s;
+	static const auto s_namespace = R"cpp(client)cpp"s;
 
 	return s_namespace;
 }
@@ -103,12 +114,11 @@ const std::string& Generator::getOperationNamespace(const Operation& operation) 
 
 		for (const auto& entry : operations)
 		{
-			std::ostringstream oss;
+			auto value = std::format(R"cpp({}::{})cpp",
+				_requestLoader.getOperationType(entry),
+				_requestLoader.getOperationNamespace(entry));
 
-			oss << _requestLoader.getOperationType(entry) << R"cpp(::)cpp"
-				<< _requestLoader.getOperationNamespace(entry);
-
-			result.emplace(entry.name, oss.str());
+			result.emplace(entry.name, std::move(value));
 		}
 
 		return result;
@@ -128,15 +138,17 @@ std::string Generator::getResponseFieldCppType(
 		case introspection::TypeKind::INTERFACE:
 		case introspection::TypeKind::UNION:
 		{
-			std::ostringstream oss;
+			std::string prefix;
 
 			if (!currentScope.empty())
 			{
-				oss << currentScope << R"cpp(::)cpp";
+				prefix = std::format(R"cpp({}::)cpp", currentScope);
 			}
 
-			oss << responseField.cppName << R"cpp(_)cpp" << responseField.type->name();
-			result = SchemaLoader::getSafeCppName(oss.str());
+			result = SchemaLoader::getSafeCppName(std::format(R"cpp({}{}_{})cpp",
+				prefix,
+				responseField.cppName,
+				responseField.type->name()));
 			break;
 		}
 
@@ -154,6 +166,11 @@ std::vector<std::string> Generator::Build() const noexcept
 	if (outputHeader() && _options.verbose)
 	{
 		builtFiles.push_back(_headerPath);
+	}
+
+	if (outputModule() && _options.verbose)
+	{
+		builtFiles.push_back(_modulePath);
 	}
 
 	if (outputSource())
@@ -175,6 +192,20 @@ bool Generator::outputHeader() const noexcept
 #include "graphqlservice/GraphQLResponse.h"
 
 #include "graphqlservice/internal/Version.h"
+)cpp";
+
+	if (_requestLoader.useSharedTypes())
+	{
+		headerFile << R"cpp(
+#include ")cpp" << _schemaLoader.getFilenamePrefix()
+				   << R"cpp(SharedTypes.h"
+)cpp";
+	}
+
+	headerFile << R"cpp(
+#include <optional>
+#include <string>
+#include <vector>
 
 // Check if the library version is compatible with clientgen )cpp"
 			   << graphql::internal::MajorVersion << R"cpp(.)cpp" << graphql::internal::MinorVersion
@@ -186,153 +217,167 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 			   << graphql::internal::MinorVersion
 			   << R"cpp(, "regenerate with clientgen: minor version mismatch");
 
-#include <optional>
-#include <string>
-#include <vector>
-
 )cpp";
 
-	PendingBlankLine pendingSeparator { headerFile };
-	NamespaceScope clientNamespaceScope { headerFile, getClientNamespace() };
+	const auto schemaNamespace = std::format("graphql::{}", _schemaLoader.getSchemaNamespace());
+	NamespaceScope schemaNamespaceScope { headerFile, schemaNamespace };
 
 	outputRequestComment(headerFile);
 
-	NamespaceScope schemaNamespaceScope { headerFile, _schemaLoader.getSchemaNamespace() };
+	NamespaceScope clientNamespaceScope { headerFile, getClientNamespace() };
+	PendingBlankLine pendingSeparator { headerFile };
 
 	outputGetRequestDeclaration(headerFile);
 
 	const auto& operations = _requestLoader.getOperations();
-	std::unordered_set<std::string_view> declaredEnum;
 
-	for (const auto& operation : operations)
+	if (!_requestLoader.useSharedTypes())
 	{
-		// Define all of the enums referenced either in variables or the response.
-		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
+		std::unordered_set<std::string_view> declaredEnum;
+
+		for (const auto& operation : operations)
 		{
-			const auto cppType = _schemaLoader.getCppType(enumType->name());
-
-			if (!declaredEnum.insert(cppType).second)
+			// Define all of the enums referenced either in variables or the response.
+			for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
 			{
-				continue;
-			}
+				const auto cppType = _schemaLoader.getCppType(enumType->name());
 
-			pendingSeparator.reset();
-
-			headerFile << R"cpp(enum class [[nodiscard("unnecessary conversion")]] )cpp" << cppType
-					   << R"cpp(
-{
-)cpp";
-			for (const auto& enumValue : enumType->enumValues())
-			{
-				headerFile << R"cpp(	)cpp" << SchemaLoader::getSafeCppName(enumValue->name())
-						   << R"cpp(,
-)cpp";
-			}
-
-			headerFile << R"cpp(};
-)cpp";
-
-			pendingSeparator.add();
-		}
-	}
-
-	std::unordered_set<std::string_view> declaredInput;
-	std::unordered_set<std::string_view> forwardDeclaredInput;
-
-	for (const auto& operation : operations)
-	{
-		// Define all of the input object structs referenced in variables.
-		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
-		{
-			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
-
-			if (!declaredInput.insert(cppType).second)
-			{
-				continue;
-			}
-
-			pendingSeparator.reset();
-
-			if (!inputType.declarations.empty())
-			{
-				// Forward declare nullable dependencies
-				for (auto declaration : inputType.declarations)
+				if (!declaredEnum.insert(cppType).second)
 				{
-					if (declaredInput.find(declaration) == declaredInput.end()
-						&& forwardDeclaredInput.insert(declaration).second)
-					{
-						headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
-)cpp";
-						pendingSeparator.add();
-					}
+					continue;
 				}
 
 				pendingSeparator.reset();
-			}
 
-			headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp" << cppType
-					   << R"cpp(
+				if (clientNamespaceScope.exit())
+				{
+					headerFile << std::endl;
+				}
+
+				headerFile << R"cpp(enum class [[nodiscard("unnecessary conversion")]] )cpp"
+						   << cppType << R"cpp(
+{
+)cpp";
+				for (const auto& enumValue : enumType->enumValues())
+				{
+					headerFile << R"cpp(	)cpp" << SchemaLoader::getSafeCppName(enumValue->name())
+							   << R"cpp(,
+)cpp";
+				}
+
+				headerFile << R"cpp(};
+)cpp";
+
+				pendingSeparator.add();
+			}
+		}
+
+		std::unordered_set<std::string_view> declaredInput;
+		std::unordered_set<std::string_view> forwardDeclaredInput;
+
+		for (const auto& operation : operations)
+		{
+			// Define all of the input object structs referenced in variables.
+			for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+			{
+				const auto cppType = _schemaLoader.getCppType(inputType.type->name());
+
+				if (!declaredInput.insert(cppType).second)
+				{
+					continue;
+				}
+
+				pendingSeparator.reset();
+
+				if (clientNamespaceScope.exit())
+				{
+					headerFile << std::endl;
+				}
+
+				if (!inputType.declarations.empty())
+				{
+					// Forward declare nullable dependencies
+					for (auto declaration : inputType.declarations)
+					{
+						if (declaredInput.find(declaration) == declaredInput.end()
+							&& forwardDeclaredInput.insert(declaration).second)
+						{
+							headerFile << R"cpp(struct )cpp" << declaration << R"cpp(;
+)cpp";
+							pendingSeparator.add();
+						}
+					}
+
+					pendingSeparator.reset();
+				}
+
+				headerFile << R"cpp(struct [[nodiscard("unnecessary construction")]] )cpp"
+						   << cppType << R"cpp(
 {
 	explicit )cpp" << cppType
-					   << R"cpp(()cpp";
+						   << R"cpp(()cpp";
 
-			bool firstField = true;
+				bool firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				if (firstField)
+				for (const auto& inputField : inputType.type->inputFields())
 				{
-					headerFile << R"cpp() noexcept;
+					if (firstField)
+					{
+						headerFile << R"cpp() noexcept;
 	explicit )cpp" << cppType << R"cpp(()cpp";
+					}
+					else
+					{
+						headerFile << R"cpp(,)cpp";
+					}
+
+					firstField = false;
+
+					const auto inputCppType =
+						_requestLoader.getInputCppType(inputField->type().lock());
+
+					headerFile << R"cpp(
+		)cpp" << inputCppType << R"cpp( )cpp"
+							   << SchemaLoader::getSafeCppName(inputField->name())
+							   << R"cpp(Arg)cpp";
 				}
-				else
-				{
-					headerFile << R"cpp(,)cpp";
-				}
 
-				firstField = false;
-
-				const auto inputCppType = _requestLoader.getInputCppType(inputField->type().lock());
-
-				headerFile << R"cpp(
-		)cpp" << inputCppType
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(Arg)cpp";
-			}
-
-			headerFile << R"cpp() noexcept;
+				headerFile << R"cpp() noexcept;
 	)cpp" << cppType << R"cpp((const )cpp"
-					   << cppType << R"cpp(& other);
+						   << cppType << R"cpp(& other);
 	)cpp" << cppType << R"cpp(()cpp"
-					   << cppType << R"cpp(&& other) noexcept;
+						   << cppType << R"cpp(&& other) noexcept;
 	~)cpp" << cppType << R"cpp(();
 
 	)cpp" << cppType << R"cpp(& operator=(const )cpp"
-					   << cppType << R"cpp(& other);
+						   << cppType << R"cpp(& other);
 	)cpp" << cppType << R"cpp(& operator=()cpp"
-					   << cppType << R"cpp(&& other) noexcept;
+						   << cppType << R"cpp(&& other) noexcept;
 
 )cpp";
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				headerFile << R"cpp(	)cpp"
-						   << _requestLoader.getInputCppType(inputField->type().lock())
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(;
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					headerFile << R"cpp(	)cpp"
+							   << _requestLoader.getInputCppType(inputField->type().lock())
+							   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+							   << R"cpp(;
 )cpp";
+				}
+
+				headerFile << R"cpp(};
+)cpp";
+
+				pendingSeparator.add();
 			}
-
-			headerFile << R"cpp(};
-)cpp";
-
-			pendingSeparator.add();
 		}
 	}
 
 	pendingSeparator.reset();
-	schemaNamespaceScope.exit();
-	pendingSeparator.add();
+	if (clientNamespaceScope.enter())
+	{
+		pendingSeparator.add();
+	}
 
 	for (const auto& operation : operations)
 	{
@@ -341,9 +386,11 @@ static_assert(graphql::internal::MinorVersion == )cpp"
 		NamespaceScope operationNamespaceScope { headerFile, getOperationNamespace(operation) };
 
 		headerFile << R"cpp(
-using )cpp" << _schemaLoader.getSchemaNamespace()
+using graphql::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestText;
-using )cpp" << _schemaLoader.getSchemaNamespace()
+using graphql::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestObject;
 )cpp";
 
@@ -352,8 +399,8 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 		// Alias all of the enums referenced either in variables or the response.
 		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
 		{
-			headerFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
+			headerFile << R"cpp(using graphql::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
 )cpp";
 
 			pendingSeparator.add();
@@ -364,8 +411,9 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 		// Alias all of the input object structs referenced in variables.
 		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
 		{
-			headerFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp"
-					   << _schemaLoader.getCppType(inputType.type->name()) << R"cpp(;
+			headerFile << R"cpp(using graphql::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(inputType.type->name())
+					   << R"cpp(;
 )cpp";
 
 			pendingSeparator.add();
@@ -430,6 +478,37 @@ using )cpp" << _schemaLoader.getSchemaNamespace()
 
 		headerFile << R"cpp(};
 
+class ResponseVisitor
+	: public std::enable_shared_from_this<ResponseVisitor>
+{
+public:
+	ResponseVisitor() noexcept;
+	~ResponseVisitor();
+
+	void add_value(std::shared_ptr<const response::Value>&&);
+	void reserve(std::size_t count);
+	void start_object();
+	void add_member(std::string&& key);
+	void end_object();
+	void start_array();
+	void end_array();
+	void add_null();
+	void add_string(std::string&& value);
+	void add_enum(std::string&& value);
+	void add_id(response::IdType&& value);
+	void add_bool(bool value);
+	void add_int(int value);
+	void add_float(double value);
+	void complete();
+
+	Response response();
+
+private:
+	struct impl;
+
+	std::unique_ptr<impl> _pimpl;
+};
+
 [[nodiscard("unnecessary conversion")]] Response parseResponse(response::Value&& response);
 
 struct Traits
@@ -452,6 +531,8 @@ struct Traits
 		headerFile << R"cpp(
 	using Response = )cpp"
 				   << _requestLoader.getOperationNamespace(operation) << R"cpp(::Response;
+	using ResponseVisitor = )cpp"
+				   << _requestLoader.getOperationNamespace(operation) << R"cpp(::ResponseVisitor;
 
 	[[nodiscard("unnecessary conversion")]] static Response parseResponse(response::Value&& response);
 };
@@ -467,8 +548,7 @@ struct Traits
 void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 {
 	headerFile << R"cpp(
-/// <summary>
-/// Operation)cpp";
+/// # Operation)cpp";
 
 	const auto& operations = _requestLoader.getOperations();
 
@@ -495,8 +575,7 @@ void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 	}
 
 	headerFile << R"cpp(
-/// </summary>
-/// <code class="language-graphql">
+/// ```graphql
 )cpp";
 
 	std::istringstream request { std::string { _requestLoader.getRequestText() } };
@@ -506,7 +585,7 @@ void Generator::outputRequestComment(std::ostream& headerFile) const noexcept
 		headerFile << R"cpp(/// )cpp" << line << std::endl;
 	}
 
-	headerFile << R"cpp(/// </code>
+	headerFile << R"cpp(/// ```
 )cpp";
 }
 
@@ -531,7 +610,7 @@ void Generator::outputGetOperationNameDeclaration(std::ostream& headerFile) cons
 }
 
 bool Generator::outputResponseFieldType(std::ostream& headerFile,
-	const ResponseField& responseField, size_t indent /* = 0 */) const noexcept
+	const ResponseField& responseField, std::size_t indent /* = 0 */) const noexcept
 {
 	switch (responseField.type->kind())
 	{
@@ -601,6 +680,198 @@ bool Generator::outputResponseFieldType(std::ostream& headerFile,
 	return true;
 }
 
+bool Generator::outputModule() const noexcept
+{
+	std::ofstream moduleFile(_modulePath, std::ios_base::trunc);
+
+	moduleFile << R"cpp(// Copyright (c) Microsoft Corporation. All rights reserved.
+// Licensed under the MIT License.
+
+// WARNING! Do not edit this file manually, your changes will be overwritten.
+
+module;
+
+#include ")cpp" << _schemaLoader.getFilenamePrefix()
+			   <<
+		R"cpp(Client.h"
+
+export module GraphQL.)cpp"
+			   << _schemaLoader.getFilenamePrefix() << R"cpp(.)cpp"
+			   << _schemaLoader.getFilenamePrefix() <<
+		R"cpp(Client;
+
+export )cpp";
+
+	const auto schemaNamespace = std::format("graphql::{}", _schemaLoader.getSchemaNamespace());
+	NamespaceScope schemaNamespaceScope { moduleFile, schemaNamespace };
+
+	moduleFile << std::endl;
+
+	NamespaceScope clientNamespaceScope { moduleFile, getClientNamespace() };
+	PendingBlankLine pendingSeparator { moduleFile };
+
+	moduleFile << R"cpp(
+using )cpp" << getClientNamespace()
+			   << R"cpp(::GetRequestText;
+using )cpp" << getClientNamespace()
+			   << R"cpp(::GetRequestObject;
+)cpp";
+
+	const auto& operations = _requestLoader.getOperations();
+	std::unordered_set<std::string_view> declaredEnum;
+
+	for (const auto& operation : operations)
+	{
+		if (!_requestLoader.getReferencedEnums(operation).empty())
+		{
+			pendingSeparator.reset();
+
+			if (clientNamespaceScope.exit())
+			{
+				moduleFile << std::endl;
+			}
+
+			// Define all of the enums referenced either in variables or the response.
+			for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
+			{
+				const auto cppType = _schemaLoader.getCppType(enumType->name());
+
+				if (!declaredEnum.insert(cppType).second)
+				{
+					continue;
+				}
+
+				moduleFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace()
+						   << R"cpp(::)cpp" << cppType << R"cpp(;
+)cpp";
+			}
+		}
+	}
+
+	if (!declaredEnum.empty())
+	{
+		pendingSeparator.add();
+	}
+
+	std::unordered_set<std::string_view> declaredInput;
+	std::unordered_set<std::string_view> forwardDeclaredInput;
+
+	for (const auto& operation : operations)
+	{
+		if (!_requestLoader.getReferencedInputTypes(operation).empty())
+		{
+			pendingSeparator.reset();
+
+			if (clientNamespaceScope.exit())
+			{
+				moduleFile << std::endl;
+			}
+
+			// Define all of the input object structs referenced in variables.
+			for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+			{
+				const auto cppType = _schemaLoader.getCppType(inputType.type->name());
+
+				if (!declaredInput.insert(cppType).second)
+				{
+					continue;
+				}
+
+				moduleFile << R"cpp(using )cpp" << _schemaLoader.getSchemaNamespace()
+						   << R"cpp(::)cpp" << cppType << R"cpp(;
+)cpp";
+			}
+		}
+	}
+
+	if (!declaredInput.empty())
+	{
+		pendingSeparator.add();
+	}
+
+	pendingSeparator.reset();
+	if (clientNamespaceScope.enter())
+	{
+		pendingSeparator.add();
+	}
+
+	for (const auto& operation : operations)
+	{
+		pendingSeparator.reset();
+
+		NamespaceScope operationNamespaceScope { moduleFile, getOperationNamespace(operation) };
+		const auto operationNamespace = _requestLoader.getOperationNamespace(operation);
+
+		moduleFile << R"cpp(
+using graphql::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << getClientNamespace()
+				   << R"cpp(::GetRequestText;
+using graphql::)cpp"
+				   << _schemaLoader.getSchemaNamespace() << R"cpp(::)cpp" << getClientNamespace()
+				   << R"cpp(::GetRequestObject;
+using )cpp" << operationNamespace
+				   << R"cpp(::GetOperationName;
+
+)cpp";
+
+		// Alias all of the enums referenced either in variables or the response.
+		for (const auto& enumType : _requestLoader.getReferencedEnums(operation))
+		{
+			moduleFile << R"cpp(using graphql::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(enumType->name()) << R"cpp(;
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		// Alias all of the input object structs referenced in variables.
+		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+		{
+			moduleFile << R"cpp(using graphql::)cpp" << _schemaLoader.getSchemaNamespace()
+					   << R"cpp(::)cpp" << _schemaLoader.getCppType(inputType.type->name())
+					   << R"cpp(;
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		const auto& variables = _requestLoader.getVariables(operation);
+
+		if (!variables.empty())
+		{
+			moduleFile << R"cpp(using )cpp" << operationNamespace << R"cpp(::Variables;
+using )cpp" << operationNamespace
+					   << R"cpp(::serializeVariables;
+)cpp";
+
+			pendingSeparator.add();
+		}
+
+		pendingSeparator.reset();
+
+		moduleFile << R"cpp(using )cpp" << operationNamespace << R"cpp(::Response;
+using )cpp" << operationNamespace
+				   << R"cpp(::ResponseVisitor;
+using )cpp" << operationNamespace
+				   << R"cpp(::parseResponse;
+
+using )cpp" << operationNamespace
+				   << R"cpp(::Traits;
+
+)cpp";
+
+		pendingSeparator.add();
+	}
+
+	pendingSeparator.reset();
+
+	return true;
+}
+
 bool Generator::outputSource() const noexcept
 {
 	std::ofstream sourceFile(_sourcePath, std::ios_base::trunc);
@@ -617,7 +888,7 @@ bool Generator::outputSource() const noexcept
 
 #include <algorithm>
 #include <array>
-#include <sstream>
+#include <cstddef>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
@@ -626,174 +897,187 @@ using namespace std::literals;
 
 )cpp";
 
-	NamespaceScope clientNamespaceScope { sourceFile, getClientNamespace() };
+	NamespaceScope graphqlNamespaceScope { sourceFile, "graphql" };
 	NamespaceScope schemaNamespaceScope { sourceFile, _schemaLoader.getSchemaNamespace() };
+	NamespaceScope clientNamespaceScope { sourceFile, getClientNamespace() };
 	PendingBlankLine pendingSeparator { sourceFile };
 
 	outputGetRequestImplementation(sourceFile);
 
 	const auto& operations = _requestLoader.getOperations();
-	std::unordered_set<std::string_view> outputInputMethods;
 
-	for (const auto& operation : operations)
+	if (!_requestLoader.useSharedTypes())
 	{
-		for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
+
+		std::unordered_set<std::string_view> outputInputMethods;
+
+		for (const auto& operation : operations)
 		{
-			const auto cppType = _schemaLoader.getCppType(inputType.type->name());
-
-			if (!outputInputMethods.insert(cppType).second)
+			for (const auto& inputType : _requestLoader.getReferencedInputTypes(operation))
 			{
-				continue;
-			}
+				const auto cppType = _schemaLoader.getCppType(inputType.type->name());
 
-			pendingSeparator.reset();
+				if (!outputInputMethods.insert(cppType).second)
+				{
+					continue;
+				}
 
-			sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept)cpp";
+				pendingSeparator.reset();
 
-			bool firstField = true;
+				if (clientNamespaceScope.exit())
+				{
+					sourceFile << R"cpp(
+using namespace graphql::)cpp" << getClientNamespace()
+							   << R"cpp(;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				sourceFile << R"cpp(
+)cpp";
+				}
+
+				sourceFile << cppType << R"cpp(::)cpp" << cppType << R"cpp(() noexcept)cpp";
+
+				bool firstField = true;
+
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					sourceFile << R"cpp(
 	)cpp" << (firstField ? R"cpp(:)cpp" : R"cpp(,)cpp")
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp( {})cpp";
-				firstField = false;
-			}
+							   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+							   << R"cpp( {})cpp";
+					firstField = false;
+				}
 
-			sourceFile << R"cpp(
+				sourceFile << R"cpp(
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 )cpp" << cppType << R"cpp(::)cpp"
-					   << cppType << R"cpp(()cpp";
+						   << cppType << R"cpp(()cpp";
 
-			firstField = true;
+				firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				if (!firstField)
+				for (const auto& inputField : inputType.type->inputFields())
 				{
-					sourceFile << R"cpp(,)cpp";
+					if (!firstField)
+					{
+						sourceFile << R"cpp(,)cpp";
+					}
+
+					firstField = false;
+					sourceFile << R"cpp(
+		)cpp" << _requestLoader.getInputCppType(inputField->type().lock())
+							   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
+							   << R"cpp(Arg)cpp";
 				}
 
-				firstField = false;
-				sourceFile << R"cpp(
-		)cpp" << _requestLoader.getInputCppType(inputField->type().lock())
-						   << R"cpp( )cpp" << SchemaLoader::getSafeCppName(inputField->name())
-						   << R"cpp(Arg)cpp";
-			}
-
-			sourceFile << R"cpp() noexcept
+				sourceFile << R"cpp() noexcept
 )cpp";
 
-			firstField = true;
+				firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-				firstField = false;
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+					firstField = false;
 
-				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+					const auto name = SchemaLoader::getSafeCppName(inputField->name());
 
-				sourceFile << name << R"cpp( { std::move()cpp" << name << R"cpp(Arg) }
+					sourceFile << name << R"cpp( { std::move()cpp" << name << R"cpp(Arg) }
 )cpp";
-			}
+				}
 
-			sourceFile << R"cpp({
+				sourceFile << R"cpp({
 }
 
 )cpp" << cppType << R"cpp(::)cpp"
-					   << cppType << R"cpp((const )cpp" << cppType << R"cpp(& other)
+						   << cppType << R"cpp((const )cpp" << cppType << R"cpp(& other)
 )cpp";
 
-			firstField = true;
+				firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-				firstField = false;
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+					firstField = false;
 
-				const auto name = SchemaLoader::getSafeCppName(inputField->name());
-				const auto [type, modifiers] =
-					RequestLoader::unwrapSchemaType(inputField->type().lock());
+					const auto name = SchemaLoader::getSafeCppName(inputField->name());
+					const auto [type, modifiers] =
+						RequestLoader::unwrapSchemaType(inputField->type().lock());
 
-				sourceFile << name << R"cpp( { ModifiedVariable<)cpp"
-						   << _schemaLoader.getCppType(type->name()) << R"cpp(>::duplicate)cpp"
-						   << getTypeModifierList(modifiers) << R"cpp((other.)cpp" << name
-						   << R"cpp() }
+					sourceFile << name << R"cpp( { ModifiedVariable<)cpp"
+							   << _schemaLoader.getCppType(type->name()) << R"cpp(>::duplicate)cpp"
+							   << getTypeModifierList(modifiers) << R"cpp((other.)cpp" << name
+							   << R"cpp() }
 )cpp";
-			}
+				}
 
-			sourceFile << R"cpp({
+				sourceFile << R"cpp({
 }
 
 )cpp" << cppType << R"cpp(::)cpp"
-					   << cppType << R"cpp(()cpp" << cppType << R"cpp(&& other) noexcept
+						   << cppType << R"cpp(()cpp" << cppType << R"cpp(&& other) noexcept
 )cpp";
 
-			firstField = true;
+				firstField = true;
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
-				firstField = false;
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					sourceFile << (firstField ? R"cpp(	: )cpp" : R"cpp(	, )cpp");
+					firstField = false;
 
-				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+					const auto name = SchemaLoader::getSafeCppName(inputField->name());
 
-				sourceFile << name << R"cpp( { std::move(other.)cpp" << name << R"cpp() }
+					sourceFile << name << R"cpp( { std::move(other.)cpp" << name << R"cpp() }
 )cpp";
-			}
+				}
 
-			sourceFile << R"cpp({
+				sourceFile << R"cpp({
 }
 
 )cpp" << cppType << R"cpp(::~)cpp"
-					   << cppType << R"cpp(()
+						   << cppType << R"cpp(()
 {
 	// Explicit definition to prevent ODR violations when LTO is enabled.
 }
 
 )cpp" << cppType << R"cpp(& )cpp"
-					   << cppType << R"cpp(::operator=(const )cpp" << cppType << R"cpp(& other)
+						   << cppType << R"cpp(::operator=(const )cpp" << cppType << R"cpp(& other)
 {
-	return *this = )cpp"
-					   << cppType << R"cpp( { other };
+	return *this = )cpp" << cppType
+						   << R"cpp( { other };
 }
 
 )cpp" << cppType << R"cpp(& )cpp"
-					   << cppType << R"cpp(::operator=()cpp" << cppType << R"cpp(&& other) noexcept
+						   << cppType << R"cpp(::operator=()cpp" << cppType
+						   << R"cpp(&& other) noexcept
 {
 )cpp";
 
-			for (const auto& inputField : inputType.type->inputFields())
-			{
-				const auto name = SchemaLoader::getSafeCppName(inputField->name());
+				for (const auto& inputField : inputType.type->inputFields())
+				{
+					const auto name = SchemaLoader::getSafeCppName(inputField->name());
 
-				sourceFile << R"cpp(	)cpp" << name << R"cpp( = std::move(other.)cpp" << name
-						   << R"cpp();
+					sourceFile << R"cpp(	)cpp" << name << R"cpp( = std::move(other.)cpp" << name
+							   << R"cpp();
 )cpp";
-			}
+				}
 
-			sourceFile << R"cpp(
+				sourceFile << R"cpp(
 	return *this;
 }
 )cpp";
 
-			pendingSeparator.add();
+				pendingSeparator.add();
+			}
 		}
 	}
 
 	pendingSeparator.reset();
-	schemaNamespaceScope.exit();
-
-	sourceFile << R"cpp(
-using namespace )cpp"
-			   << _schemaLoader.getSchemaNamespace() << R"cpp(;
-)cpp";
-
-	pendingSeparator.add();
+	clientNamespaceScope.exit();
+	if (schemaNamespaceScope.exit())
+	{
+		pendingSeparator.add();
+	}
 
 	std::unordered_set<std::string_view> outputModifiedVariableEnum;
 	std::unordered_set<std::string_view> outputModifiedVariableInput;
@@ -815,6 +1099,15 @@ using namespace )cpp"
 				}
 
 				pendingSeparator.reset();
+
+				if (clientNamespaceScope.enter())
+				{
+					sourceFile << R"cpp(
+using namespace )cpp" << _schemaLoader.getSchemaNamespace()
+							   << R"cpp(;
+
+)cpp";
+				}
 
 				const auto& enumValues = enumType->enumValues();
 
@@ -846,7 +1139,7 @@ response::Value Variable<)cpp"
 
 	response::Value result { response::Type::EnumValue };
 
-	result.set<std::string>(std::string { s_names[static_cast<size_t>(value)] });
+	result.set<std::string>(std::string { s_names[static_cast<std::size_t>(value)] });
 
 	return result;
 }
@@ -864,6 +1157,15 @@ response::Value Variable<)cpp"
 				}
 
 				pendingSeparator.reset();
+
+				if (clientNamespaceScope.enter())
+				{
+					sourceFile << R"cpp(
+using namespace )cpp" << _schemaLoader.getSchemaNamespace()
+							   << R"cpp(;
+
+)cpp";
+				}
 
 				sourceFile << R"cpp(template <>
 response::Value Variable<)cpp"
@@ -907,37 +1209,33 @@ response::Value Variable<)cpp"
 
 			pendingSeparator.reset();
 
+			if (clientNamespaceScope.enter())
+			{
+				sourceFile << R"cpp(
+using namespace )cpp" << _schemaLoader.getSchemaNamespace()
+						   << R"cpp(;
+
+)cpp";
+			}
+
 			const auto& enumValues = enumType->enumValues();
 
-			sourceFile << R"cpp(template <>
-)cpp" << cppType << R"cpp( Response<)cpp"
-					   << cppType << R"cpp(>::parse(response::Value&& value)
-{
-	if (!value.maybe_enum())
-	{
-		throw std::logic_error { R"ex(not a valid )cpp"
-					   << enumType->name() << R"cpp( value)ex" };
-	}
-
-	static const std::array<std::pair<std::string_view, )cpp"
-					   << cppType << R"cpp(>, )cpp" << enumValues.size()
-					   << R"cpp(> s_values = {)cpp";
+			sourceFile << R"cpp(static const std::array<std::pair<std::string_view, )cpp" << cppType
+					   << R"cpp(>, )cpp" << enumValues.size() << R"cpp(> s_values)cpp" << cppType
+					   << R"cpp( = {)cpp";
 
 			std::vector<std::pair<std::string_view, std::string_view>> sortedValues(
 				enumValues.size());
 
-			std::transform(enumValues.cbegin(),
-				enumValues.cend(),
+			std::ranges::transform(enumValues,
 				sortedValues.begin(),
 				[](const auto& value) noexcept {
 					return std::make_pair(value->name(),
 						SchemaLoader::getSafeCppName(value->name()));
 				});
-			std::sort(sortedValues.begin(),
-				sortedValues.end(),
-				[](const auto& lhs, const auto& rhs) noexcept {
-					return internal::shorter_or_less {}(lhs.first, rhs.first);
-				});
+			std::ranges::sort(sortedValues, [](const auto& lhs, const auto& rhs) noexcept {
+				return internal::shorter_or_less {}(lhs.first, rhs.first);
+			});
 
 			bool firstValue = true;
 
@@ -950,17 +1248,28 @@ response::Value Variable<)cpp"
 
 				firstValue = false;
 				sourceFile << R"cpp(
-		std::make_pair(R"gql()cpp"
+	std::make_pair(R"gql()cpp"
 						   << enumValue.first << R"cpp()gql"sv, )cpp" << cppType << R"cpp(::)cpp"
 						   << enumValue.second << R"cpp())cpp";
 				pendingSeparator.add();
 			}
 
 			pendingSeparator.reset();
-			sourceFile << R"cpp(	};
+			sourceFile << R"cpp(};
+			
+template <>
+)cpp" << cppType << R"cpp( Response<)cpp"
+					   << cppType << R"cpp(>::parse(response::Value&& value)
+{
+	if (!value.maybe_enum())
+	{
+		throw std::logic_error { R"ex(not a valid )cpp"
+					   << enumType->name() << R"cpp( value)ex" };
+	}
 
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_values,
+		s_values)cpp" << cppType
+					   << R"cpp(,
 		std::string_view { value.get<std::string>() });
 
 	if (!result)
@@ -976,24 +1285,40 @@ response::Value Variable<)cpp"
 			pendingSeparator.add();
 		}
 
-		std::ostringstream oss;
-
-		oss << getOperationNamespace(operation) << R"cpp(::Response)cpp";
-
-		const auto currentScope = oss.str();
+		const auto operationNamespace = std::format("{}::client::{}",
+			_schemaLoader.getSchemaNamespace(),
+			getOperationNamespace(operation));
+		const auto graphqlCurrentScope =
+			std::format(R"cpp(graphql::{}::Response)cpp", operationNamespace);
 		const auto& responseType = _requestLoader.getResponseType(operation);
 
 		for (const auto& responseField : responseType.fields)
 		{
-			if (outputModifiedResponseImplementation(sourceFile, currentScope, responseField))
+			if (clientNamespaceScope.enter())
+			{
+				sourceFile << R"cpp(
+using namespace )cpp" << _schemaLoader.getSchemaNamespace()
+						   << R"cpp(;
+)cpp";
+			}
+
+			if (outputModifiedResponseImplementation(sourceFile,
+					graphqlCurrentScope,
+					responseField))
 			{
 				pendingSeparator.add();
 			}
 		}
 
 		pendingSeparator.reset();
+		if (clientNamespaceScope.exit())
+		{
+			sourceFile << std::endl;
+		}
 
-		NamespaceScope operationNamespaceScope { sourceFile, getOperationNamespace(operation) };
+		NamespaceScope operationNamespaceScope { sourceFile, operationNamespace };
+		const auto schemaCurrentScope =
+			std::format("{}::Response", getOperationNamespace(operation));
 
 		outputGetOperationNameImplementation(sourceFile, operation);
 
@@ -1002,6 +1327,9 @@ response::Value Variable<)cpp"
 			sourceFile << R"cpp(
 response::Value serializeVariables(Variables&& variables)
 {
+	using namespace graphql::)cpp"
+					   << getClientNamespace() << R"cpp(;
+
 	response::Value result { response::Type::Map };
 
 )cpp";
@@ -1023,8 +1351,329 @@ response::Value serializeVariables(Variables&& variables)
 		}
 
 		sourceFile << R"cpp(
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorStates(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddValue(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorReserve(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorStartObject(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		outputResponseFieldVisitorAddMember(sourceFile, responseType.fields);
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorEndObject(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorStartArray(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorEndArray(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddNull(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddString(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddEnum(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddId(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddBool(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddInt(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{)cpp";
+
+		for (const auto& responseField : responseType.fields)
+		{
+			outputResponseFieldVisitorAddFloat(sourceFile, responseField);
+		}
+
+		sourceFile << R"cpp(
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
+}
+
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::)cpp"
+				   << getClientNamespace() << R"cpp(;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -1046,7 +1695,7 @@ Response parseResponse(response::Value&& response)
 			{
 				result.)cpp"
 						   << responseField.cppName << R"cpp( = ModifiedResponse<)cpp"
-						   << getResponseFieldCppType(responseField, currentScope)
+						   << getResponseFieldCppType(responseField, schemaCurrentScope)
 						   << R"cpp(>::parse)cpp" << getTypeModifierList(responseField.modifiers)
 						   << R"cpp((std::move(member.second));
 				continue;
@@ -1063,13 +1712,13 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return )cpp" << _schemaLoader.getSchemaNamespace()
+	return )cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return )cpp" << _schemaLoader.getSchemaNamespace()
+	return )cpp" << getClientNamespace()
 				   << R"cpp(::GetRequestObject();
 }
 
@@ -1159,11 +1808,8 @@ const std::string& GetOperationName() noexcept
 bool Generator::outputModifiedResponseImplementation(std::ostream& sourceFile,
 	const std::string& outerScope, const ResponseField& responseField) const noexcept
 {
-	std::ostringstream oss;
-
-	oss << outerScope << R"cpp(::)cpp" << getResponseFieldCppType(responseField);
-
-	const auto cppType = oss.str();
+	const auto cppType =
+		std::format(R"cpp({}::{})cpp", outerScope, getResponseFieldCppType(responseField));
 	std::unordered_set<std::string_view> fieldNames;
 
 	switch (responseField.type->kind())
@@ -1288,6 +1934,1440 @@ std::string Generator::getTypeModifierList(const TypeModifierStack& modifiers) n
 	return oss.str();
 }
 
+void Generator::outputResponseFieldVisitorStates(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view parent /* = {} */) const noexcept
+{
+	auto state =
+		std::format("{}_{}", parent.empty() ? R"cpp(Member)cpp"sv : parent, responseField.cppName);
+
+	sourceFile << R"cpp(		)cpp" << state << R"cpp(,
+)cpp";
+
+	std::size_t arrayDimensions = 0;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+			case service::TypeModifier::Nullable:
+				break;
+
+			case service::TypeModifier::List:
+				state = std::format("{}_{}", state, arrayDimensions++);
+				sourceFile << R"cpp(		)cpp" << state << R"cpp(,
+)cpp";
+				break;
+		}
+	}
+
+	if (arrayDimensions > 0)
+	{
+		sourceFile << R"cpp(		)cpp" << state << R"cpp(_,
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorStates(sourceFile, field, state);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddValue(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */, std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+			   << state << R"cpp(:)cpp";
+
+	if (arrayDimensions == 0)
+	{
+		sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+				   << (parentState.empty() ? "Start"sv : parentState);
+
+		if (arrayElement)
+		{
+			sourceFile << R"cpp(_)cpp";
+		}
+
+		sourceFile << R"cpp(;)cpp";
+	}
+
+	sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+			   << accessor;
+
+	if (arrayDimensions > 0)
+	{
+		sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+				? R"cpp(->)cpp"
+				: R"cpp(.)cpp")
+				   << R"cpp(push_back()cpp";
+	}
+	else
+	{
+		sourceFile << R"cpp( = )cpp";
+	}
+
+	sourceFile << R"cpp(ModifiedResponse<)cpp" << cppType << R"cpp(>::parse)cpp";
+
+	if (arrayDimensions > 0)
+	{
+		TypeModifierStack skippedModifiers;
+
+		skippedModifiers.reserve(responseField.modifiers.size() - arrayDimensions);
+		std::ranges::copy(std::views::all(responseField.modifiers) | std::views::reverse
+				| std::views::take_while([](auto modifier) noexcept {
+					  return modifier != service::TypeModifier::List;
+				  })
+				| std::views::reverse,
+			std::back_inserter(skippedModifiers));
+		sourceFile << getTypeModifierList(skippedModifiers);
+	}
+	else
+	{
+		sourceFile << getTypeModifierList(responseField.modifiers);
+	}
+
+	sourceFile << R"cpp((response::Value { *value }))cpp";
+
+	if (arrayDimensions > 0)
+	{
+		sourceFile << R"cpp())cpp";
+	}
+
+	sourceFile << R"cpp(;
+			break;
+)cpp";
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddValue(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor,
+						cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorReserve(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	std::size_t arrayDimensions = 0;
+	bool dereference = true;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				accessor.append(R"cpp(->)cpp");
+				dereference = false;
+				break;
+
+			case service::TypeModifier::List:
+				if (dereference)
+				{
+					accessor.append(R"cpp(.)cpp");
+				}
+				state = std::format("{}_{}", state, arrayDimensions++);
+
+				sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+						   << state << R"cpp(:
+			_pimpl->response.)cpp"
+						   << accessor << R"cpp(reserve(count);
+			break;
+)cpp";
+
+				accessor.append(R"cpp(back())cpp");
+				dereference = true;
+				break;
+		}
+	}
+
+	if (dereference)
+	{
+		accessor.append(R"cpp(.)cpp");
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorReserve(sourceFile, field, state, accessor, cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorStartObject(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	if (responseField.type->kind() == introspection::TypeKind::SCALAR
+		&& SchemaLoader::getBuiltinTypes().contains(responseField.type->name()))
+	{
+		return;
+	}
+
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (isNullable && arrayDimensions == 0)
+	{
+		switch (responseField.type->kind())
+		{
+			case introspection::TypeKind::OBJECT:
+			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
+				break;
+
+			default:
+				isNullable = false;
+				break;
+		}
+	}
+
+	if (isNullable || arrayDimensions > 0)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << state << R"cpp(_;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		if (isNullable)
+		{
+			sourceFile << R"cpp(std::make_optional<)cpp" << cppType << R"cpp(>({}))cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp({})cpp";
+		}
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorStartObject(sourceFile,
+						field,
+						state,
+						accessor,
+						cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddMember(std::ostream& sourceFile,
+	const ResponseFieldList& children, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
+{
+	sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+			   << (parentState.empty() ? R"cpp(Start)cpp"sv : parentState);
+
+	if (arrayElement)
+	{
+		sourceFile << R"cpp(_)cpp";
+	}
+
+	sourceFile << R"cpp(:
+			)cpp";
+
+	std::unordered_set<std::string_view> fieldNames;
+	bool firstField = true;
+
+	for (const auto& field : children)
+	{
+		if (!fieldNames.emplace(field.name).second)
+		{
+			continue;
+		}
+
+		auto state = std::format("{}_{}",
+			parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+			field.cppName);
+
+		if (!firstField)
+		{
+			sourceFile << R"cpp(else )cpp";
+		}
+
+		firstField = false;
+
+		sourceFile << R"cpp(if (key == ")cpp" << field.name << R"cpp("sv)
+			{
+				_pimpl->state = impl::VisitorState::)cpp"
+				   << state << R"cpp(;
+			}
+			)cpp";
+	}
+
+	sourceFile << R"cpp(break;
+)cpp";
+
+	fieldNames.clear();
+
+	for (const auto& field : children)
+	{
+		switch (field.type->kind())
+		{
+			case introspection::TypeKind::OBJECT:
+			case introspection::TypeKind::INTERFACE:
+			case introspection::TypeKind::UNION:
+				break;
+
+			default:
+				continue;
+		}
+
+		if (!fieldNames.emplace(field.name).second)
+		{
+			continue;
+		}
+
+		auto state = std::format("{}_{}",
+			parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+			field.cppName);
+		std::size_t arrayDimensions = 0;
+
+		for (auto modifier : field.modifiers)
+		{
+			switch (modifier)
+			{
+				case service::TypeModifier::None:
+				case service::TypeModifier::Nullable:
+					break;
+
+				case service::TypeModifier::List:
+					state = std::format("{}_{}", state, arrayDimensions++);
+					break;
+			}
+		}
+
+		outputResponseFieldVisitorAddMember(sourceFile, field.children, arrayDimensions > 0, state);
+	}
+}
+
+void Generator::outputResponseFieldVisitorEndObject(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
+{
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+			break;
+
+		default:
+			return;
+	}
+
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+
+	std::size_t arrayDimensions = 0;
+	std::string arrayState;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+			case service::TypeModifier::Nullable:
+				break;
+
+			case service::TypeModifier::List:
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	for (const auto& field : responseField.children)
+	{
+		if (fieldNames.emplace(field.name).second)
+		{
+			outputResponseFieldVisitorEndObject(sourceFile, field, arrayDimensions > 0, state);
+		}
+	}
+
+	if (arrayDimensions > 0)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(_:
+			_pimpl->state = impl::VisitorState::)cpp"
+				   << state;
+	}
+	else
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:
+			_pimpl->state = impl::VisitorState::)cpp"
+				   << (parentState.empty() ? "Start"sv : parentState);
+
+		if (arrayElement)
+		{
+			sourceFile << R"cpp(_)cpp";
+		}
+	}
+
+	sourceFile << R"cpp(;
+			break;
+)cpp";
+}
+
+void Generator::outputResponseFieldVisitorStartArray(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	bool dereference = true;
+	std::size_t arrayDimensions = 0;
+	std::size_t skipModifiers = 0;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				dereference = false;
+				break;
+
+			case service::TypeModifier::List:
+				sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+						   << state << R"cpp(:)cpp";
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+
+				sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+						   << state << R"cpp(;)cpp";
+
+				if (!dereference)
+				{
+					sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+							   << accessor;
+
+					if (arrayDimensions > 1)
+					{
+						sourceFile << R"cpp(push_back()cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp( = )cpp";
+					}
+
+					TypeModifierStack skippedModifiers;
+
+					skippedModifiers.reserve(responseField.modifiers.size() - skipModifiers);
+					std::ranges::copy(
+						std::views::all(responseField.modifiers) | std::views::drop(skipModifiers),
+						std::back_inserter(skippedModifiers));
+
+					sourceFile << R"cpp(std::make_optional<)cpp"
+							   << RequestLoader::getOutputCppType(cppType, skippedModifiers)
+							   << R"cpp(>({}))cpp";
+
+					if (arrayDimensions > 1)
+					{
+						sourceFile << R"cpp();)cpp";
+					}
+					else
+					{
+						sourceFile << R"cpp(;)cpp";
+					}
+				}
+
+				sourceFile << R"cpp(
+			break;
+)cpp";
+
+				if (dereference)
+				{
+					accessor.append(R"cpp(.)cpp");
+				}
+				else
+				{
+					accessor.append(R"cpp(->)cpp");
+				}
+
+				accessor.append(R"cpp(back())cpp");
+				dereference = true;
+				break;
+		}
+
+		++skipModifiers;
+	}
+
+	if (dereference)
+	{
+		accessor.append(R"cpp(.)cpp");
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorStartArray(sourceFile,
+						field,
+						state,
+						accessor,
+						cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorEndArray(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+
+	std::size_t arrayDimensions = 0;
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+			case service::TypeModifier::Nullable:
+				break;
+
+			case service::TypeModifier::List:
+			{
+				auto child = std::format("{}_{}", state, arrayDimensions++);
+				std::string_view parent { state };
+
+				if (arrayDimensions == 1)
+				{
+					parent = parentState.empty() ? "Start"sv : parentState;
+				}
+
+				sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+						   << child << R"cpp(:
+			_pimpl->state = impl::VisitorState::)cpp"
+						   << parent;
+
+				if (arrayElement)
+				{
+					sourceFile << R"cpp(_)cpp";
+				}
+
+				sourceFile << R"cpp(;
+			break;
+)cpp";
+
+				state = std::move(child);
+				break;
+			}
+		}
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	for (const auto& field : responseField.children)
+	{
+		if (fieldNames.emplace(field.name).second)
+		{
+			outputResponseFieldVisitorEndArray(sourceFile, field, arrayDimensions > 0, state);
+		}
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddNull(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (isNullable)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions == 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		sourceFile << R"cpp(std::nullopt)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddNull(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddMovedValue(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view movedCppType,
+	bool arrayElement /* = false */, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (getResponseFieldCppType(responseField) == movedCppType)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions == 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		sourceFile << R"cpp(std::move(value))cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddMovedValue(sourceFile,
+						field,
+						movedCppType,
+						arrayDimensions > 0,
+						state,
+						accessor);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddString(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddMovedValue(sourceFile, responseField, R"cpp(std::string)cpp"sv);
+}
+
+void Generator::outputResponseFieldVisitorAddEnum(std::ostream& sourceFile,
+	const ResponseField& responseField, bool arrayElement /* = false */,
+	std::string_view parentState /* = {} */, std::string_view parentAccessor /* = {} */,
+	std::string_view parentCppType /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+	auto cppType = getResponseFieldCppType(responseField,
+		parentCppType.empty() ? R"cpp(Response)cpp"sv : parentCppType);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (responseField.type->kind() == introspection::TypeKind::ENUM)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions == 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			if (const auto enumValue = internal::sorted_map_lookup<internal::shorter_or_less>(s_values)cpp"
+				   << cppType << R"cpp(, std::string_view { value }))
+			{
+				_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		sourceFile << R"cpp(*enumValue)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			}
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddEnum(sourceFile,
+						field,
+						arrayDimensions > 0,
+						state,
+						accessor,
+						cppType);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddId(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddMovedValue(sourceFile,
+		responseField,
+		R"cpp(response::IdType)cpp"sv);
+}
+
+void Generator::outputResponseFieldVisitorAddCopiedValue(std::ostream& sourceFile,
+	const ResponseField& responseField, std::string_view copiedCppType,
+	bool arrayElement /* = false */, std::string_view parentState /* = {} */,
+	std::string_view parentAccessor /* = {} */) const noexcept
+{
+	auto state = std::format("{}_{}",
+		parentState.empty() ? R"cpp(Member)cpp"sv : parentState,
+		responseField.cppName);
+	auto accessor = std::format("{}{}", parentAccessor, responseField.cppName);
+
+	bool isNullable = false;
+	std::size_t arrayDimensions = 0;
+	std::optional<std::size_t> lastNullableDimension {};
+
+	for (auto modifier : responseField.modifiers)
+	{
+		switch (modifier)
+		{
+			case service::TypeModifier::None:
+				break;
+
+			case service::TypeModifier::Nullable:
+				isNullable = true;
+				break;
+
+			case service::TypeModifier::List:
+				if (isNullable)
+				{
+					lastNullableDimension = arrayDimensions;
+					isNullable = false;
+				}
+
+				state = std::format("{}_{}", state, arrayDimensions++);
+				break;
+		}
+	}
+
+	if (getResponseFieldCppType(responseField) == copiedCppType)
+	{
+		sourceFile << R"cpp(
+		case impl::VisitorState::)cpp"
+				   << state << R"cpp(:)cpp";
+
+		if (arrayDimensions == 0)
+		{
+			sourceFile << R"cpp(
+			_pimpl->state = impl::VisitorState::)cpp"
+					   << (parentState.empty() ? "Start"sv : parentState);
+
+			if (arrayElement)
+			{
+				sourceFile << R"cpp(_)cpp";
+			}
+
+			sourceFile << R"cpp(;)cpp";
+		}
+
+		sourceFile << R"cpp(
+			_pimpl->response.)cpp"
+				   << accessor;
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << ((lastNullableDimension && *lastNullableDimension + 1 == arrayDimensions)
+					? R"cpp(->)cpp"
+					: R"cpp(.)cpp")
+					   << R"cpp(push_back()cpp";
+		}
+		else
+		{
+			sourceFile << R"cpp( = )cpp";
+		}
+
+		sourceFile << R"cpp(value)cpp";
+
+		if (arrayDimensions > 0)
+		{
+			sourceFile << R"cpp())cpp";
+		}
+
+		sourceFile << R"cpp(;
+			break;
+)cpp";
+	}
+
+	std::unordered_set<std::string_view> fieldNames;
+
+	switch (responseField.type->kind())
+	{
+		case introspection::TypeKind::OBJECT:
+		case introspection::TypeKind::INTERFACE:
+		case introspection::TypeKind::UNION:
+		{
+			bool dereference = true;
+
+			for (auto modifier : responseField.modifiers)
+			{
+				switch (modifier)
+				{
+					case service::TypeModifier::None:
+						break;
+
+					case service::TypeModifier::Nullable:
+						accessor.append(R"cpp(->)cpp");
+						dereference = false;
+						break;
+
+					case service::TypeModifier::List:
+						if (dereference)
+						{
+							accessor.append(R"cpp(.)cpp");
+						}
+
+						accessor.append(R"cpp(back())cpp");
+						dereference = true;
+						break;
+				}
+			}
+
+			if (dereference)
+			{
+				accessor.append(R"cpp(.)cpp");
+			}
+
+			for (const auto& field : responseField.children)
+			{
+				if (fieldNames.emplace(field.name).second)
+				{
+					outputResponseFieldVisitorAddCopiedValue(sourceFile,
+						field,
+						copiedCppType,
+						arrayDimensions > 0,
+						state,
+						accessor);
+				}
+			}
+
+			break;
+		}
+
+		default:
+			break;
+	}
+}
+
+void Generator::outputResponseFieldVisitorAddBool(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddCopiedValue(sourceFile, responseField, R"cpp(bool)cpp"sv);
+}
+
+void Generator::outputResponseFieldVisitorAddInt(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddCopiedValue(sourceFile, responseField, R"cpp(int)cpp"sv);
+}
+
+void Generator::outputResponseFieldVisitorAddFloat(
+	std::ostream& sourceFile, const ResponseField& responseField) const noexcept
+{
+	outputResponseFieldVisitorAddCopiedValue(sourceFile, responseField, R"cpp(double)cpp"sv);
+}
+
 } // namespace graphql::generator::client
 
 namespace po = boost::program_options;
@@ -1315,6 +3395,7 @@ int main(int argc, char** argv)
 	bool buildCustom = false;
 	bool verbose = false;
 	bool noIntrospection = false;
+	bool sharedTypes = false;
 	std::string schemaFileName;
 	std::string requestFileName;
 	std::string operationName;
@@ -1344,7 +3425,9 @@ int main(int argc, char** argv)
 		po::value(&headerDir),
 		"Target path for the <prefix>Client.h header file")("no-introspection",
 		po::bool_switch(&noIntrospection),
-		"Do not expect support for Introspection");
+		"Do not expect support for Introspection")("shared-types",
+		po::bool_switch(&sharedTypes),
+		"Re-use shared types from <prefix>SharedTypes.h");
 	positional.add("schema", 1).add("request", 1).add("prefix", 1).add("namespace", 1);
 
 	try
@@ -1406,6 +3489,7 @@ int main(int argc, char** argv)
 				{ operationName.empty() ? std::nullopt
 										: std::make_optional(std::move(operationName)) },
 				noIntrospection,
+				sharedTypes,
 			},
 			graphql::generator::client::GeneratorOptions {
 				{ std::move(headerDir), std::move(sourceDir) },
@@ -1448,9 +3532,9 @@ int main(int argc, char** argv)
 
 				for (const auto& segment : error.path)
 				{
-					if (std::holds_alternative<size_t>(segment))
+					if (std::holds_alternative<std::size_t>(segment))
 					{
-						std::cerr << '[' << std::get<size_t>(segment) << ']';
+						std::cerr << '[' << std::get<std::size_t>(segment) << ']';
 					}
 					else
 					{

@@ -1,24 +1,28 @@
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
 
-#include "TodayMock.h"
-
-#include "graphqlservice/JSONResponse.h"
-
+#include <algorithm>
 #include <chrono>
 #include <iostream>
 #include <iterator>
 #include <numeric>
+#include <ranges>
 #include <stdexcept>
 #include <string>
 #include <string_view>
+
+import GraphQL.Parse;
+import GraphQL.JSONResponse;
+import GraphQL.Service;
+
+import GraphQL.Today.Mock;
 
 using namespace graphql;
 
 using namespace std::literals;
 
 void outputOverview(
-	size_t iterations, const std::chrono::steady_clock::duration& totalDuration) noexcept
+	std::size_t iterations, const std::chrono::steady_clock::duration& totalDuration) noexcept
 {
 	const auto requestsPerSecond =
 		((static_cast<double>(iterations)
@@ -40,7 +44,7 @@ void outputOverview(
 void outputSegment(
 	std::string_view name, std::vector<std::chrono::steady_clock::duration>& durations) noexcept
 {
-	std::sort(durations.begin(), durations.end());
+	std::ranges::sort(durations);
 
 	const auto count = durations.size();
 	const auto total =
@@ -61,14 +65,14 @@ void outputSegment(
 
 int main(int argc, char** argv)
 {
-	const size_t iterations = [](const char* arg) noexcept -> size_t {
+	const std::size_t iterations = [](const char* arg) noexcept -> std::size_t {
 		if (arg)
 		{
 			const int parsed = std::atoi(arg);
 
 			if (parsed > 0)
 			{
-				return static_cast<size_t>(parsed);
+				return static_cast<std::size_t>(parsed);
 			}
 		}
 
@@ -88,7 +92,7 @@ int main(int argc, char** argv)
 
 	try
 	{
-		for (size_t i = 0; i < iterations; ++i)
+		for (std::size_t i = 0; i < iterations; ++i)
 		{
 			const auto startParse = std::chrono::steady_clock::now();
 			auto query = peg::parseString(R"gql(query {

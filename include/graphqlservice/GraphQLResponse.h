@@ -6,22 +6,16 @@
 #ifndef GRAPHQLRESPONSE_H
 #define GRAPHQLRESPONSE_H
 
-// clang-format off
-#ifdef GRAPHQL_DLLEXPORTS
-	#ifdef IMPL_GRAPHQLRESPONSE_DLL
-		#define GRAPHQLRESPONSE_EXPORT __declspec(dllexport)
-	#else // !IMPL_GRAPHQLRESPONSE_DLL
-		#define GRAPHQLRESPONSE_EXPORT __declspec(dllimport)
-	#endif // !IMPL_GRAPHQLRESPONSE_DLL
-#else // !GRAPHQL_DLLEXPORTS
-	#define GRAPHQLRESPONSE_EXPORT
-#endif // !GRAPHQL_DLLEXPORTS
-// clang-format on
+#include "internal/Awaitable.h"
+#include "internal/DllExports.h"
 
-#include "graphqlservice/internal/Awaitable.h"
-
+#include <any>
+#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <initializer_list>
+#include <iterator>
+#include <list>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -47,6 +41,7 @@ enum class [[nodiscard("unnecessary conversion")]] Type : std::uint8_t {
 };
 
 struct Value;
+class ValueVisitor;
 
 using MapType = std::vector<std::pair<std::string, Value>>;
 using ListType = std::vector<Value>;
@@ -66,7 +61,7 @@ struct [[nodiscard("unnecessary conversion")]] IdType
 	GRAPHQLRESPONSE_EXPORT ~IdType();
 
 	// Implicit ByteData constructors
-	GRAPHQLRESPONSE_EXPORT IdType(size_t count, typename ByteData::value_type value = 0);
+	GRAPHQLRESPONSE_EXPORT IdType(std::size_t count, typename ByteData::value_type value = 0);
 	GRAPHQLRESPONSE_EXPORT IdType(std::initializer_list<typename ByteData::value_type> values);
 	template <typename InputIt>
 	IdType(InputIt begin, InputIt end);
@@ -101,20 +96,21 @@ struct [[nodiscard("unnecessary conversion")]] IdType
 
 	// Shared accessors
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT bool empty() const noexcept;
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT size_t size() const noexcept;
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT size_t max_size() const noexcept;
-	GRAPHQLRESPONSE_EXPORT void reserve(size_t new_cap);
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT size_t capacity() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::size_t size() const noexcept;
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::size_t max_size() const noexcept;
+	GRAPHQLRESPONSE_EXPORT void reserve(std::size_t new_cap);
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::size_t capacity() const noexcept;
 	GRAPHQLRESPONSE_EXPORT void shrink_to_fit();
 	GRAPHQLRESPONSE_EXPORT void clear() noexcept;
 
 	// ByteData accessors
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const std::uint8_t& at(
-		size_t pos) const;
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& at(size_t pos);
+		std::size_t pos) const;
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& at(std::size_t pos);
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const std::uint8_t& operator[](
-		size_t pos) const;
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& operator[](size_t pos);
+		std::size_t pos) const;
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& operator[](
+		std::size_t pos);
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const std::uint8_t& front() const;
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::uint8_t& front();
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const std::uint8_t& back() const;
@@ -168,6 +164,22 @@ GRAPHQLRESPONSE_EXPORT IdType::ByteData IdType::release<IdType::ByteData>();
 template <>
 GRAPHQLRESPONSE_EXPORT IdType::OpaqueString IdType::release<IdType::OpaqueString>();
 #endif // GRAPHQL_DLLEXPORTS
+
+// A type-erased payload for scalar values whose C++ representation can't be expressed with any
+// of Value's other alternatives (e.g. a BigInt backed by std::int64_t). The implementer supplies
+// both the std::any payload and a serializer that knows how to drive a ValueVisitor with it, so
+// this stays a private implementation detail of a hand-written resolver -- it's never exposed to
+// the schema definition (no IDL/directive changes) or to the client (the wire format is still
+// ordinary JSON, produced by whatever the serializer calls on the visitor).
+struct [[nodiscard("unnecessary construction")]] AnyScalar
+{
+	using Serializer = std::function<void(const std::any&, const std::shared_ptr<ValueVisitor>&)>;
+
+	std::any value;
+	Serializer serialize;
+};
+
+using SharedAnyScalar = std::shared_ptr<const AnyScalar>;
 
 template <typename ValueType>
 struct ValueTypeTraits
@@ -232,6 +244,7 @@ struct [[nodiscard("unnecessary conversion")]] Value
 	GRAPHQLRESPONSE_EXPORT explicit Value(IntType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(FloatType value);
 	GRAPHQLRESPONSE_EXPORT explicit Value(IdType&& value);
+	GRAPHQLRESPONSE_EXPORT explicit Value(AnyScalar&& value);
 
 	GRAPHQLRESPONSE_EXPORT Value(Value&& other) noexcept;
 	GRAPHQLRESPONSE_EXPORT explicit Value(const Value& other);
@@ -248,6 +261,10 @@ struct [[nodiscard("unnecessary conversion")]] Value
 	// Check the Type
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT Type type() const noexcept;
 
+	// Check for and release a type-erased AnyScalar payload attached to a Type::Scalar value.
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT bool isAny() const noexcept;
+	GRAPHQLRESPONSE_EXPORT SharedAnyScalar releaseAny();
+
 	// JSON doesn't distinguish between Type::String, Type::EnumValue, and Type::ID, so if this
 	// value comes from JSON and it's a string we need to track the fact that it can be interpreted
 	// as any of those types.
@@ -261,8 +278,8 @@ struct [[nodiscard("unnecessary conversion")]] Value
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT bool maybe_id() const noexcept;
 
 	// Valid for Type::Map or Type::List
-	GRAPHQLRESPONSE_EXPORT void reserve(size_t count);
-	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT size_t size() const;
+	GRAPHQLRESPONSE_EXPORT void reserve(std::size_t count);
+	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT std::size_t size() const;
 
 	// Valid for Type::Map
 	GRAPHQLRESPONSE_EXPORT bool emplace_back(std::string&& name, Value&& value);
@@ -276,7 +293,7 @@ struct [[nodiscard("unnecessary conversion")]] Value
 	// Valid for Type::List
 	GRAPHQLRESPONSE_EXPORT void emplace_back(Value&& value);
 	[[nodiscard("unnecessary call")]] GRAPHQLRESPONSE_EXPORT const Value& operator[](
-		size_t index) const;
+		std::size_t index) const;
 
 	// Specialized for all single-value Types.
 	template <typename ValueType>
@@ -297,7 +314,7 @@ private:
 		[[nodiscard("unnecessary call")]] bool operator==(const MapData& rhs) const;
 
 		MapType map;
-		std::vector<size_t> members;
+		std::vector<std::size_t> members;
 	};
 
 	// Type::String
@@ -325,6 +342,7 @@ private:
 		[[nodiscard("unnecessary call")]] bool operator==(const ScalarData& rhs) const;
 
 		std::unique_ptr<ScalarType> scalar;
+		SharedAnyScalar any;
 	};
 
 	using SharedData = std::shared_ptr<const Value>;
@@ -383,100 +401,296 @@ GRAPHQLRESPONSE_EXPORT IdType Value::release<IdType>();
 
 using AwaitableValue = internal::Awaitable<Value>;
 
-class [[nodiscard("unnecessary construction")]] Writer final
+// Type-erased visitor for alternate representations of Value.
+class [[nodiscard("unnecessary construction")]] ValueVisitor final
+	: public std::enable_shared_from_this<ValueVisitor>
 {
 private:
 	struct Concept
 	{
 		virtual ~Concept() = default;
 
-		virtual void start_object() const = 0;
-		virtual void add_member(const std::string& key) const = 0;
-		virtual void end_object() const = 0;
+		virtual void add_value(std::shared_ptr<const Value>&& value) = 0;
 
-		virtual void start_array() const = 0;
-		virtual void end_arrary() const = 0;
+		virtual void reserve(std::size_t count) = 0;
 
-		virtual void write_null() const = 0;
-		virtual void write_string(const std::string& value) const = 0;
-		virtual void write_bool(bool value) const = 0;
-		virtual void write_int(int value) const = 0;
-		virtual void write_float(double value) const = 0;
+		virtual void start_object() = 0;
+		virtual void add_member(std::string&& key) = 0;
+		virtual void end_object() = 0;
+
+		virtual void start_array() = 0;
+		virtual void end_array() = 0;
+
+		virtual void add_null() = 0;
+		virtual void add_string(std::string&& value) = 0;
+		virtual void add_enum(std::string&& value) = 0;
+		virtual void add_id(IdType&& value) = 0;
+		virtual void add_bool(bool value) = 0;
+		virtual void add_int(int value) = 0;
+		virtual void add_float(double value) = 0;
+
+		virtual void complete() = 0;
 	};
 
 	template <class T>
 	struct Model : Concept
 	{
-		explicit Model(std::unique_ptr<T> pimpl) noexcept
+		explicit Model(std::shared_ptr<T> pimpl) noexcept
 			: _pimpl { std::move(pimpl) }
 		{
 		}
 
-		void start_object() const final
+		void add_value(std::shared_ptr<const Value>&& value) final
+		{
+			_pimpl->add_value(std::move(value));
+		}
+
+		void reserve(std::size_t count) final
+		{
+			_pimpl->reserve(count);
+		}
+
+		void start_object() final
 		{
 			_pimpl->start_object();
 		}
 
-		void add_member(const std::string& key) const final
+		void add_member(std::string&& key) final
 		{
-			_pimpl->add_member(key);
+			_pimpl->add_member(std::move(key));
 		}
 
-		void end_object() const final
+		void end_object() final
 		{
 			_pimpl->end_object();
 		}
 
-		void start_array() const final
+		void start_array() final
 		{
 			_pimpl->start_array();
 		}
 
-		void end_arrary() const final
+		void end_array() final
 		{
-			_pimpl->end_arrary();
+			_pimpl->end_array();
 		}
 
-		void write_null() const final
+		void add_null() final
 		{
-			_pimpl->write_null();
+			_pimpl->add_null();
 		}
 
-		void write_string(const std::string& value) const final
+		void add_string(std::string&& value) final
 		{
-			_pimpl->write_string(value);
+			_pimpl->add_string(std::move(value));
 		}
 
-		void write_bool(bool value) const final
+		void add_enum(std::string&& value) final
 		{
-			_pimpl->write_bool(value);
+			_pimpl->add_enum(std::move(value));
 		}
 
-		void write_int(int value) const final
+		void add_id(IdType&& value) final
 		{
-			_pimpl->write_int(value);
+			_pimpl->add_id(std::move(value));
 		}
 
-		void write_float(double value) const final
+		void add_bool(bool value) final
 		{
-			_pimpl->write_float(value);
+			_pimpl->add_bool(value);
+		}
+
+		void add_int(int value) final
+		{
+			_pimpl->add_int(value);
+		}
+
+		void add_float(double value) final
+		{
+			_pimpl->add_float(value);
+		}
+
+		void complete() final
+		{
+			_pimpl->complete();
 		}
 
 	private:
-		std::unique_ptr<T> _pimpl;
+		std::shared_ptr<T> _pimpl;
 	};
 
-	const std::shared_ptr<const Concept> _concept;
+	const std::shared_ptr<Concept> _concept;
 
 public:
 	template <class T>
-	Writer(std::unique_ptr<T> writer) noexcept
-		: _concept { std::static_pointer_cast<const Concept>(
+	ValueVisitor(std::shared_ptr<T> writer) noexcept
+		: _concept { std::static_pointer_cast<Concept>(
 			std::make_shared<Model<T>>(std::move(writer))) }
 	{
 	}
 
-	GRAPHQLRESPONSE_EXPORT void write(Value value) const;
+	GRAPHQLRESPONSE_EXPORT void add_value(std::shared_ptr<const Value>&& value);
+
+	GRAPHQLRESPONSE_EXPORT void reserve(std::size_t count);
+
+	GRAPHQLRESPONSE_EXPORT void start_object();
+	GRAPHQLRESPONSE_EXPORT void add_member(std::string&& key);
+	GRAPHQLRESPONSE_EXPORT void end_object();
+
+	GRAPHQLRESPONSE_EXPORT void start_array();
+	GRAPHQLRESPONSE_EXPORT void end_array();
+
+	GRAPHQLRESPONSE_EXPORT void add_null();
+	GRAPHQLRESPONSE_EXPORT void add_string(std::string&& value);
+	GRAPHQLRESPONSE_EXPORT void add_enum(std::string&& value);
+	GRAPHQLRESPONSE_EXPORT void add_id(IdType&& value);
+	GRAPHQLRESPONSE_EXPORT void add_bool(bool value);
+	GRAPHQLRESPONSE_EXPORT void add_int(int value);
+	GRAPHQLRESPONSE_EXPORT void add_float(double value);
+
+	GRAPHQLRESPONSE_EXPORT void complete();
+};
+
+// Pending token for ValueVisitor.
+struct [[nodiscard("unnecessary construction")]] ValueToken
+{
+	using OpaqueValue = std::shared_ptr<const Value>;
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(OpaqueValue&& value);
+
+	using AnyValue = SharedAnyScalar;
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(AnyValue&& value);
+
+	struct Reserve
+	{
+		std::size_t capacity;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(Reserve&& value);
+
+	struct StartObject
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(StartObject&& value);
+
+	struct AddMember
+	{
+		std::string key;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(AddMember&& value);
+
+	struct EndObject
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(EndObject&& value);
+
+	struct StartArray
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(StartArray&& value);
+
+	struct EndArray
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(EndArray&& value);
+
+	struct NullValue
+	{
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(NullValue&& value);
+
+	struct StringValue
+	{
+		std::string value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(StringValue&& value);
+
+	struct EnumValue
+	{
+		std::string value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(EnumValue&& value);
+
+	struct IdValue
+	{
+		IdType value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(IdValue&& value);
+
+	struct BoolValue
+	{
+		bool value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(BoolValue&& value);
+
+	struct IntValue
+	{
+		int value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(IntValue&& value);
+
+	struct FloatValue
+	{
+		double value;
+	};
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueToken(FloatValue&& value);
+
+	GRAPHQLRESPONSE_EXPORT void visit(const std::shared_ptr<ValueVisitor>& visitor) &&;
+
+private:
+	using variant_type =
+		std::variant<OpaqueValue, AnyValue, Reserve, StartObject, AddMember, EndObject, StartArray,
+			EndArray, NullValue, StringValue, EnumValue, IdValue, BoolValue, IntValue, FloatValue>;
+
+	variant_type _value;
+};
+
+class [[nodiscard("unnecessary construction")]] ValueTokenStream final
+{
+public:
+	ValueTokenStream() noexcept = default;
+	~ValueTokenStream() = default;
+
+	GRAPHQLRESPONSE_EXPORT explicit ValueTokenStream(Value&& value);
+
+	ValueTokenStream(ValueTokenStream&&) noexcept = default;
+	ValueTokenStream& operator=(ValueTokenStream&&) noexcept = default;
+
+	ValueTokenStream(const ValueTokenStream&) = delete;
+	ValueTokenStream& operator=(const ValueTokenStream&) = delete;
+
+	template <class TArg>
+	ValueTokenStream(TArg&& arg)
+		: _tokens { ValueToken { std::forward<TArg>(arg) } }
+	{
+	}
+
+	template <class TArg>
+	void push_back(TArg&& arg)
+	{
+		_tokens.push_back(ValueToken { std::forward<TArg>(arg) });
+	}
+
+	GRAPHQLRESPONSE_EXPORT void append(ValueTokenStream&& other);
+
+	GRAPHQLRESPONSE_EXPORT void visit(const std::shared_ptr<ValueVisitor>& visitor) &&;
+	GRAPHQLRESPONSE_EXPORT Value value() &&;
+
+private:
+	std::list<ValueToken> _tokens;
 };
 
 } // namespace graphql::response

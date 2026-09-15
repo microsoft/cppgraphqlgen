@@ -1,7 +1,7 @@
 # Copyright (c) Microsoft Corporation. All rights reserved.
 # Licensed under the MIT License.
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.28)
 
 find_package(GTest MODULE REQUIRED)
 
@@ -14,51 +14,53 @@ target_link_libraries(validation_tests PRIVATE
 add_bigobj_flag(validation_tests)
 gtest_add_tests(TARGET validation_tests)
 
-add_executable(today_tests TodayTests.cpp)
-target_link_libraries(today_tests PRIVATE
-  todaygraphql
-  graphqljson
-  GTest::GTest
-  GTest::Main)
-add_bigobj_flag(today_tests)
-gtest_add_tests(TARGET today_tests)
+if(GRAPHQL_BUILD_MODULES)
+  add_executable(today_tests TodayTests.cpp)
+  target_link_libraries(today_tests PRIVATE
+    todaygraphql
+    graphqljson
+    GTest::GTest
+    GTest::Main)
+  add_bigobj_flag(today_tests)
+  gtest_add_tests(TARGET today_tests)
 
-add_executable(coroutine_tests CoroutineTests.cpp)
-target_link_libraries(coroutine_tests PRIVATE
-  todaygraphql
-  graphqljson
-  GTest::GTest
-  GTest::Main)
-gtest_add_tests(TARGET coroutine_tests)
+  add_executable(coroutine_tests CoroutineTests.cpp)
+  target_link_libraries(coroutine_tests PRIVATE
+    todaygraphql
+    graphqljson
+    GTest::GTest
+    GTest::Main)
+  gtest_add_tests(TARGET coroutine_tests)
 
-add_executable(client_tests ClientTests.cpp)
-target_link_libraries(client_tests PRIVATE
-  todaygraphql
-  query_client
-  mutate_client
-  subscribe_client
-  GTest::GTest
-  GTest::Main)
-add_bigobj_flag(client_tests)
-gtest_add_tests(TARGET client_tests)
+  add_executable(client_tests ClientTests.cpp)
+  target_link_libraries(client_tests PRIVATE
+    todaygraphql
+    query_client
+    mutate_client
+    subscribe_client
+    GTest::GTest
+    GTest::Main)
+  add_bigobj_flag(client_tests)
+  gtest_add_tests(TARGET client_tests)
 
-add_executable(nointrospection_tests NoIntrospectionTests.cpp)
-target_link_libraries(nointrospection_tests PRIVATE
-  todaygraphql_nointrospection
-  graphqljson
-  GTest::GTest
-  GTest::Main)
-add_bigobj_flag(nointrospection_tests)
-gtest_add_tests(TARGET nointrospection_tests)
+  add_executable(nointrospection_tests NoIntrospectionTests.cpp)
+  target_link_libraries(nointrospection_tests PRIVATE
+    todaygraphql_nointrospection
+    graphqljson
+    GTest::GTest
+    GTest::Main)
+  add_bigobj_flag(nointrospection_tests)
+  gtest_add_tests(TARGET nointrospection_tests)
 
-add_executable(argument_tests ArgumentTests.cpp)
-target_link_libraries(argument_tests PRIVATE
-  todaygraphql
-  graphqljson
-  GTest::GTest
-  GTest::Main)
-add_bigobj_flag(argument_tests)
-gtest_add_tests(TARGET argument_tests)
+  add_executable(argument_tests ArgumentTests.cpp)
+  target_link_libraries(argument_tests PRIVATE
+    todaygraphql
+    graphqljson
+    GTest::GTest
+    GTest::Main)
+  add_bigobj_flag(argument_tests)
+  gtest_add_tests(TARGET argument_tests)
+endif()
 
 add_executable(pegtl_combined_tests PegtlCombinedTests.cpp)
 target_link_libraries(pegtl_combined_tests PRIVATE
@@ -98,6 +100,16 @@ target_include_directories(response_tests PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/../include)
 gtest_add_tests(TARGET response_tests)
 
+add_executable(anyscalar_tests AnyScalarTests.cpp)
+target_link_libraries(anyscalar_tests PRIVATE
+  graphqlservice
+  graphqljson
+  GTest::GTest
+  GTest::Main)
+target_include_directories(anyscalar_tests PUBLIC
+  ${CMAKE_CURRENT_SOURCE_DIR}/../include)
+gtest_add_tests(TARGET anyscalar_tests)
+
 if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_command(OUTPUT copied_test_dlls
     COMMAND ${CMAKE_COMMAND} -E copy_if_different
@@ -118,10 +130,12 @@ if(WIN32 AND BUILD_SHARED_LIBS)
   add_custom_target(copy_test_dlls DEPENDS copied_test_dlls)
 
   add_dependencies(validation_tests copy_test_dlls)
-  add_dependencies(today_tests copy_test_dlls)
-  add_dependencies(client_tests copy_test_dlls)
-  add_dependencies(nointrospection_tests copy_test_dlls)
-  add_dependencies(argument_tests copy_test_dlls)
+  if(GRAPHQL_BUILD_MODULES)
+    add_dependencies(today_tests copy_test_dlls)
+    add_dependencies(client_tests copy_test_dlls)
+    add_dependencies(nointrospection_tests copy_test_dlls)
+    add_dependencies(argument_tests copy_test_dlls)
+  endif()
   add_dependencies(pegtl_combined_tests copy_test_dlls)
   add_dependencies(pegtl_executable_tests copy_test_dlls)
   add_dependencies(pegtl_schema_tests copy_test_dlls)

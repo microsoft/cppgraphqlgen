@@ -9,15 +9,16 @@
 
 #include <algorithm>
 #include <array>
-#include <sstream>
+#include <cstddef>
 #include <stdexcept>
 #include <string_view>
 #include <utility>
 
 using namespace std::literals;
 
-namespace graphql::client {
+namespace graphql {
 namespace query {
+namespace client {
 
 const std::string& GetRequestText() noexcept
 {
@@ -77,6 +78,7 @@ const std::string& GetRequestText() noexcept
 		      subject
 		      when
 		      isNow
+		      array
 		    }
 		  }
 		
@@ -102,10 +104,20 @@ const peg::ast& GetRequestObject() noexcept
 	return s_request;
 }
 
+} // namespace client
 } // namespace query
+
+namespace client {
 
 using namespace query;
 
+static const std::array<std::pair<std::string_view, TaskState>, 4> s_valuesTaskState = {
+	std::make_pair(R"gql(New)gql"sv, TaskState::New),
+	std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
+	std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
+	std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
+};
+			
 template <>
 TaskState Response<TaskState>::parse(response::Value&& value)
 {
@@ -114,15 +126,8 @@ TaskState Response<TaskState>::parse(response::Value&& value)
 		throw std::logic_error { R"ex(not a valid TaskState value)ex" };
 	}
 
-	static const std::array<std::pair<std::string_view, TaskState>, 4> s_values = {
-		std::make_pair(R"gql(New)gql"sv, TaskState::New),
-		std::make_pair(R"gql(Started)gql"sv, TaskState::Started),
-		std::make_pair(R"gql(Complete)gql"sv, TaskState::Complete),
-		std::make_pair(R"gql(Unassigned)gql"sv, TaskState::Unassigned)
-	};
-
 	const auto result = internal::sorted_map_lookup<internal::shorter_or_less>(
-		s_values,
+		s_valuesTaskState,
 		std::string_view { value.get<std::string>() });
 
 	if (!result)
@@ -134,9 +139,9 @@ TaskState Response<TaskState>::parse(response::Value&& value)
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment Response<graphql::query::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse(response::Value&& response)
 {
-	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
+	graphql::query::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -176,9 +181,9 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge Response<graphql::query::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse(response::Value&& response)
 {
-	query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
+	graphql::query::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -188,7 +193,7 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 		{
 			if (member.first == R"js(node)js"sv)
 			{
-				result.node = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.node = ModifiedResponse<graphql::query::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -198,9 +203,9 @@ query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdg
 }
 
 template <>
-query::Query::Response::appointments_AppointmentConnection Response<query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::appointments_AppointmentConnection Response<graphql::query::client::query::Query::Response::appointments_AppointmentConnection>::parse(response::Value&& response)
 {
-	query::Query::Response::appointments_AppointmentConnection result;
+	graphql::query::client::query::Query::Response::appointments_AppointmentConnection result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -210,7 +215,7 @@ query::Query::Response::appointments_AppointmentConnection Response<query::Query
 		{
 			if (member.first == R"js(edges)js"sv)
 			{
-				result.edges = ModifiedResponse<query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				result.edges = ModifiedResponse<graphql::query::client::query::Query::Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -220,9 +225,9 @@ query::Query::Response::appointments_AppointmentConnection Response<query::Query
 }
 
 template <>
-query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Response<query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Response<graphql::query::client::query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse(response::Value&& response)
 {
-	query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task result;
+	graphql::query::client::query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -257,9 +262,9 @@ query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task Response
 }
 
 template <>
-query::Query::Response::tasks_TaskConnection::edges_TaskEdge Response<query::Query::Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::tasks_TaskConnection::edges_TaskEdge Response<graphql::query::client::query::Query::Response::tasks_TaskConnection::edges_TaskEdge>::parse(response::Value&& response)
 {
-	query::Query::Response::tasks_TaskConnection::edges_TaskEdge result;
+	graphql::query::client::query::Query::Response::tasks_TaskConnection::edges_TaskEdge result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -269,7 +274,7 @@ query::Query::Response::tasks_TaskConnection::edges_TaskEdge Response<query::Que
 		{
 			if (member.first == R"js(node)js"sv)
 			{
-				result.node = ModifiedResponse<query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.node = ModifiedResponse<graphql::query::client::query::Query::Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -279,9 +284,9 @@ query::Query::Response::tasks_TaskConnection::edges_TaskEdge Response<query::Que
 }
 
 template <>
-query::Query::Response::tasks_TaskConnection Response<query::Query::Response::tasks_TaskConnection>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::tasks_TaskConnection Response<graphql::query::client::query::Query::Response::tasks_TaskConnection>::parse(response::Value&& response)
 {
-	query::Query::Response::tasks_TaskConnection result;
+	graphql::query::client::query::Query::Response::tasks_TaskConnection result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -291,7 +296,7 @@ query::Query::Response::tasks_TaskConnection Response<query::Query::Response::ta
 		{
 			if (member.first == R"js(edges)js"sv)
 			{
-				result.edges = ModifiedResponse<query::Query::Response::tasks_TaskConnection::edges_TaskEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				result.edges = ModifiedResponse<graphql::query::client::query::Query::Response::tasks_TaskConnection::edges_TaskEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -301,9 +306,9 @@ query::Query::Response::tasks_TaskConnection Response<query::Query::Response::ta
 }
 
 template <>
-query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder Response<query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder Response<graphql::query::client::query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse(response::Value&& response)
 {
-	query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder result;
+	graphql::query::client::query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -338,9 +343,9 @@ query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Fo
 }
 
 template <>
-query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge Response<query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge Response<graphql::query::client::query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse(response::Value&& response)
 {
-	query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge result;
+	graphql::query::client::query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -350,7 +355,7 @@ query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge Response
 		{
 			if (member.first == R"js(node)js"sv)
 			{
-				result.node = ModifiedResponse<query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse<TypeModifier::Nullable>(std::move(member.second));
+				result.node = ModifiedResponse<graphql::query::client::query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse<TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -360,9 +365,9 @@ query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge Response
 }
 
 template <>
-query::Query::Response::unreadCounts_FolderConnection Response<query::Query::Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::unreadCounts_FolderConnection Response<graphql::query::client::query::Query::Response::unreadCounts_FolderConnection>::parse(response::Value&& response)
 {
-	query::Query::Response::unreadCounts_FolderConnection result;
+	graphql::query::client::query::Query::Response::unreadCounts_FolderConnection result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -372,7 +377,7 @@ query::Query::Response::unreadCounts_FolderConnection Response<query::Query::Res
 		{
 			if (member.first == R"js(edges)js"sv)
 			{
-				result.edges = ModifiedResponse<query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
+				result.edges = ModifiedResponse<graphql::query::client::query::Query::Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse<TypeModifier::Nullable, TypeModifier::List, TypeModifier::Nullable>(std::move(member.second));
 				continue;
 			}
 		}
@@ -382,9 +387,9 @@ query::Query::Response::unreadCounts_FolderConnection Response<query::Query::Res
 }
 
 template <>
-query::Query::Response::anyType_UnionType Response<query::Query::Response::anyType_UnionType>::parse(response::Value&& response)
+graphql::query::client::query::Query::Response::anyType_UnionType Response<graphql::query::client::query::Query::Response::anyType_UnionType>::parse(response::Value&& response)
 {
-	query::Query::Response::anyType_UnionType result;
+	graphql::query::client::query::Query::Response::anyType_UnionType result;
 
 	if (response.type() == response::Type::Map)
 	{
@@ -427,13 +432,20 @@ query::Query::Response::anyType_UnionType Response<query::Query::Response::anyTy
 				result.isNow = ModifiedResponse<bool>::parse(std::move(member.second));
 				continue;
 			}
+			if (member.first == R"js(array)js"sv)
+			{
+				result.array = ModifiedResponse<response::IdType>::parse<TypeModifier::List>(std::move(member.second));
+				continue;
+			}
 		}
 	}
 
 	return result;
 }
 
-namespace query::Query {
+} // namespace client
+
+namespace query::client::query::Query {
 
 const std::string& GetOperationName() noexcept
 {
@@ -442,8 +454,907 @@ const std::string& GetOperationName() noexcept
 	return s_name;
 }
 
+struct ResponseVisitor::impl
+{
+	enum class VisitorState
+	{
+		Start,
+		Member_appointments,
+		Member_appointments_edges,
+		Member_appointments_edges_0,
+		Member_appointments_edges_0_,
+		Member_appointments_edges_0_node,
+		Member_appointments_edges_0_node_id,
+		Member_appointments_edges_0_node_subject,
+		Member_appointments_edges_0_node_when,
+		Member_appointments_edges_0_node_isNow,
+		Member_appointments_edges_0_node__typename,
+		Member_tasks,
+		Member_tasks_edges,
+		Member_tasks_edges_0,
+		Member_tasks_edges_0_,
+		Member_tasks_edges_0_node,
+		Member_tasks_edges_0_node_id,
+		Member_tasks_edges_0_node_title,
+		Member_tasks_edges_0_node_isComplete,
+		Member_tasks_edges_0_node__typename,
+		Member_unreadCounts,
+		Member_unreadCounts_edges,
+		Member_unreadCounts_edges_0,
+		Member_unreadCounts_edges_0_,
+		Member_unreadCounts_edges_0_node,
+		Member_unreadCounts_edges_0_node_id,
+		Member_unreadCounts_edges_0_node_name,
+		Member_unreadCounts_edges_0_node_unreadCount,
+		Member_unreadCounts_edges_0_node__typename,
+		Member_testTaskState,
+		Member_anyType,
+		Member_anyType_0,
+		Member_anyType_0_,
+		Member_anyType_0__typename,
+		Member_anyType_0_id,
+		Member_anyType_0_title,
+		Member_anyType_0_isComplete,
+		Member_anyType_0_subject,
+		Member_anyType_0_when,
+		Member_anyType_0_isNow,
+		Member_anyType_0_array,
+		Member_anyType_0_array_0,
+		Member_anyType_0_array_0_,
+		Member_default_,
+		Complete,
+	};
+
+	VisitorState state { VisitorState::Start };
+	Response response {};
+};
+
+ResponseVisitor::ResponseVisitor() noexcept
+	: _pimpl { std::make_unique<impl>() }
+{
+}
+
+ResponseVisitor::~ResponseVisitor()
+{
+}
+
+void ResponseVisitor::add_value([[maybe_unused]] std::shared_ptr<const response::Value>&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.appointments = ModifiedResponse<Response::appointments_AppointmentConnection>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->push_back(ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
+			_pimpl->response.appointments.edges->back()->node = ModifiedResponse<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_when:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_isNow:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->isNow = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.tasks = ModifiedResponse<Response::tasks_TaskConnection>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->response.tasks.edges->push_back(ModifiedResponse<Response::tasks_TaskConnection::edges_TaskEdge>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_;
+			_pimpl->response.tasks.edges->back()->node = ModifiedResponse<Response::tasks_TaskConnection::edges_TaskEdge::node_Task>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_title:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_isComplete:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->isComplete = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.unreadCounts = ModifiedResponse<Response::unreadCounts_FolderConnection>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->response.unreadCounts.edges->push_back(ModifiedResponse<Response::unreadCounts_FolderConnection::edges_FolderEdge>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_;
+			_pimpl->response.unreadCounts.edges->back()->node = ModifiedResponse<Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_name:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->name = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_unreadCount:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->unreadCount = ModifiedResponse<int>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_testTaskState:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.testTaskState = ModifiedResponse<TaskState>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->response.anyType.push_back(ModifiedResponse<Response::anyType_UnionType>::parse<TypeModifier::Nullable>(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_anyType_0__typename:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->_typename = ModifiedResponse<std::string>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_id:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->id = ModifiedResponse<response::IdType>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_title:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->title = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_isComplete:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->isComplete = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_subject:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->subject = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_when:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->when = ModifiedResponse<response::Value>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_isNow:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->isNow = ModifiedResponse<bool>::parse(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Member_anyType_0_array_0:
+			_pimpl->response.anyType.back()->array.push_back(ModifiedResponse<response::IdType>::parse(response::Value { *value }));
+			break;
+
+		case impl::VisitorState::Member_default_:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.default_ = ModifiedResponse<std::string>::parse<TypeModifier::Nullable>(response::Value { *value });
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::reserve([[maybe_unused]] std::size_t count)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->reserve(count);
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->response.tasks.edges->reserve(count);
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->response.unreadCounts.edges->reserve(count);
+			break;
+
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->response.anyType.reserve(count);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_array_0:
+			_pimpl->response.anyType.back()->array.reserve(count);
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
+			_pimpl->response.appointments.edges->push_back(std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>({}));
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->response.appointments.edges->back()->node = std::make_optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge::node_Appointment>({});
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_;
+			_pimpl->response.tasks.edges->push_back(std::make_optional<Response::tasks_TaskConnection::edges_TaskEdge>({}));
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->response.tasks.edges->back()->node = std::make_optional<Response::tasks_TaskConnection::edges_TaskEdge::node_Task>({});
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_;
+			_pimpl->response.unreadCounts.edges->push_back(std::make_optional<Response::unreadCounts_FolderConnection::edges_FolderEdge>({}));
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->response.unreadCounts.edges->back()->node = std::make_optional<Response::unreadCounts_FolderConnection::edges_FolderEdge::node_Folder>({});
+			break;
+
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.push_back(std::make_optional<Response::anyType_UnionType>({}));
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_member([[maybe_unused]] std::string&& key)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Start:
+			if (key == "appointments"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments;
+			}
+			else if (key == "tasks"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks;
+			}
+			else if (key == "unreadCounts"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts;
+			}
+			else if (key == "testTaskState"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_testTaskState;
+			}
+			else if (key == "anyType"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType;
+			}
+			else if (key == "default"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_default_;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments:
+			if (key == "edges"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_:
+			if (key == "node"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			}
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_id;
+			}
+			else if (key == "subject"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_subject;
+			}
+			else if (key == "when"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_when;
+			}
+			else if (key == "isNow"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node_isNow;
+			}
+			else if (key == "__typename"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node__typename;
+			}
+			break;
+
+		case impl::VisitorState::Member_tasks:
+			if (key == "edges"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges;
+			}
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_:
+			if (key == "node"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			}
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node_id;
+			}
+			else if (key == "title"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node_title;
+			}
+			else if (key == "isComplete"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node_isComplete;
+			}
+			else if (key == "__typename"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node__typename;
+			}
+			break;
+
+		case impl::VisitorState::Member_unreadCounts:
+			if (key == "edges"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges;
+			}
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_:
+			if (key == "node"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			}
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node_id;
+			}
+			else if (key == "name"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node_name;
+			}
+			else if (key == "unreadCount"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node_unreadCount;
+			}
+			else if (key == "__typename"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node__typename;
+			}
+			break;
+
+		case impl::VisitorState::Member_anyType_0_:
+			if (key == "__typename"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0__typename;
+			}
+			else if (key == "id"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_id;
+			}
+			else if (key == "title"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_title;
+			}
+			else if (key == "isComplete"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_isComplete;
+			}
+			else if (key == "subject"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_subject;
+			}
+			else if (key == "when"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_when;
+			}
+			else if (key == "isNow"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_isNow;
+			}
+			else if (key == "array"sv)
+			{
+				_pimpl->state = impl::VisitorState::Member_anyType_0_array;
+			}
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_object()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			break;
+
+		case impl::VisitorState::Member_appointments:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_;
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
+			break;
+
+		case impl::VisitorState::Member_tasks:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::start_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0;
+			_pimpl->response.appointments.edges = std::make_optional<std::vector<std::optional<Response::appointments_AppointmentConnection::edges_AppointmentEdge>>>({});
+			break;
+
+		case impl::VisitorState::Member_tasks_edges:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0;
+			_pimpl->response.tasks.edges = std::make_optional<std::vector<std::optional<Response::tasks_TaskConnection::edges_TaskEdge>>>({});
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0;
+			_pimpl->response.unreadCounts.edges = std::make_optional<std::vector<std::optional<Response::unreadCounts_FolderConnection::edges_FolderEdge>>>({});
+			break;
+
+		case impl::VisitorState::Member_anyType:
+			_pimpl->state = impl::VisitorState::Member_anyType_0;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_array:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_array_0;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::end_array()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->state = impl::VisitorState::Member_appointments;
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->state = impl::VisitorState::Member_tasks;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts;
+			break;
+
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->state = impl::VisitorState::Start;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_array_0:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_null()
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0:
+			_pimpl->response.appointments.edges->push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_;
+			_pimpl->response.appointments.edges->back()->node = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node_when:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->when = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0:
+			_pimpl->response.tasks.edges->push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_;
+			_pimpl->response.tasks.edges->back()->node = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_title:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->title = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0:
+			_pimpl->response.unreadCounts.edges->push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_;
+			_pimpl->response.unreadCounts.edges->back()->node = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_name:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->name = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_anyType_0:
+			_pimpl->response.anyType.push_back(std::nullopt);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_title:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->title = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_subject:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->subject = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_when:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->when = std::nullopt;
+			break;
+
+		case impl::VisitorState::Member_default_:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.default_ = std::nullopt;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_string([[maybe_unused]] std::string&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node_subject:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->subject = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_appointments_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->_typename = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_title:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->title = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->_typename = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_name:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->name = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node__typename:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->_typename = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_anyType_0__typename:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->_typename = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_title:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->title = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_subject:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->subject = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_default_:
+			_pimpl->state = impl::VisitorState::Start;
+			_pimpl->response.default_ = std::move(value);
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_enum([[maybe_unused]] std::string&& value)
+{
+	using namespace graphql::client;
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_testTaskState:
+			_pimpl->state = impl::VisitorState::Start;
+			if (const auto enumValue = internal::sorted_map_lookup<internal::shorter_or_less>(s_valuesTaskState, std::string_view { value }))
+			{
+				_pimpl->response.testTaskState = *enumValue;
+			}
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_id([[maybe_unused]] response::IdType&& value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->id = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->id = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_id:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->id = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_id:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->id = std::move(value);
+			break;
+
+		case impl::VisitorState::Member_anyType_0_array_0:
+			_pimpl->response.anyType.back()->array.push_back(std::move(value));
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_bool([[maybe_unused]] bool value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_appointments_edges_0_node_isNow:
+			_pimpl->state = impl::VisitorState::Member_appointments_edges_0_node;
+			_pimpl->response.appointments.edges->back()->node->isNow = value;
+			break;
+
+		case impl::VisitorState::Member_tasks_edges_0_node_isComplete:
+			_pimpl->state = impl::VisitorState::Member_tasks_edges_0_node;
+			_pimpl->response.tasks.edges->back()->node->isComplete = value;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_isComplete:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->isComplete = value;
+			break;
+
+		case impl::VisitorState::Member_anyType_0_isNow:
+			_pimpl->state = impl::VisitorState::Member_anyType_0_;
+			_pimpl->response.anyType.back()->isNow = value;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_int([[maybe_unused]] int value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Member_unreadCounts_edges_0_node_unreadCount:
+			_pimpl->state = impl::VisitorState::Member_unreadCounts_edges_0_node;
+			_pimpl->response.unreadCounts.edges->back()->node->unreadCount = value;
+			break;
+
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::add_float([[maybe_unused]] double value)
+{
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			break;
+
+		default:
+			break;
+	}
+}
+
+void ResponseVisitor::complete()
+{
+	_pimpl->state = impl::VisitorState::Complete;
+}
+
+Response ResponseVisitor::response()
+{
+	Response response {};
+
+	switch (_pimpl->state)
+	{
+		case impl::VisitorState::Complete:
+			_pimpl->state = impl::VisitorState::Start;
+			std::swap(_pimpl->response, response);
+			break;
+
+		default:
+			break;
+	}
+
+	return response;
+}
+
 Response parseResponse(response::Value&& response)
 {
+	using namespace graphql::client;
+
 	Response result;
 
 	if (response.type() == response::Type::Map)
@@ -490,12 +1401,12 @@ Response parseResponse(response::Value&& response)
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetRequestText() noexcept
 {
-	return query::GetRequestText();
+	return client::GetRequestText();
 }
 
 [[nodiscard("unnecessary call")]] const peg::ast& Traits::GetRequestObject() noexcept
 {
-	return query::GetRequestObject();
+	return client::GetRequestObject();
 }
 
 [[nodiscard("unnecessary call")]] const std::string& Traits::GetOperationName() noexcept
@@ -508,5 +1419,5 @@ Response parseResponse(response::Value&& response)
 	return Query::parseResponse(std::move(response));
 }
 
-} // namespace query::Query
-} // namespace graphql::client
+} // namespace query::client::query::Query
+} // namespace graphql

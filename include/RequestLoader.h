@@ -84,6 +84,7 @@ struct [[nodiscard("unnecessary construction")]] RequestOptions
 	const std::string requestFilename;
 	const std::optional<std::string> operationName;
 	const bool noIntrospection = false;
+	const bool sharedTypes = false;
 };
 
 class SchemaLoader;
@@ -91,16 +92,16 @@ class SchemaLoader;
 class [[nodiscard("unnecessary construction")]] RequestLoader
 {
 public:
-	explicit RequestLoader(RequestOptions && requestOptions, const SchemaLoader& schemaLoader);
+	explicit RequestLoader(RequestOptions&& requestOptions, const SchemaLoader& schemaLoader);
 
 	[[nodiscard("unnecessary call")]] std::string_view getRequestFilename() const noexcept;
 	[[nodiscard("unnecessary call")]] const OperationList& getOperations() const noexcept;
 	[[nodiscard("unnecessary call")]] std::string_view getOperationDisplayName(
 		const Operation& operation) const noexcept;
-	[[nodiscard("unnecessary call")]] std::string getOperationNamespace(const Operation& operation)
-		const noexcept;
-	[[nodiscard("unnecessary call")]] std::string_view getOperationType(const Operation& operation)
-		const noexcept;
+	[[nodiscard("unnecessary call")]] std::string getOperationNamespace(
+		const Operation& operation) const noexcept;
+	[[nodiscard("unnecessary call")]] std::string_view getOperationType(
+		const Operation& operation) const noexcept;
 	[[nodiscard("unnecessary call")]] std::string_view getRequestText() const noexcept;
 
 	[[nodiscard("unnecessary call")]] const ResponseType& getResponseType(
@@ -108,6 +109,7 @@ public:
 	[[nodiscard("unnecessary call")]] const RequestVariableList& getVariables(
 		const Operation& operation) const noexcept;
 
+	[[nodiscard("unnecessary call")]] bool useSharedTypes() const noexcept;
 	[[nodiscard("unnecessary call")]] const RequestInputTypeList& getReferencedInputTypes(
 		const Operation& operation) const noexcept;
 	[[nodiscard("unnecessary call")]] const RequestSchemaTypeList& getReferencedEnums(
@@ -116,20 +118,18 @@ public:
 	[[nodiscard("unnecessary call")]] std::string getInputCppType(
 		const RequestSchemaType& wrappedInputType) const noexcept;
 	[[nodiscard("unnecessary call")]] std::string getInputCppType(
-		const RequestSchemaType& inputType,
-		const TypeModifierStack& modifiers) const noexcept;
+		const RequestSchemaType& inputType, const TypeModifierStack& modifiers) const noexcept;
 	[[nodiscard("unnecessary call")]] static std::string getOutputCppType(
-		std::string_view outputCppType,
-		const TypeModifierStack& modifiers) noexcept;
+		std::string_view outputCppType, const TypeModifierStack& modifiers) noexcept;
 
 	[[nodiscard("unnecessary call")]] static std::pair<RequestSchemaType, TypeModifierStack>
-		unwrapSchemaType(RequestSchemaType && type) noexcept;
+	unwrapSchemaType(RequestSchemaType&& type) noexcept;
 
 private:
 	void buildSchema();
 	void addTypesToSchema();
-	[[nodiscard("unnecessary call")]] RequestSchemaType getSchemaType(std::string_view type,
-		const TypeModifierStack& modifiers) const noexcept;
+	[[nodiscard("unnecessary call")]] RequestSchemaType getSchemaType(
+		std::string_view type, const TypeModifierStack& modifiers) const noexcept;
 	void validateRequest() const;
 
 	[[nodiscard("unnecessary call")]] static std::string_view trimWhitespace(
@@ -137,11 +137,11 @@ private:
 
 	void findOperation();
 	void collectFragments() noexcept;
-	void collectVariables(Operation & operation) noexcept;
-	void collectInputTypes(Operation & operation, const RequestSchemaType& variableType) noexcept;
-	void reorderInputTypeDependencies(Operation & operation);
-	void collectEnums(Operation & operation, const RequestSchemaType& variableType) noexcept;
-	void collectEnums(Operation & operation, const ResponseField& responseField) noexcept;
+	void collectVariables(Operation& operation) noexcept;
+	void collectInputTypes(Operation& operation, const RequestSchemaType& variableType) noexcept;
+	void reorderInputTypeDependencies(Operation& operation);
+	void collectEnums(Operation& operation, const RequestSchemaType& variableType) noexcept;
+	void collectEnums(Operation& operation, const ResponseField& responseField) noexcept;
 
 	using FragmentDefinitionMap = std::map<std::string_view, const peg::ast_node*>;
 
@@ -150,8 +150,7 @@ private:
 	{
 	public:
 		explicit SelectionVisitor(const SchemaLoader& schemaLoader,
-			const FragmentDefinitionMap& fragments,
-			const std::shared_ptr<schema::Schema>& schema,
+			const FragmentDefinitionMap& fragments, const std::shared_ptr<schema::Schema>& schema,
 			const RequestSchemaType& type);
 
 		void visit(const peg::ast_node& selection);
@@ -163,7 +162,7 @@ private:
 		void visitFragmentSpread(const peg::ast_node& fragmentSpread);
 		void visitInlineFragment(const peg::ast_node& inlineFragment);
 
-		void mergeFragmentFields(ResponseFieldList && fragmentFields) noexcept;
+		void mergeFragmentFields(ResponseFieldList&& fragmentFields) noexcept;
 
 		const SchemaLoader& _schemaLoader;
 		const FragmentDefinitionMap& _fragments;
