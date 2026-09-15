@@ -127,6 +127,7 @@ input ComplexInput {
 extend type Query {
   "[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
   findDog(complex: ComplexInput): Dog
+  findDogName(complex: ComplexInput): String
   "[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
   booleanList(booleanListArg: [Boolean!]): Boolean
 }

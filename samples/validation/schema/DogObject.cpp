@@ -95,7 +95,7 @@ service::AwaitableResolver Dog::resolveBarkVolume(service::ResolverParams&& para
 
 service::AwaitableResolver Dog::resolveDoesKnowCommand(service::ResolverParams&& params) const
 {
-	auto argDogCommand = service::ModifiedArgument<DogCommand>::require("dogCommand", params.arguments);
+	auto argDogCommand = service::ModifiedArgument<validation::DogCommand>::require("dogCommand", params.arguments);
 	std::unique_lock resolverLock(_resolverMutex);
 	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
 	auto directives = std::move(params.fieldDirectives);

@@ -255,6 +255,8 @@ void SchemaLoader::fixupOutputFieldList(OutputFieldList& fields,
 			entry.accessor = *accessor;
 		}
 
+		fixupInputFieldList(entry.arguments);
+
 		if (s_builtinTypes.find(entry.type) != s_builtinTypes.cend())
 		{
 			continue;
@@ -313,8 +315,6 @@ void SchemaLoader::fixupOutputFieldList(OutputFieldList& fields,
 				throw std::runtime_error(error.str());
 			}
 		}
-
-		fixupInputFieldList(entry.arguments);
 	}
 }
 
@@ -1715,6 +1715,17 @@ std::string_view SchemaLoader::getCppType(std::string_view type) const noexcept
 
 std::string SchemaLoader::getInputCppType(const InputField& field) const noexcept
 {
+	return getArgumentCppType(field, false);
+}
+
+std::string SchemaLoader::getArgumentCppType(const InputField& field) const noexcept
+{
+	return getArgumentCppType(field, true);
+}
+
+std::string SchemaLoader::getArgumentCppType(
+	const InputField& field, bool useOptional) const noexcept
+{
 	bool nonNull = true;
 	size_t templateCount = 0;
 	std::ostringstream inputType;
@@ -1750,9 +1761,10 @@ std::string SchemaLoader::getInputCppType(const InputField& field) const noexcep
 		switch (field.fieldType)
 		{
 			case InputFieldType::Input:
-				// If it's nullable, we want to return std::unique_ptr instead of std::optional for
-				// innermost complex types
-				inputType << R"cpp(std::unique_ptr<)cpp";
+				// Recursive input fields need std::unique_ptr, while resolver arguments use
+				// std::optional consistently with other nullable arguments.
+				inputType << (useOptional ? R"cpp(std::optional<)cpp"
+										  : R"cpp(std::unique_ptr<)cpp");
 				++templateCount;
 				break;
 

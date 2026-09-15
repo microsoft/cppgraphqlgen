@@ -86,15 +86,27 @@ concept getResource = requires (TImpl impl)
 };
 
 template <class TImpl>
-concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::unique_ptr<ComplexInput> complexArg)
+concept getFindDogWithParams = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getFindDog(std::move(params), std::move(complexArg)) } };
 };
 
 template <class TImpl>
-concept getFindDog = requires (TImpl impl, std::unique_ptr<ComplexInput> complexArg)
+concept getFindDog = requires (TImpl impl, std::optional<ComplexInput> complexArg)
 {
 	{ service::AwaitableObject<std::shared_ptr<Dog>> { impl.getFindDog(std::move(complexArg)) } };
+};
+
+template <class TImpl>
+concept getFindDogNameWithParams = requires (TImpl impl, service::FieldParams params, std::optional<ComplexInput> complexArg)
+{
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getFindDogName(std::move(params), std::move(complexArg)) } };
+};
+
+template <class TImpl>
+concept getFindDogName = requires (TImpl impl, std::optional<ComplexInput> complexArg)
+{
+	{ service::AwaitableScalar<std::optional<std::string>> { impl.getFindDogName(std::move(complexArg)) } };
 };
 
 template <class TImpl>
@@ -134,6 +146,7 @@ private:
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveArguments(service::ResolverParams&& params) const;
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveResource(service::ResolverParams&& params) const;
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveFindDog(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveFindDogName(service::ResolverParams&& params) const;
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params) const;
 
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
@@ -151,7 +164,8 @@ private:
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<CatOrDog>> getCatOrDog(service::FieldParams&& params) const = 0;
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Arguments>> getArguments(service::FieldParams&& params) const = 0;
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
-		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<std::string>> getFindDogName(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const = 0;
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
 	};
 
@@ -260,7 +274,7 @@ private:
 			}
 		}
 
-		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const override
+		[[nodiscard("unnecessary call")]] service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const override
 		{
 			if constexpr (methods::QueryHas::getFindDogWithParams<T>)
 			{
@@ -273,6 +287,22 @@ private:
 			else
 			{
 				throw service::unimplemented_method(R"ex(Query::getFindDog)ex");
+			}
+		}
+
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::optional<std::string>> getFindDogName(service::FieldParams&& params, std::optional<ComplexInput>&& complexArg) const override
+		{
+			if constexpr (methods::QueryHas::getFindDogNameWithParams<T>)
+			{
+				return { _pimpl->getFindDogName(std::move(params), std::move(complexArg)) };
+			}
+			else if constexpr (methods::QueryHas::getFindDogName<T>)
+			{
+				return { _pimpl->getFindDogName(std::move(complexArg)) };
+			}
+			else
+			{
+				throw service::unimplemented_method(R"ex(Query::getFindDogName)ex");
 			}
 		}
 
