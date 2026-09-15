@@ -9,7 +9,7 @@ jobs:
       matrix:
         config: [Debug, Release]
 
-    runs-on: macos-13
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -21,7 +21,7 @@ jobs:
       id: cache-vcpkg
       with:
         path: build/vcpkg_cache/
-        key: vcpkg-binaries-x64-osx
+        key: vcpkg-binaries-arm64-osx
 
     - name: Create Build Environment
       if: ${{ !steps.cache-vcpkg.outputs.cache-hit }}

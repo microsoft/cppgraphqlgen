@@ -3,7 +3,7 @@ name: Windows
 on: [push, pull_request]
 
 jobs:
-  vs2022:
+  vs2026:
     strategy:
       fail-fast: false
       matrix:
@@ -11,7 +11,7 @@ jobs:
         libs: ['shared', 'static']
         config: ['Debug', 'Release']
 
-    runs-on: windows-2022
+    runs-on: windows-latest
 
     steps:
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -49,7 +49,7 @@ jobs:
         $cacheAccess = $(if ('${{ steps.cache-vcpkg.outputs.cache-hit }}' -eq 'true') { 'read' } else { 'write' })
         $env:VCPKG_BINARY_SOURCES = "clear;files,$cachedBinaries,$cacheAccess"
 
-        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DVCPKG_TARGET_TRIPLET=$vcpkgTriplet" "-DBUILD_SHARED_LIBS=$cmakeSharedLibs" -G "Visual Studio 17 2022" -A "$msbuildArch" ${{ github.workspace }}
+        cmake "-DCMAKE_TOOLCHAIN_FILE=$vcpkgToolchain" "-DVCPKG_TARGET_TRIPLET=$vcpkgTriplet" "-DBUILD_SHARED_LIBS=$cmakeSharedLibs" -G "Visual Studio 18 2026" -A "$msbuildArch" ${{ github.workspace }}
 
     - name: Build
       working-directory: build/
