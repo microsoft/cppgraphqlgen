@@ -95,6 +95,44 @@ struct [[nodiscard("unnecessary construction")]] ComplexInput
 	std::optional<std::string> owner;
 };
 
+struct NestedDefaultInput;
+
+struct [[nodiscard("unnecessary construction")]] DefaultInput
+{
+	explicit DefaultInput() noexcept;
+	explicit DefaultInput(
+		std::optional<std::vector<int>> valuesArg,
+		std::optional<int> countArg,
+		std::unique_ptr<NestedDefaultInput> childArg,
+		int requiredArg) noexcept;
+	DefaultInput(const DefaultInput& other);
+	DefaultInput(DefaultInput&& other) noexcept;
+	~DefaultInput();
+
+	DefaultInput& operator=(const DefaultInput& other);
+	DefaultInput& operator=(DefaultInput&& other) noexcept;
+
+	std::optional<std::vector<int>> values;
+	std::optional<int> count;
+	std::unique_ptr<NestedDefaultInput> child;
+	int required;
+};
+
+struct [[nodiscard("unnecessary construction")]] NestedDefaultInput
+{
+	explicit NestedDefaultInput() noexcept;
+	explicit NestedDefaultInput(
+		std::optional<int> countArg) noexcept;
+	NestedDefaultInput(const NestedDefaultInput& other);
+	NestedDefaultInput(NestedDefaultInput&& other) noexcept;
+	~NestedDefaultInput();
+
+	NestedDefaultInput& operator=(const NestedDefaultInput& other);
+	NestedDefaultInput& operator=(NestedDefaultInput&& other) noexcept;
+
+	std::optional<int> count;
+};
+
 } // namespace validation
 } // namespace graphql
 

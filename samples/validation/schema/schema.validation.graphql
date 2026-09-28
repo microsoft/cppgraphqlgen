@@ -130,3 +130,19 @@ extend type Query {
   "[Example 167](https://spec.graphql.org/October2021/#example-ce150)"
   booleanList(booleanListArg: [Boolean!]): Boolean
 }
+
+"Input-field defaults apply to omitted fields while preserving explicit nulls."
+input DefaultInput {
+  values: [Int!] = []
+  count: Int = 42
+  child: NestedDefaultInput = {}
+  required: Int! = 9
+}
+
+input NestedDefaultInput {
+  count: Int = 7
+}
+
+extend type Query {
+  inputDefaults(input: DefaultInput!): String!
+}

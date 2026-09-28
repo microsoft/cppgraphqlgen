@@ -49,7 +49,8 @@ service::ResolverMap Query::getResolvers() const noexcept
 		{ R"gql(resource)gql"sv, [this](service::ResolverParams&& params) { return resolveResource(std::move(params)); } },
 		{ R"gql(arguments)gql"sv, [this](service::ResolverParams&& params) { return resolveArguments(std::move(params)); } },
 		{ R"gql(__typename)gql"sv, [this](service::ResolverParams&& params) { return resolve_typename(std::move(params)); } },
-		{ R"gql(booleanList)gql"sv, [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } }
+		{ R"gql(booleanList)gql"sv, [this](service::ResolverParams&& params) { return resolveBooleanList(std::move(params)); } },
+		{ R"gql(inputDefaults)gql"sv, [this](service::ResolverParams&& params) { return resolveInputDefaults(std::move(params)); } }
 	};
 }
 
@@ -153,6 +154,18 @@ service::AwaitableResolver Query::resolveBooleanList(service::ResolverParams&& p
 	return service::ModifiedResult<bool>::convert<service::TypeModifier::Nullable>(std::move(result), std::move(params));
 }
 
+service::AwaitableResolver Query::resolveInputDefaults(service::ResolverParams&& params) const
+{
+	auto argInput = service::ModifiedArgument<DefaultInput>::require("input", params.arguments);
+	std::unique_lock resolverLock(_resolverMutex);
+	service::SelectionSetParams selectionSetParams { static_cast<const service::SelectionSetParams&>(params) };
+	auto directives = std::move(params.fieldDirectives);
+	auto result = _pimpl->getInputDefaults(service::FieldParams { std::move(selectionSetParams), std::move(directives) }, std::move(argInput));
+	resolverLock.unlock();
+
+	return service::ModifiedResult<std::string>::convert(std::move(result), std::move(params));
+}
+
 service::AwaitableResolver Query::resolve_typename(service::ResolverParams&& params) const
 {
 	return service::Result<std::string>::convert(std::string{ R"gql(Query)gql" }, std::move(params));
@@ -174,6 +187,9 @@ void AddQueryDetails(const std::shared_ptr<schema::ObjectType>& typeQuery, const
 		}),
 		schema::Field::Make(R"gql(booleanList)gql"sv, R"md()md"sv, std::nullopt, schema->LookupType(R"gql(Boolean)gql"sv), {
 			schema::InputValue::Make(R"gql(booleanListArg)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Boolean)gql"sv))), R"gql()gql"sv)
+		}),
+		schema::Field::Make(R"gql(inputDefaults)gql"sv, R"md()md"sv, std::nullopt, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(String)gql"sv)), {
+			schema::InputValue::Make(R"gql(input)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(DefaultInput)gql"sv)), R"gql()gql"sv)
 		})
 	});
 }

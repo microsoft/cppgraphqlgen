@@ -110,6 +110,18 @@ concept getBooleanList = requires (TImpl impl, std::optional<std::vector<bool>> 
 };
 
 template <class TImpl>
+concept getInputDefaultsWithParams = requires (TImpl impl, service::FieldParams params, DefaultInput inputArg)
+{
+	{ service::AwaitableScalar<std::string> { impl.getInputDefaults(std::move(params), std::move(inputArg)) } };
+};
+
+template <class TImpl>
+concept getInputDefaults = requires (TImpl impl, DefaultInput inputArg)
+{
+	{ service::AwaitableScalar<std::string> { impl.getInputDefaults(std::move(inputArg)) } };
+};
+
+template <class TImpl>
 concept beginSelectionSet = requires (TImpl impl, const service::SelectionSetParams params)
 {
 	{ impl.beginSelectionSet(params) };
@@ -135,6 +147,7 @@ private:
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveResource(service::ResolverParams&& params) const;
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveFindDog(service::ResolverParams&& params) const;
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveBooleanList(service::ResolverParams&& params) const;
+	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolveInputDefaults(service::ResolverParams&& params) const;
 
 	[[nodiscard("unnecessary call")]] service::AwaitableResolver resolve_typename(service::ResolverParams&& params) const;
 
@@ -153,6 +166,7 @@ private:
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Resource>> getResource(service::FieldParams&& params) const = 0;
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableObject<std::shared_ptr<Dog>> getFindDog(service::FieldParams&& params, std::unique_ptr<ComplexInput>&& complexArg) const = 0;
 		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::optional<bool>> getBooleanList(service::FieldParams&& params, std::optional<std::vector<bool>>&& booleanListArgArg) const = 0;
+		[[nodiscard("unnecessary call")]] virtual service::AwaitableScalar<std::string> getInputDefaults(service::FieldParams&& params, DefaultInput&& inputArg) const = 0;
 	};
 
 	template <class T>
@@ -289,6 +303,22 @@ private:
 			else
 			{
 				throw service::unimplemented_method(R"ex(Query::getBooleanList)ex");
+			}
+		}
+
+		[[nodiscard("unnecessary call")]] service::AwaitableScalar<std::string> getInputDefaults(service::FieldParams&& params, DefaultInput&& inputArg) const override
+		{
+			if constexpr (methods::QueryHas::getInputDefaultsWithParams<T>)
+			{
+				return { _pimpl->getInputDefaults(std::move(params), std::move(inputArg)) };
+			}
+			else if constexpr (methods::QueryHas::getInputDefaults<T>)
+			{
+				return { _pimpl->getInputDefaults(std::move(inputArg)) };
+			}
+			else
+			{
+				throw service::unimplemented_method(R"ex(Query::getInputDefaults)ex");
 			}
 		}
 

@@ -2042,3 +2042,153 @@ TEST_F(ValidationExamplesCase, Example187)
 
 	ASSERT_TRUE(errors.empty());
 }
+
+namespace {
+
+struct InputCase
+{
+	const char* json;
+	const char* literal;
+	std::optional<std::vector<int>> values;
+	std::optional<int> count;
+	bool child;
+	std::optional<int> childCount;
+};
+
+const InputCase cases[] {
+	{ "{}", "{}", std::vector<int> {}, 42, true, 7 },
+	{ R"({"values":null,"count":null,"child":null})",
+		"{values:null,count:null,child:null}",
+		std::nullopt,
+		std::nullopt,
+		false,
+		std::nullopt },
+	{ R"({"values":[]})", "{values:[]}", std::vector<int> {}, 42, true, 7 },
+	{ R"({"values":[1,2],"count":3,"child":{"count":4}})",
+		"{values:[1,2],count:3,child:{count:4}}",
+		std::vector<int> { 1, 2 },
+		3,
+		true,
+		4 },
+	{ R"({"child":{}})", "{child:{}}", std::vector<int> {}, 42, true, 7 },
+	{ R"({"child":{"count":null}})",
+		"{child:{count:null}}",
+		std::vector<int> {},
+		42,
+		true,
+		std::nullopt },
+};
+
+void checkInput(const validation::DefaultInput& input, const InputCase& expected)
+{
+	EXPECT_EQ(input.values, expected.values);
+	EXPECT_EQ(input.count, expected.count);
+	ASSERT_EQ(static_cast<bool>(input.child), expected.child);
+	if (input.child)
+	{
+		EXPECT_EQ(input.child->count, expected.childCount);
+	}
+	EXPECT_EQ(input.required, 9);
+}
+
+struct InputDefaultsQuery
+{
+	std::optional<validation::DefaultInput> received;
+
+	std::string getInputDefaults(validation::DefaultInput input)
+	{
+		received = std::move(input);
+		return "ok";
+	}
+};
+
+const char* invalidInputs[] {
+	R"({"values":[null]})",
+	R"({"values":["bad"]})",
+	R"({"values":{}})",
+	R"({"count":"bad"})",
+	R"({"child":{"count":"bad"}})",
+	R"({"child":1})",
+	R"({"required":null})",
+	R"({"required":"bad"})",
+};
+
+} // namespace
+
+TEST(InputDefaultsCase, GeneratedConversion)
+{
+	for (const auto& expected : cases)
+	{
+		SCOPED_TRACE(expected.json);
+		auto input =
+			service::Argument<validation::DefaultInput>::convert(response::parseJSON(expected.json));
+		checkInput(input, expected);
+	}
+}
+
+TEST(InputDefaultsCase, InvalidGeneratedConversion)
+{
+	for (const auto* json : invalidInputs)
+	{
+		SCOPED_TRACE(json);
+		EXPECT_ANY_THROW(static_cast<void>(
+			service::Argument<validation::DefaultInput>::convert(response::parseJSON(json))));
+	}
+}
+
+TEST(InputDefaultsCase, RequestExecution)
+{
+	for (const auto& expected : cases)
+	{
+		for (bool variables : { false, true })
+		{
+			SCOPED_TRACE(expected.json);
+			SCOPED_TRACE(variables);
+			auto impl = std::make_shared<InputDefaultsQuery>();
+			validation::Operations service(impl, std::make_shared<validation::Mutation>());
+			auto query = peg::parseString(variables
+					? "query($input:DefaultInput!){inputDefaults(input:$input)}"
+					: std::string("{inputDefaults(input:") + expected.literal + ")}");
+			auto args = response::parseJSON(std::string("{\"input\":") + expected.json + "}");
+			auto result = service.resolve({ query, {}, std::move(args) }).get();
+			EXPECT_EQ(response::toJSON(std::move(result)), R"({"data":{"inputDefaults":"ok"}})");
+			ASSERT_TRUE(impl->received);
+			checkInput(*impl->received, expected);
+		}
+	}
+}
+
+TEST(InputDefaultsCase, InvalidRequestExecution)
+{
+	for (const auto* json : invalidInputs)
+	{
+		SCOPED_TRACE(json);
+		auto impl = std::make_shared<InputDefaultsQuery>();
+		validation::Operations service(impl, std::make_shared<validation::Mutation>());
+		auto query = "query($input:DefaultInput!){inputDefaults(input:$input)}"_graphql;
+		auto args = response::parseJSON(std::string("{\"input\":") + json + "}");
+		auto result = service.resolve({ query, {}, std::move(args) }).get();
+		EXPECT_FALSE(impl->received);
+		ASSERT_NE(result.find("errors"), result.get<response::MapType>().cend());
+		EXPECT_GT(result["errors"].size(), 0U);
+	}
+}
+
+TEST(InputDefaultsCase, FindDistinguishesAbsenceAndInvalidValues)
+{
+	const std::string name = "value";
+	auto absent = response::parseJSON("{}");
+	EXPECT_FALSE(service::IntArgument::find(name, absent).second);
+	EXPECT_FALSE(service::IntArgument::find<>(name, absent).second);
+	EXPECT_FALSE(service::IntArgument::find<service::TypeModifier::Nullable>(name, absent).second);
+	for (const auto* json : { R"({"value":null})", R"({"value":"bad"})" })
+	{
+		auto invalid = response::parseJSON(json);
+		EXPECT_ANY_THROW(static_cast<void>(service::IntArgument::find(name, invalid)));
+		EXPECT_ANY_THROW(static_cast<void>(service::IntArgument::find<>(name, invalid)));
+	}
+	auto null = response::parseJSON(R"({"value":null})");
+	auto found = service::IntArgument::find<service::TypeModifier::Nullable>(name, null);
+	EXPECT_TRUE(found.second);
+	EXPECT_FALSE(found.first);
+}

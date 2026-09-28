@@ -151,6 +151,87 @@ validation::ComplexInput Argument<validation::ComplexInput>::convert(const respo
 	};
 }
 
+template <>
+validation::DefaultInput Argument<validation::DefaultInput>::convert(const response::Value& value)
+{
+	const auto defaultValue = []()
+	{
+		response::Value values(response::Type::Map);
+		response::Value entry;
+
+		entry = []()
+		{
+			response::Value elements(response::Type::List);
+			response::Value entry;
+
+			return elements;
+		}();
+		values.emplace_back("values", std::move(entry));
+		entry = response::Value(static_cast<int>(42));
+		values.emplace_back("count", std::move(entry));
+		entry = []()
+		{
+			response::Value members(response::Type::Map);
+			response::Value entry;
+
+			return members;
+		}();
+		values.emplace_back("child", std::move(entry));
+		entry = response::Value(static_cast<int>(9));
+		values.emplace_back("required", std::move(entry));
+
+		return values;
+	}();
+
+	auto pairValues = service::ModifiedArgument<int>::find<service::TypeModifier::Nullable, service::TypeModifier::List>("values", value);
+	auto valueValues = (pairValues.second
+		? std::move(pairValues.first)
+		: service::ModifiedArgument<int>::require<service::TypeModifier::Nullable, service::TypeModifier::List>("values", defaultValue));
+	auto pairCount = service::ModifiedArgument<int>::find<service::TypeModifier::Nullable>("count", value);
+	auto valueCount = (pairCount.second
+		? std::move(pairCount.first)
+		: service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("count", defaultValue));
+	auto pairChild = service::ModifiedArgument<validation::NestedDefaultInput>::find<service::TypeModifier::Nullable>("child", value);
+	auto valueChild = (pairChild.second
+		? std::move(pairChild.first)
+		: service::ModifiedArgument<validation::NestedDefaultInput>::require<service::TypeModifier::Nullable>("child", defaultValue));
+	auto pairRequired = service::ModifiedArgument<int>::find("required", value);
+	auto valueRequired = (pairRequired.second
+		? pairRequired.first
+		: service::ModifiedArgument<int>::require("required", defaultValue));
+
+	return validation::DefaultInput {
+		std::move(valueValues),
+		std::move(valueCount),
+		std::move(valueChild),
+		valueRequired
+	};
+}
+
+template <>
+validation::NestedDefaultInput Argument<validation::NestedDefaultInput>::convert(const response::Value& value)
+{
+	const auto defaultValue = []()
+	{
+		response::Value values(response::Type::Map);
+		response::Value entry;
+
+		entry = response::Value(static_cast<int>(7));
+		values.emplace_back("count", std::move(entry));
+
+		return values;
+	}();
+
+	auto pairCount = service::ModifiedArgument<int>::find<service::TypeModifier::Nullable>("count", value);
+	auto valueCount = (pairCount.second
+		? std::move(pairCount.first)
+		: service::ModifiedArgument<int>::require<service::TypeModifier::Nullable>("count", defaultValue));
+
+	return validation::NestedDefaultInput {
+		std::move(valueCount)
+	};
+}
+
 } // namespace service
 
 namespace validation {
@@ -200,6 +281,112 @@ ComplexInput& ComplexInput::operator=(ComplexInput&& other) noexcept
 {
 	name = std::move(other.name);
 	owner = std::move(other.owner);
+
+	return *this;
+}
+
+
+DefaultInput::DefaultInput() noexcept
+	: values {}
+	, count {}
+	, child {}
+	, required {}
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
+DefaultInput::DefaultInput(
+		std::optional<std::vector<int>> valuesArg,
+		std::optional<int> countArg,
+		std::unique_ptr<NestedDefaultInput> childArg,
+		int requiredArg) noexcept
+	: values { std::move(valuesArg) }
+	, count { std::move(countArg) }
+	, child { std::move(childArg) }
+	, required { std::move(requiredArg) }
+{
+}
+
+DefaultInput::DefaultInput(const DefaultInput& other)
+	: values { service::ModifiedArgument<int>::duplicate<service::TypeModifier::Nullable, service::TypeModifier::List>(other.values) }
+	, count { service::ModifiedArgument<int>::duplicate<service::TypeModifier::Nullable>(other.count) }
+	, child { service::ModifiedArgument<NestedDefaultInput>::duplicate<service::TypeModifier::Nullable>(other.child) }
+	, required { service::ModifiedArgument<int>::duplicate(other.required) }
+{
+}
+
+DefaultInput::DefaultInput(DefaultInput&& other) noexcept
+	: values { std::move(other.values) }
+	, count { std::move(other.count) }
+	, child { std::move(other.child) }
+	, required { std::move(other.required) }
+{
+}
+
+DefaultInput::~DefaultInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
+DefaultInput& DefaultInput::operator=(const DefaultInput& other)
+{
+	DefaultInput value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+DefaultInput& DefaultInput::operator=(DefaultInput&& other) noexcept
+{
+	values = std::move(other.values);
+	count = std::move(other.count);
+	child = std::move(other.child);
+	required = std::move(other.required);
+
+	return *this;
+}
+
+
+NestedDefaultInput::NestedDefaultInput() noexcept
+	: count {}
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
+NestedDefaultInput::NestedDefaultInput(
+		std::optional<int> countArg) noexcept
+	: count { std::move(countArg) }
+{
+}
+
+NestedDefaultInput::NestedDefaultInput(const NestedDefaultInput& other)
+	: count { service::ModifiedArgument<int>::duplicate<service::TypeModifier::Nullable>(other.count) }
+{
+}
+
+NestedDefaultInput::NestedDefaultInput(NestedDefaultInput&& other) noexcept
+	: count { std::move(other.count) }
+{
+}
+
+NestedDefaultInput::~NestedDefaultInput()
+{
+	// Explicit definition to prevent ODR violations when LTO is enabled.
+}
+
+NestedDefaultInput& NestedDefaultInput::operator=(const NestedDefaultInput& other)
+{
+	NestedDefaultInput value { other };
+
+	std::swap(*this, value);
+
+	return *this;
+}
+
+NestedDefaultInput& NestedDefaultInput::operator=(NestedDefaultInput&& other) noexcept
+{
+	count = std::move(other.count);
 
 	return *this;
 }

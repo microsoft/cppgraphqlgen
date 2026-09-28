@@ -20,5 +20,7 @@ using validation::getCatCommandNames;
 using validation::getCatCommandValues;
 
 using validation::ComplexInput;
+using validation::DefaultInput;
+using validation::NestedDefaultInput;
 
 } // namespace graphql::validation

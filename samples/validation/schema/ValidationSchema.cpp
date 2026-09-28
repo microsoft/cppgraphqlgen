@@ -44,6 +44,10 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	schema->AddType(R"gql(CatCommand)gql"sv, typeCatCommand);
 	auto typeComplexInput = schema::InputObjectType::Make(R"gql(ComplexInput)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(ComplexInput)gql"sv, typeComplexInput);
+	auto typeDefaultInput = schema::InputObjectType::Make(R"gql(DefaultInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(DefaultInput)gql"sv, typeDefaultInput);
+	auto typeNestedDefaultInput = schema::InputObjectType::Make(R"gql(NestedDefaultInput)gql"sv, R"md()md"sv);
+	schema->AddType(R"gql(NestedDefaultInput)gql"sv, typeNestedDefaultInput);
 	auto typeSentient = schema::InterfaceType::Make(R"gql(Sentient)gql"sv, R"md()md"sv);
 	schema->AddType(R"gql(Sentient)gql"sv, typeSentient);
 	auto typePet = schema::InterfaceType::Make(R"gql(Pet)gql"sv, R"md()md"sv);
@@ -93,6 +97,15 @@ void AddTypesToSchema(const std::shared_ptr<schema::Schema>& schema)
 	typeComplexInput->AddInputValues({
 		schema::InputValue::Make(R"gql(name)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv),
 		schema::InputValue::Make(R"gql(owner)gql"sv, R"md()md"sv, schema->LookupType(R"gql(String)gql"sv), R"gql()gql"sv)
+	});
+	typeDefaultInput->AddInputValues({
+		schema::InputValue::Make(R"gql(values)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::LIST, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv))), R"gql([])gql"sv),
+		schema::InputValue::Make(R"gql(count)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql(42)gql"sv),
+		schema::InputValue::Make(R"gql(child)gql"sv, R"md()md"sv, schema->LookupType(R"gql(NestedDefaultInput)gql"sv), R"gql({})gql"sv),
+		schema::InputValue::Make(R"gql(required)gql"sv, R"md()md"sv, schema->WrapType(introspection::TypeKind::NON_NULL, schema->LookupType(R"gql(Int)gql"sv)), R"gql(9)gql"sv)
+	});
+	typeNestedDefaultInput->AddInputValues({
+		schema::InputValue::Make(R"gql(count)gql"sv, R"md()md"sv, schema->LookupType(R"gql(Int)gql"sv), R"gql(7)gql"sv)
 	});
 
 	AddSentientDetails(typeSentient, schema);

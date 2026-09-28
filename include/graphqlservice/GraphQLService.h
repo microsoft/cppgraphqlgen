@@ -662,18 +662,16 @@ struct ModifiedArgument
 		}
 	}
 
-	// Wrap require in a try/catch block.
+	// Return false only for an absent argument; supplied values must pass conversion.
 	[[nodiscard("unnecessary call")]] static std::pair<Type, bool> find(
-		const std::string& name, const response::Value& arguments) noexcept
+		const std::string& name, const response::Value& arguments)
 	{
-		try
-		{
-			return { require(name, arguments), true };
-		}
-		catch (const std::exception&)
+		if (arguments.find(name) == arguments.get<response::MapType>().cend())
 		{
 			return { Type {}, false };
 		}
+
+		return { require(name, arguments), true };
 	}
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
@@ -738,20 +736,18 @@ struct ModifiedArgument
 		return result;
 	}
 
-	// Wrap require with modifiers in a try/catch block.
+	// Preserve absence separately from nullable values and conversion errors.
 	template <TypeModifier Modifier = TypeModifier::None, TypeModifier... Other>
 	[[nodiscard("unnecessary call")]] static std::pair<
 		typename ArgumentTraits<Type, Modifier, Other...>::type, bool>
-	find(std::string_view name, const response::Value& arguments) noexcept
+	find(std::string_view name, const response::Value& arguments)
 	{
-		try
-		{
-			return { require<Modifier, Other...>(name, arguments), true };
-		}
-		catch (const std::exception&)
+		if (arguments.find(name) == arguments.get<response::MapType>().cend())
 		{
 			return { typename ArgumentTraits<Type, Modifier, Other...>::type {}, false };
 		}
+
+		return { require<Modifier, Other...>(name, arguments), true };
 	}
 
 	// Peel off the none modifier. If it's included, it should always be last in the list.
